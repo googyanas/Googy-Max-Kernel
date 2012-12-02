@@ -22,6 +22,11 @@
 #include <linux/regulator/consumer.h>
 #include <linux/regulator/driver.h>
 
+#include <linux/sysdev.h>
+#include <linux/platform_device.h>
+
+#include <linux/sysfs_helpers.h>
+
 #include <asm/io.h>
 
 #include "mali_device_pause_resume.h"
@@ -755,6 +760,7 @@ mali_bool mali_dvfs_handler(u32 utilization)
 	return MALI_TRUE;
 }
 
+
 int change_dvfs_tableset(int change_clk, int change_step)
 {
 	int err;
@@ -774,6 +780,92 @@ int change_dvfs_tableset(int change_clk, int change_step)
 	}
 */
 	MALI_PRINT((":::mali dvfs step %d clock and voltage = %d Mhz, %d V\n",change_step, mali_dvfs[change_step].clock, mali_dvfs[change_step].vol));
+
+/* #### Sysfs start #### */
+
+static int sanitize_voltage(int voltage)
+{
+	voltage *= 1000;
+	
+	if(voltage % MALI_VOLTAGE_STEP)
+		voltage += voltage % MALI_VOLTAGE_STEP;
+
+	if(voltage > MALI_MAX_VOLTAGE)
+		voltage = MALI_MAX_VOLTAGE;
+
+	if(voltage < MALI_MIN_VOLTAGE)
+		voltage = MALI_MIN_VOLTAGE;
+
+	return voltage;
+}
+
+static ssize_t max_freq_show(struct sysdev_class * cls, 
+			     struct sysdev_class_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", mali_dvfs[mali_policy.highStep].clock);
+}
+
+static ssize_t max_freq_store(struct sysdev_class * cls, struct sysdev_class_attribute *attr,
+			      const char *buf, size_t count) 
+{
+	unsigned int ret = -EINVAL;
+	int freq, i, s;
+
+	ret = sscanf(buf, "%d", &freq);
+	if (ret != 1) {
+		return -EINVAL;
+	} else {
+		for(i = 0; i < MALI_DVFS_STEPS; i++){
+			if(mali_dvfs[i].clock != freq) continue;
+
+			s = findStep(freq);
+			if(s > mali_policy.lowStep)
+				s = mali_policy.lowStep;
+
+			mali_policy.highStep = s;
+
+			if(mali_policy.currentStep > mali_policy.highStep)
+				change_mali_dvfs_status(mali_policy.highStep, MALI_FALSE);
+			
+			break;
+		}
+	}
+	return count;	
+}
+
+static ssize_t min_freq_show(struct sysdev_class * cls, 
+			     struct sysdev_class_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", mali_dvfs[mali_policy.lowStep].clock);
+}
+
+static ssize_t min_freq_store(struct sysdev_class * cls, struct sysdev_class_attribute *attr,
+			      const char *buf, size_t count) 
+{
+	unsigned int ret = -EINVAL;
+	int freq, i, s;
+
+	ret = sscanf(buf, "%d", &freq);
+	if (ret != 1) {
+		return -EINVAL;
+	} else {
+		for(i = 0; i < MALI_DVFS_STEPS; i++){
+			if(mali_dvfs[i].clock != freq) continue;
+
+			s = findStep(freq);
+			if(s < mali_policy.highStep)
+				s = mali_policy.highStep;
+
+			mali_policy.lowStep = s;
+
+			if(mali_policy.currentStep < mali_policy.lowStep)
+				change_mali_dvfs_status(mali_policy.lowStep, MALI_TRUE);
+			break;
+		}
+	}
+	return count;	
+}
+
 
 	if (maliDvfsStatus.currentStep == change_step) {
 #ifdef CONFIG_REGULATOR
@@ -797,7 +889,23 @@ int change_dvfs_tableset(int change_clk, int change_step)
 
 void mali_default_step_set(int step, mali_bool boostup)
 {
+
 	mali_clk_set_rate(mali_dvfs[step].clock, mali_dvfs[step].freq);
+
+	int i, t;
+	int u[MALI_DVFS_STEPS];
+	
+	if((t = read_into((int*)&u, MALI_DVFS_STEPS, buf, count)) < 0)
+		return -EINVAL;
+	if(t == 2 && MALI_DVFS_STEPS != 2){
+		mali_dvfs[findStep(u[0])].clock = u[1];
+	} else if (t == MALI_DVFS_STEPS) {
+		for(i = 0; i < MALI_DVFS_STEPS; i++) {
+			mali_dvfs[MALI_DVFS_STEPS - i - 1].clock = u[i];
+		}
+	} else
+		return -EINVAL;
+
 
 	if (maliDvfsStatus.currentStep == 1)
 		set_mali_dvfs_status(step, boostup);
@@ -811,6 +919,7 @@ int mali_dvfs_bottom_lock_push(int lock_step)
 		MALI_PRINT(("gpu bottom lock status is not valid for push\n"));
 		return -1;
 	}
+
 	// not a bad idea to limit locking to 4th step, so let's leave this -gm
 	if (samsung_rev() < EXYNOS4412_REV_2_0)
 		lock_step = min(lock_step, MALI_DVFS_STEPS - 2);
@@ -825,6 +934,50 @@ int mali_dvfs_bottom_lock_push(int lock_step)
 			mali_clk_set_rate(mali_dvfs[lock_step].clock,
 					  mali_dvfs[lock_step].freq);
 			set_mali_dvfs_current_step(lock_step);
+
+	return len;
+}
+
+static ssize_t volt_table_store(struct sysdev_class * cls, struct sysdev_class_attribute *attr,
+			      const char *buf, size_t count) 
+{
+	int i, t;
+	int u[MALI_DVFS_STEPS];
+
+	if((t = read_into((int*)&u, MALI_DVFS_STEPS, buf, count)) < 0)
+		return -EINVAL;
+	if(t == 2 && MALI_DVFS_STEPS != 2) {
+		mali_dvfs[findStep(u[0])].vol = sanitize_voltage(u[1]);
+	} else if (t == MALI_DVFS_STEPS) {
+		for(i = 0; i < MALI_DVFS_STEPS; i++) {
+			mali_dvfs[MALI_DVFS_STEPS - i - 1].vol = sanitize_voltage(u[i]);
+		}
+	} else
+		return -EINVAL;
+
+	return count;	
+}
+
+static ssize_t thresholds_show(struct sysdev_class * cls, 
+			     struct sysdev_class_attribute *attr, char *buf)
+{
+	return sprintf(buf, "Up: %d down-differential: %d\n",
+		       mali_policy.upThreshold, mali_policy.downDifferential);
+}
+
+static ssize_t thresholds_store(struct sysdev_class * cls, struct sysdev_class_attribute *attr,
+			      const char *buf, size_t count) 
+{
+	unsigned int ret = -EINVAL;
+	int up, down;
+
+	ret = sscanf(buf, "%d %d", &up, &down);
+	if (ret != 2) {
+		return -EINVAL;
+	} else {
+		if(up > 0 && up < 100 && down > 0 && down < (99 - up)) {
+			mali_policy.upThreshold = up;
+			mali_policy.downDifferential = down;
 		}
 	}
 	return _mali_osk_atomic_inc_return(&bottomlock_status);

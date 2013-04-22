@@ -1804,3 +1804,8 @@ config CORESIGHT_ETM_DEFAULT_ENABLE
 	help
 	  Turns on ETM tracing by default. Otherwise, tracing is
 	  disabled by default but can be enabled by other means.
+
+config ABB_CONTROL
+	bool "Adaptive body bias control"
+	depends on EXYNOS4_CPUFREQ && CPU_EXYNOS4412
+	default n

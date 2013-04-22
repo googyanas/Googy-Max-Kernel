@@ -338,12 +338,16 @@ static mali_bool set_mali_dvfs_status(u32 step,mali_bool boostup)
 	}
 
 #ifdef EXYNOS4_ASV_ENABLED
+#ifndef CONFIG_ABB_CONTROL
 	if (samsung_rev() < EXYNOS4412_REV_2_0) {
 		if (mali_dvfs[step].clock == 160)
 			exynos4x12_set_abb_member(ABB_G3D, ABB_MODE_100V);
 		else
 			exynos4x12_set_abb_member(ABB_G3D, ABB_MODE_130V);
 	}
+#else
+	abb_target(ABB_G3D, mali_dvfs[step].clock*1000);
+#endif
 #endif
 
 

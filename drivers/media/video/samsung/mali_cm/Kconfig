@@ -1,0 +1,12 @@
+#
+## S3C Multimedia Mali configuration
+##
+#
+# For Mali
+config MALI_CM
+	bool "Enable MALI_CM integration"
+	depends on VIDEO_SAMSUNG
+	default y
+	---help---
+                This enables MALI integration in the multimedia device driver
+

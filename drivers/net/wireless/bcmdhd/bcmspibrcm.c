@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: bcmspibrcm.c 355377 2012-09-06 13:25:35Z $
+ * $Id: bcmspibrcm.c 359460 2012-09-28 01:51:23Z $
  */
 
 #define HSMODE

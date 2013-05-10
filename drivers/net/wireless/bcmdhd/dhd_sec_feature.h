@@ -1,8 +1,5 @@
-﻿/*
- * Header file describing the internal (inter-module) DHD interfaces.
- *
- * Provides type definitions and function prototypes used to link the
- * DHD OS, bus, and protocol modules.
+/*
+ * Customer HW 4 dependant file
  *
  * Copyright (C) 1999-2012, Broadcom Corporation
  *
@@ -24,8 +21,11 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: dhd_sec_feature.h 309548 2012-01-20 01:13:08Z $
+ * $Id: dhd_sec_feature.h$
  */
+
+#ifndef _dhd_sec_feature_h_
+#define _dhd_sec_feature_h_
 
 /* PROJECTS */
 
@@ -33,91 +33,127 @@
 	|| defined(CONFIG_MACH_SAMSUNG_ESPRESSO_10)
 #define READ_MACADDR
 #define HW_OOB
-#endif
+#endif /* CONFIG_MACH_SAMSUNG_ESPRESSO && CONFIG_MACH_SAMSUNG_ESPRESSO_10 */
 
 /* Q1 also uses this feature */
 #if defined(CONFIG_MACH_U1) || defined(CONFIG_MACH_TRATS)
 #ifdef CONFIG_MACH_Q1_BD
 #define HW_OOB
-#endif
+#endif /* CONFIG_MACH_Q1_BD */
 #define USE_CID_CHECK
 #define WRITE_MACADDR
-#endif
+#endif /* CONFIG_MACH_U1 || CONFIG_MACH_TRATS */
 
 #ifdef CONFIG_ARCH_MSM7X30
 #define HW_OOB
 #define READ_MACADDR
-#endif
+#endif /* CONFIG_ARCH_MSM7X30 */
 
-#if defined CONFIG_MACH_GC1 || defined CONFIG_MACH_U1_NA_SPR
+#if defined(CONFIG_MACH_GC1) || defined(CONFIG_MACH_U1_NA_SPR) || defined(CONFIG_MACH_V1)
 #undef USE_CID_CHECK
 #define READ_MACADDR
-#endif
+#endif /* CONFIG_MACH_GC1 || CONFIG_MACH_U1_NA_SPR || CONFIG_MACH_V1 */
 
 #ifdef CONFIG_MACH_P10
 #define READ_MACADDR
-#endif
+#endif /* CONFIG_MACH_P10 */
 
 #ifdef CONFIG_ARCH_MSM8960
 #undef WIFI_TURNOFF_DELAY
 #define WIFI_TURNOFF_DELAY	200
-#endif
+#endif /* CONFIG_ARCH_MSM8960 */
+
+#if defined(CONFIG_BCM4335) || defined (CONFIG_BCM4335_MODULE)
+#define POWERUP_MAX_RETRY 5 /* Due to late start-up of FPGA in JF project */
+#endif /* CONFIG_BCM4335 || CONFIG_BCM4335_MODULE */
 
 /* REGION CODE */
+#ifndef CONFIG_WLAN_REGION_CODE
+#define CONFIG_WLAN_REGION_CODE 100
+#endif /* CONFIG_WLAN_REGION_CODE */
 
-#if (WLAN_REGION_CODE >= 100) && (WLAN_REGION_CODE < 200) /*EUR*/
-#if (WLAN_REGION_CODE == 101) /*EUR ORG*/
+#if (CONFIG_WLAN_REGION_CODE >= 100) && (CONFIG_WLAN_REGION_CODE < 200)     /* EUR */
+#if (CONFIG_WLAN_REGION_CODE == 101)     /* EUR ORG */
 /* GAN LITE NAT KEEPALIVE FILTER */
 #define GAN_LITE_NAT_KEEPALIVE_FILTER
-#endif
-#endif
+#endif /* CONFIG_WLAN_REGION_CODE == 101 */
+#endif /* CONFIG_WLAN_REGION_CODE >= 100 && CONFIG_WLAN_REGION_CODE < 200 */
 
-#if (WLAN_REGION_CODE >= 200) && (WLAN_REGION_CODE < 300) /* KOR */
+#if (CONFIG_WLAN_REGION_CODE >= 200) && (CONFIG_WLAN_REGION_CODE < 300)     /* KOR */
 #undef USE_INITIAL_2G_SCAN_ORG
 #ifndef ROAM_ENABLE
 #define ROAM_ENABLE
-#endif
+#endif /* ROAM_ENABLE */
 #ifndef ROAM_API
 #define ROAM_API
-#endif
+#endif /* ROAM_API */
 #ifndef ROAM_CHANNEL_CACHE
 #define ROAM_CHANNEL_CACHE
-#endif
+#endif /* ROAM_CHANNEL_CACHE */
 #ifndef OKC_SUPPORT
 #define OKC_SUPPORT
-#endif
+#endif /* OKC_SUPPORT */
 
 #ifndef ROAM_AP_ENV_DETECTION
 #define ROAM_AP_ENV_DETECTION
-#endif
+#endif /* ROAM_AP_ENV_DETECTION */
 
 #undef WRITE_MACADDR
 #undef READ_MACADDR
-#ifdef CONFIG_BCM4334
+#if defined(CONFIG_BCM4334) || defined(CONFIG_BCM4335) \
+	|| defined(CONFIG_BCM4334_MODULE) || defined(CONFIG_BCM4335_MODULE)
 #define READ_MACADDR
 #else
 #define RDWR_MACADDR
+#endif /* CONFIG_BCM4334 || CONFIG_BCM4335 */
+
+#if (CONFIG_WLAN_REGION_CODE == 201)     /* SKT */
+
+#ifdef CONFIG_MACH_UNIVERSAL5410
+// Make CPU core clock 300MHz & assign dpc thread workqueue to CPU1
+#define FIX_CPU_MIN_CLOCK
 #endif
 
-#if (WLAN_REGION_CODE == 201) /* SKT */
-#endif
+#endif /* CONFIG_WLAN_REGION_CODE == 201 */
 
-#if (WLAN_REGION_CODE == 202) /* KTT */
+#if (CONFIG_WLAN_REGION_CODE == 202)     /* KTT */
 #define VLAN_MODE_OFF
-#define KEEP_ALIVE_PACKET_PERIOD_30_SEC
+#define CUSTOM_KEEP_ALIVE_SETTING   30000 /* JBP type KOR KTT only. do not correct here */
 #define FULL_ROAMING_SCAN_PERIOD_60_SEC
+
+#ifdef CONFIG_MACH_UNIVERSAL5410
+// Make CPU core clock 300MHz & assign dpc thread workqueue to CPU1
+#define FIX_CPU_MIN_CLOCK
 #endif
 
-#if (WLAN_REGION_CODE == 203) /* LGT */
-#endif
-#endif
+#endif /* CONFIG_WLAN_REGION_CODE == 202 */
 
-#if (WLAN_REGION_CODE >= 300) && (WLAN_REGION_CODE < 400) /* CHN */
+#if (CONFIG_WLAN_REGION_CODE == 203)     /* LGT */
+#ifdef CONFIG_MACH_UNIVERSAL5410
+// Make CPU core clock 300MHz & assign dpc thread workqueue to CPU1
+#define FIX_CPU_MIN_CLOCK
+#define FIX_BUS_MIN_CLOCK
+#endif
+#endif /* CONFIG_WLAN_REGION_CODE == 203 */
+#endif /* CONFIG_WLAN_REGION_CODE >= 200 && CONFIG_WLAN_REGION_CODE < 300 */
+
+#if (CONFIG_WLAN_REGION_CODE >= 300) && (CONFIG_WLAN_REGION_CODE < 400)     /* CHN */
+#ifndef BCMWAPI_WPI
 #define BCMWAPI_WPI
+#endif
+#ifndef BCMWAPI_WAI
 #define BCMWAPI_WAI
 #endif
+#endif /* CONFIG_WLAN_REGION_CODE >= 300 && CONFIG_WLAN_REGION_CODE < 400 */
 
-#if !defined(READ_MACADDR) && !defined(WRITE_MACADDR) && !defined(RDWR_KORICS_MACADDR) && !defined(RDWR_MACADDR)
+#if (CONFIG_WLAN_REGION_CODE >= 400) && (CONFIG_WLAN_REGION_CODE < 500)     /* JPN */
+#define DISABLE_11AC
+#endif /* CONFIG_WLAN_REGION_CODE >= 400 && CONFIG_WLAN_REGION_CODE < 500 */
+
+#if !defined(READ_MACADDR) && !defined(WRITE_MACADDR) \
+	&& !defined(RDWR_KORICS_MACADDR) && !defined(RDWR_MACADDR)
 #define GET_MAC_FROM_OTP
-#endif
+#define SHOW_NVRAM_TYPE
+#endif /* !READ_MACADDR && !WRITE_MACADDR && !RDWR_KORICS_MACADDR && !RDWR_MACADDR */
 
+#endif /* _dhd_sec_feature_h_ */

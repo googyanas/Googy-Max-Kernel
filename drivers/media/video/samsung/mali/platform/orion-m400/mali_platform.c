@@ -51,14 +51,14 @@
 #define CLK_DIV_STAT_G3D 	0x1003C62C
 #define CLK_DESC 			"clk-divider-status"
 
-#define MALI_BOTTOMLOCK_VOL	900000
+#define MALI_BOTTOMLOCK_VOL	1000000
 
 typedef struct mali_runtime_resumeTag{
 	int clk;
 	int vol;
 }mali_runtime_resume_table;
 
-mali_runtime_resume_table mali_runtime_resume = {108, 900000};
+mali_runtime_resume_table mali_runtime_resume = {160, 1000000};
 
 /* lock/unlock CPU freq by Mali */
 extern int cpufreq_lock_by_mali(unsigned int freq);
@@ -76,8 +76,8 @@ static struct clk  *mali_clock = 0;
 
 static unsigned int GPU_MHZ	= 1000000;
 
-int mali_gpu_clk = 108;
-int mali_gpu_vol = 900000;
+int mali_gpu_clk = 160;
+int mali_gpu_vol = 1000000;
 
 #if MALI_DVFS_ENABLED
 #define MALI_DVFS_DEFAULT_STEP 0
@@ -134,6 +134,7 @@ int mali_regulator_get_usecount(void)
 
 void mali_regulator_disable(void)
 {
+	bPoweroff = 1;
 	if( IS_ERR_OR_NULL(g3d_regulator) )
 	{
 		MALI_DEBUG_PRINT(1, ("error on mali_regulator_disable : g3d_regulator is null\n"));
@@ -141,11 +142,12 @@ void mali_regulator_disable(void)
 	}
 	regulator_disable(g3d_regulator);
 	MALI_DEBUG_PRINT(1, ("regulator_disable -> use cnt: %d \n",mali_regulator_get_usecount()));
-	bPoweroff = 1;
+
 }
 
 void mali_regulator_enable(void)
 {
+	bPoweroff = 0;
 	if( IS_ERR_OR_NULL(g3d_regulator) )
 	{
 		MALI_DEBUG_PRINT(1, ("error on mali_regulator_enable : g3d_regulator is null\n"));
@@ -153,7 +155,7 @@ void mali_regulator_enable(void)
 	}
 	regulator_enable(g3d_regulator);
 	MALI_DEBUG_PRINT(1, ("regulator_enable -> use cnt: %d \n",mali_regulator_get_usecount()));
-	bPoweroff = 0;
+
 }
 
 void mali_regulator_set_voltage(int min_uV, int max_uV)
@@ -678,7 +680,9 @@ _mali_osk_errcode_t mali_platform_powerdown(u32 cores)
 	{
 		MALI_PRINT(("mali_platform_powerdown gpu_power_state == 0 and cores %x \n", cores));
 	}
-
+	
+	bPoweroff=1
+	
 	MALI_SUCCESS;
 }
 
@@ -700,6 +704,8 @@ _mali_osk_errcode_t mali_platform_powerup(u32 cores)
 	{
 		gpu_power_state = gpu_power_state | cores;
 	}
+	
+	bPoweroff=1
 
 	MALI_SUCCESS;
 }

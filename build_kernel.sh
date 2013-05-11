@@ -15,7 +15,7 @@ RAMFS_TMP="/home/googy/tmp/ramfs-source-sgs3"
 
 if [ ! -f $KERNELDIR/.config ];
 then
-  make -j 5 0googymax_defconfig
+  make -j3 0googymax_defconfig
 fi
 
 . $KERNELDIR/.config
@@ -23,7 +23,7 @@ fi
 export ARCH=arm
 
 cd $KERNELDIR/
-make -j 5 || exit 1
+make -j3 || exit 1
 
 #remove previous ramfs files
 rm -rf $RAMFS_TMP
@@ -51,7 +51,7 @@ ls -lh $RAMFS_TMP.cpio
 gzip -9 $RAMFS_TMP.cpio
 cd -
 
-make -j 5 zImage || exit 1
+make -j3 zImage || exit 1
 
 ./mkbootimg --kernel $KERNELDIR/arch/arm/boot/zImage --ramdisk $RAMFS_TMP.cpio.gz --board smdk4x12 --base 0x10000000 --pagesize 2048 --ramdiskaddr 0x11000000 -o $KERNELDIR/boot.img.pre
 

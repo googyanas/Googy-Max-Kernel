@@ -492,6 +492,8 @@ show_one(up_nr_cpus, up_nr_cpus);
 show_one(max_cpu_lock, max_cpu_lock);
 show_one(min_cpu_lock, min_cpu_lock);
 show_one(dvfs_debug, dvfs_debug);
+show_one(up_threshold_at_min_freq, up_threshold_at_min_freq);
+show_one(freq_for_responsiveness, freq_for_responsiveness);
 static ssize_t show_hotplug_lock(struct kobject *kobj,
 				struct attribute *attr, char *buf)
 {
@@ -808,6 +810,33 @@ static ssize_t store_dvfs_debug(struct kobject *a, struct attribute *b,
 	if (ret != 1)
 		return -EINVAL;
 	dbs_tuners_ins.dvfs_debug = input > 0;
+	return count;
+}
+
+static ssize_t store_up_threshold_at_min_freq(struct kobject *a, struct attribute *b,
+				   const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+
+	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
+	    input < MIN_FREQUENCY_UP_THRESHOLD) {
+		return -EINVAL;
+	}
+	dbs_tuners_ins.up_threshold_at_min_freq = input;
+	return count;
+}
+
+static ssize_t store_freq_for_responsiveness(struct kobject *a, struct attribute *b,
+				   const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
+	dbs_tuners_ins.freq_for_responsiveness = input;
 	return count;
 }
 

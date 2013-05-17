@@ -15,7 +15,7 @@ RAMFS_TMP="/home/googy/tmp/ramfs-source-sgs3"
 
 if [ ! -f $KERNELDIR/.config ];
 then
-  make -j4 0googymax_defconfig
+  make -j5 0googymax_defconfig
 fi
 
 . $KERNELDIR/.config
@@ -23,7 +23,7 @@ fi
 export ARCH=arm
 
 cd $KERNELDIR/
-make -j4 || exit 1
+make -j5 || exit 1
 
 #remove previous ramfs files
 rm -rf $RAMFS_TMP
@@ -51,12 +51,12 @@ ls -lh $RAMFS_TMP.cpio
 gzip -9 $RAMFS_TMP.cpio
 cd -
 
-make -j4 zImage || exit 1
+make -j5 zImage || exit 1
 
 ./mkbootimg --kernel $KERNELDIR/arch/arm/boot/zImage --ramdisk $RAMFS_TMP.cpio.gz --board smdk4x12 --base 0x10000000 --pagesize 2048 --ramdiskaddr 0x11000000 -o $KERNELDIR/boot.img.pre
 
 $KERNELDIR/mkshbootimg.py $KERNELDIR/boot.img $KERNELDIR/boot.img.pre $KERNELDIR/payload.tar
-rm -f $KERNELDIR/boot.img.pre
+# rm -f $KERNELDIR/boot.img.pre
 
 cd /home/googy/Desktop/Sources/Googy-Max-Kernel
 mv -f -v /home/googy/Desktop/Sources/Googy-Max-Kernel/Kernel/boot.img .

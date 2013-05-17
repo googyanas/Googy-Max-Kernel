@@ -342,9 +342,6 @@ static inline int cpufreq_ondemand_flexrate_request(unsigned int rate_ms,
 }
 #endif
 
-#ifdef CONFIG_CPU_FREQ_LCD_FREQ_DFS
-extern int _lcdfreq_lock(int lock);
-#endif
 
 /*********************************************************************
  *                       CPUFREQ DEFAULT GOVERNOR                    *

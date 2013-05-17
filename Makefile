@@ -366,22 +366,31 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 KBUILD_CPPFLAGS := -D__KERNEL__
 
 GOOGY_FLAGS   = -marm -march=armv7-a \
-         -mcpu=cortex-a9 -mfpu=vfp3 \
-         -fgraphite-identity -fsched-spec-load \
-         -floop-interchange -floop-strip-mine -floop-block \
-         -ffast-math -ftree-vectorize \
+		-mcpu=cortex-a9 -mfpu=vfp3 \
          -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
          -fmodulo-sched -fmodulo-sched-allow-regmoves \
          -fipa-cp-clone -pipe \
-         -Wno-array-bounds
+         -Wno-array-bounds \
+	-fgraphite-identity -fsched-spec-load \
+	-ffast-math
+# 	-ftree-vectorize \
+#	-floop-interchange -floop-strip-mine -floop-block
+
+#	        
+#         
+#          \
+#          \
+
 
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks $(NEAK_FLAGS) \
+		   -fno-delete-null-pointer-checks $(GOOGY_FLAGS) \
 		   -mtune=cortex-a9
+		   
+		   # $(GOOGY_FLAGS)
 		   
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=

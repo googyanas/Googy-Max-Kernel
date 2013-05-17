@@ -2124,15 +2124,10 @@ static struct platform_driver wifi_device_legacy = {
 
 static int wifi_add_dev(void)
 {
-	int ret = 0;
 	DHD_TRACE(("## Calling platform_driver_register\n"));
-
-	ret = platform_driver_register(&wifi_device);
-	if (ret)
-		return ret;
-
-	ret = platform_driver_register(&wifi_device_legacy);
-	return ret;
+	platform_driver_register(&wifi_device);
+	platform_driver_register(&wifi_device_legacy);
+	return 0;
 }
 
 static void wifi_del_dev(void)

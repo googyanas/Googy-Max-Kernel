@@ -61,7 +61,6 @@ obj-$(CONFIG_MWIFIEX)	+= mwifiex/
 
 # obj-$(CONFIG_BCM4329)	+= bcm4329/
 obj-$(CONFIG_BCM4334)   += bcmdhd/
-obj-$(CONFIG_BCM4334)   += bcmdhd.cm/
 obj-$(CONFIG_BCM4330)   += bcmdhd/
 obj-$(CONFIG_BCM43241)	+= bcmdhd/
 obj-$(CONFIG_BCM4334)   += btlock/

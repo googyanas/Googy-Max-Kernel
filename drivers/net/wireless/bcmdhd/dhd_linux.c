@@ -643,6 +643,9 @@ void dhd_enable_packet_filter(int value, dhd_pub_t *dhd)
 #endif /* PKT_FILTER_SUPPORT */
 }
 
+bool wifi_pm = false;
+module_param(wifi_pm, bool, 0755);
+
 static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 {
 #ifndef SUPPORT_PM2_ONLY
@@ -722,7 +725,10 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 				DHD_ERROR(("%s: Remove extra suspend setting\n", __FUNCTION__));
 
 #ifndef SUPPORT_PM2_ONLY
-				power_mode = PM_FAST;
+				if (wifi_pm)
+					power_mode = PM_FAST;
+				else
+					power_mode = PM_OFF;
 				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
 				                 sizeof(power_mode), TRUE, 0);
 #endif
@@ -3568,13 +3574,13 @@ int
 dhd_preinit_ioctls(dhd_pub_t *dhd)
 {
 	int ret = 0;
+	uint power_mode;
 	char eventmask[WL_EVENTING_MASK_LEN];
 	char iovbuf[WL_EVENTING_MASK_LEN + 12];	/*  Room for "event_msgs" + '\0' + bitvec  */
 
 #if !defined(WL_CFG80211)
 	uint up = 0;
 #endif /* !defined(WL_CFG80211) */
-	uint power_mode = PM_FAST;
 	uint32 dongle_align = DHD_SDALIGN;
 	uint32 glom = CUSTOM_GLOM_SETTING;
 #if defined(VSDB) || defined(ROAM_ENABLE)
@@ -3651,6 +3657,10 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #endif /* PROP_TXSTATUS */
 	DHD_TRACE(("Enter %s\n", __FUNCTION__));
 	dhd->op_mode = 0;
+	if (wifi_pm)
+		power_mode = PM_FAST;
+	else
+		power_mode = PM_OFF;
 #ifdef GET_CUSTOM_MAC_ENABLE
 	ret = dhd_custom_get_mac_address(ea_addr.octet);
 	if (!ret) {
@@ -3974,7 +3984,7 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 	/* Add filter to pass multicastDNS packet and NOT filter out as Broadcast */
 	dhd->pktfilter[4] = "104 0 0 0 0xFFFFFFFFFFFF 0x01005E0000FB";
 
-#ifdef CUSTOMER_HW4
+#if defined(CUSTOMER_HW4) && 0
 #ifdef GAN_LITE_NAT_KEEPALIVE_FILTER
 	dhd->pktfilter_count = 4;
 	/* Setup filter to block broadcast and NAT Keepalive packets */
@@ -5217,7 +5227,7 @@ int net_os_set_dtim_skip(struct net_device *dev, int val)
 #ifdef PKT_FILTER_SUPPORT
 int net_os_rxfilter_add_remove(struct net_device *dev, int add_remove, int num)
 {
-#ifndef GAN_LITE_NAT_KEEPALIVE_FILTER
+#if !defined(GAN_LITE_NAT_KEEPALIVE_FILTER) && 0
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
 	char *filterp = NULL;
 	int ret = 0;

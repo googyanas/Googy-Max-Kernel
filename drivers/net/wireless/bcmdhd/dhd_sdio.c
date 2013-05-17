@@ -7547,7 +7547,7 @@ dhdsdio_download_code_file(struct dhd_bus *bus, char *pfw_path)
 {
 	int bcmerror = -1;
 	int offset = 0;
-	int len;
+	uint len;
 	void *image = NULL;
 	uint8 *memblock = NULL, *memptr;
 

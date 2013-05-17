@@ -1,6 +1,0 @@
-
-config BCM4334_CM
-	tristate "---Broadcom WiFi Driver for 4334"
-	depends on WLAN
-	---help---
-		Select this option to build Broadcom wlan driver

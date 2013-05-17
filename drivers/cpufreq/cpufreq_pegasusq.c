@@ -494,30 +494,6 @@ show_one(min_cpu_lock, min_cpu_lock);
 show_one(dvfs_debug, dvfs_debug);
 show_one(up_threshold_at_min_freq, up_threshold_at_min_freq);
 show_one(freq_for_responsiveness, freq_for_responsiveness);
-
-show_one(up_threshold_at_fast_down, up_threshold_at_fast_down);
-show_one(freq_for_fast_down, freq_for_fast_down);
-
-#ifdef CONFIG_CPU_FREQ_LCD_FREQ_DFS
-show_one(lcdfreq_enable, lcdfreq_enable);
-show_one(lcdfreq_kick_in_down_delay, lcdfreq_kick_in_down_delay);
-show_one(lcdfreq_kick_in_freq, lcdfreq_kick_in_freq);
-#endif
-
-#ifdef CONFIG_CPU_FREQ_LCD_FREQ_DFS
-show_one(lcdfreq_enable, lcdfreq_enable);
-show_one(lcdfreq_kick_in_down_delay, lcdfreq_kick_in_down_delay);
-show_one(lcdfreq_kick_in_freq, lcdfreq_kick_in_freq);
-#endif
-
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_FLEXRATE
-static struct global_attr flexrate_forcerate;
-static struct global_attr flexrate_enable;
-static struct global_attr flexrate_max_freq;
-static struct global_attr flexrate_num_effective_usage;
-#endif
-
-
 static ssize_t show_hotplug_lock(struct kobject *kobj,
 				struct attribute *attr, char *buf)
 {

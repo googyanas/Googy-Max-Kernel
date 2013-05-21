@@ -811,8 +811,8 @@ void tick_cancel_sched_timer(int cpu)
 	if (ts->sched_timer.base)
 		hrtimer_cancel(&ts->sched_timer);
 # endif
-
-	memset(ts, 0, sizeof(*ts));
+ts->nohz_mode = NOHZ_MODE_INACTIVE;
+/*	memset(ts, 0, sizeof(*ts)); */
 }
 #endif
 

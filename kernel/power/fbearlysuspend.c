@@ -28,7 +28,7 @@ static enum {
 	FB_STATE_DRAWING_OK,
 } fb_state;
 
-int fbearlysuspend_delay = 0;
+int fbearlysuspend_delay = 100;
 /* tell userspace to stop drawing, wait for it to stop */
 static void stop_drawing_early_suspend(struct early_suspend *h)
 {

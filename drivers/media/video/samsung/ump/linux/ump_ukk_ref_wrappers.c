@@ -196,6 +196,35 @@ int ump_ion_import_wrapper(u32 __user * argument, struct ump_session_data  * ses
 #endif
 
 #ifdef CONFIG_DMA_SHARED_BUFFER
+static ump_dd_handle
+	get_ump_handle_from_dmabuf(struct ump_session_data *session_data,
+					struct dma_buf *dmabuf)
+{
+	ump_session_memory_list_element *session_mem, *tmp;
+	struct dma_buf_attachment *attach;
+	ump_dd_handle ump_handle;
+
+	_mali_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+
+	_MALI_OSK_LIST_FOREACHENTRY(session_mem, tmp,
+				&session_data->list_head_session_memory_list,
+				ump_session_memory_list_element, list) {
+		if (session_mem->mem->import_attach) {
+			attach = session_mem->mem->import_attach;
+			if (attach->dmabuf == dmabuf) {
+				_mali_osk_lock_signal(session_data->lock,
+							_MALI_OSK_LOCKMODE_RW);
+				ump_handle = (ump_dd_handle)session_mem->mem;
+				return ump_handle;
+			}
+		}
+	}
+
+	_mali_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+
+	return NULL;
+}
+
 int ump_dmabuf_import_wrapper(u32 __user *argument,
 				struct ump_session_data  *session_data)
 {
@@ -236,6 +265,11 @@ int ump_dmabuf_import_wrapper(u32 __user *argument,
 	 * if already imported then dma_buf_put() should be called
 	 * and then just return dma_buf imported.
 	 */
+	ump_handle = get_ump_handle_from_dmabuf(session_data, dma_buf);
+	if (ump_handle) {
+		dma_buf_put(dma_buf);
+		goto found;
+	}
 
 	attach = dma_buf_attach(dma_buf, &dev);
 	if (IS_ERR(attach)) {
@@ -285,6 +319,8 @@ int ump_dmabuf_import_wrapper(u32 __user *argument,
 	}
 
 	session->mem = (ump_dd_mem *)ump_handle;
+	session->mem->import_attach = attach;
+	session->mem->sgt = sgt;
 
 	_mali_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
 	_mali_osk_list_add(&(session->list),

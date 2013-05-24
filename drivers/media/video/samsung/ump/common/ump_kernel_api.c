@@ -15,10 +15,6 @@
 #include "ump_kernel_interface.h"
 #include "ump_kernel_common.h"
 
-#ifdef CONFIG_DMA_SHARED_BUFFER
-#include <linux/dma-buf.h>
-#endif
-
 
 
 /* ---------------- UMP kernel space API functions follows ---------------- */
@@ -165,7 +161,7 @@ UMP_KERNEL_API_EXPORT void ump_dd_reference_add(ump_dd_handle memh)
 
 	new_ref = _ump_osk_atomic_inc_and_read(&mem->ref_count);
 
-	DBG_MSG(4, ("Memory reference incremented. ID: %u, new value: %d\n", mem->secure_id, new_ref));
+	DBG_MSG(5, ("Memory reference incremented. ID: %u, new value: %d\n", mem->secure_id, new_ref));
 }
 
 
@@ -185,7 +181,7 @@ UMP_KERNEL_API_EXPORT void ump_dd_reference_release(ump_dd_handle memh)
 
 	new_ref = _ump_osk_atomic_dec_and_read(&mem->ref_count);
 
-	DBG_MSG(4, ("Memory reference decremented. ID: %u, new value: %d\n", mem->secure_id, new_ref));
+	DBG_MSG(5, ("Memory reference decremented. ID: %u, new value: %d\n", mem->secure_id, new_ref));
 
 	if (0 == new_ref)
 	{
@@ -194,32 +190,7 @@ UMP_KERNEL_API_EXPORT void ump_dd_reference_release(ump_dd_handle memh)
 		ump_descriptor_mapping_free(device.secure_id_map, (int)mem->secure_id);
 
 		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-
-#ifdef CONFIG_DMA_SHARED_BUFFER
-		/*
-		 * when ump descriptor imported to dmabuf is released,
-		 * physical memory region to the ump descriptor should be
-		 * released only through dma_buf_put().
-		 * if dma_buf_put() is called then file's refcount to
-		 * the dmabuf becomes 0 and release func of exporter will be
-		 * called by file->f_op->release to release the physical
-		 * memory region finally.
-		 */
-		if (mem->import_attach) {
-			struct dma_buf_attachment *attach = mem->import_attach;
-
-			if (mem->sgt)
-				dma_buf_unmap_attachment(attach, mem->sgt,
-							DMA_BIDIRECTIONAL);
-
-			dma_buf_put(attach->dmabuf);
-
-			dma_buf_detach(attach->dmabuf, attach);
-
-		}
-#endif
 		mem->release_func(mem->ctx, mem);
-
 		_mali_osk_free(mem);
 	}
 	else

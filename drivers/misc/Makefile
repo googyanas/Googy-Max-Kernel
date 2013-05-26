@@ -88,3 +88,4 @@ obj-$(CONFIG_MOBICORE_SUPPORT)  += tzic.o
 obj-$(CONFIG_CPU_UNDERVOLTING)	+= cpu_undervolting.o
 obj-$(CONFIG_MALI_CONTROL)	+= mali_control.o
 obj-$(CONFIG_M0_MODS)		+= m0_mods.o
+obj-$(CONFIG_TOUCH_WAKE)        += touch_wake.o

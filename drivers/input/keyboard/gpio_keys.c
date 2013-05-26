@@ -30,6 +30,10 @@
 extern void slide2wake_setdev(struct input_dev *input_device);
 #endif
 
+#ifdef CONFIG_TOUCH_WAKE
+#include <linux/touch_wake.h>
+#endif
+
 extern struct class *sec_class;
 
 struct gpio_button_data {
@@ -777,6 +781,10 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 		input_set_capability(input, type, button->code);
 #ifdef CONFIG_SLIDE_TO_WAKE
 		slide2wake_setdev(input);
+#endif
+#ifdef CONFIG_TOUCH_WAKE
+      pr_info("powerkey device set to: %p \n", input);
+      set_powerkeydev(input);
 #endif
 	}
 

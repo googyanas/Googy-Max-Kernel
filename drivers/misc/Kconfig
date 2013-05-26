@@ -745,4 +745,10 @@ config M0_MODS
 	tristate "i9300 specific modifications"
 	depends on VIDEO_MALI400MP
 	default m
+config TOUCH_WAKE
+  bool "Support for Touch Wake"
+  default y
+  help
+    Say Y here to enable Touch Wake
+
 endif # MISC_DEVICES

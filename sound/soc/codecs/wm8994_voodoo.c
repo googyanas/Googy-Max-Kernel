@@ -835,7 +835,7 @@ void update_speaker_tuning(bool with_mute)
 		return;
 
 	if (speaker_tuning) {
-/*		// DRC settings
+		// DRC settings
 		wm8994_write(codec, WM8994_AIF1_DRC1_3, 0x0010);
 		wm8994_write(codec, WM8994_AIF1_DRC1_4, 0x00EB);
 
@@ -864,33 +864,6 @@ void update_speaker_tuning(bool with_mute)
 		// Speaker Boost tuning
 		wm8994_write(codec, WM8994_CLASSD,
 			(WM8994_SPKOUT_VU | WM8994_SPKOUTL_MUTE_N | speaker_tuning_level));
-*/
-		wm8994_write(codec, WM8994_AIF1_DRC1_3, 0xE8);
-		wm8994_write(codec, WM8994_AIF1_DRC1_4, 0x0210);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_GAINS_1,   0x6318);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_GAINS_2,   0x6300);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_1_A,  0x0FBB);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_1_B,  0x0407);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_1_PG, 0x0114);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_2_A,  0x1F8C);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_2_B,  0xF073);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_2_C,  0x01C8);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_2_PG, 0x01C8);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_3_A,  0x1C58);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_3_B,  0xF373);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_3_C,  0x0A54);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_3_PG, 0x0558);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_4_A,  0x168E);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_4_B,  0xF829);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_4_C,  0x7AD);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_4_PG, 0x1103);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_5_A,  0x564);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_5_B,  0x559);
-		wm8994_write(codec, WM8994_AIF1_DAC1_EQ_BAND_5_PG, 0x4000);
-		wm8994_write(codec, WM8994_CLASSD,                 0x0164);
-		wm8994_write(codec, WM8994_CLASSD,
-			(WM8994_SPKOUT_VU | WM8994_SPKOUTL_MUTE_N | speaker_tuning_level));
-	  
 	} else {
 #ifdef GALAXY_S3
 		//defaults are different for S3

@@ -51,7 +51,7 @@
 #define CLK_DIV_STAT_G3D 	0x1003C62C
 #define CLK_DESC 			"clk-divider-status"
 
-#define MALI_BOTTOMLOCK_VOL	600000
+#define MALI_BOTTOMLOCK_VOL	900000
 
 typedef struct mali_runtime_resumeTag{
 	int clk;
@@ -134,6 +134,7 @@ int mali_regulator_get_usecount(void)
 
 void mali_regulator_disable(void)
 {
+	bPoweroff = 1;
 	if( IS_ERR_OR_NULL(g3d_regulator) )
 	{
 		MALI_DEBUG_PRINT(1, ("error on mali_regulator_disable : g3d_regulator is null\n"));
@@ -141,11 +142,11 @@ void mali_regulator_disable(void)
 	}
 	regulator_disable(g3d_regulator);
 	MALI_DEBUG_PRINT(1, ("regulator_disable -> use cnt: %d \n",mali_regulator_get_usecount()));
-	bPoweroff = 1;
 }
 
 void mali_regulator_enable(void)
 {
+	bPoweroff = 0;
 	if( IS_ERR_OR_NULL(g3d_regulator) )
 	{
 		MALI_DEBUG_PRINT(1, ("error on mali_regulator_enable : g3d_regulator is null\n"));
@@ -153,7 +154,6 @@ void mali_regulator_enable(void)
 	}
 	regulator_enable(g3d_regulator);
 	MALI_DEBUG_PRINT(1, ("regulator_enable -> use cnt: %d \n",mali_regulator_get_usecount()));
-	bPoweroff = 0;
 }
 
 void mali_regulator_set_voltage(int min_uV, int max_uV)
@@ -537,13 +537,11 @@ static _mali_osk_errcode_t enable_mali_clocks(void)
 	}
 	if (mali_gpu_clk <= mali_runtime_resume.clk)
 		set_mali_dvfs_current_step(MALI_DVFS_STEPS + 1);
-#if CPUFREQ_LOCK_DURING_440
 	/* lock/unlock CPU freq by Mali */
 	if (mali_gpu_clk >= 533)
+		err = cpufreq_lock_by_mali(1400);
+	else if (mali_gpu_clk == 440)
 		err = cpufreq_lock_by_mali(1200);
-	else if (mali_gpu_clk >= 440)
-		err = cpufreq_lock_by_mali(1000);
-#endif
 #else
 	mali_regulator_set_voltage(mali_runtime_resume.vol, mali_runtime_resume.vol);
 	mali_clk_set_rate(mali_runtime_resume.clk, GPU_MHZ);

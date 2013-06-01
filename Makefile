@@ -372,9 +372,9 @@ GOOGY_FLAGS   = -marm -march=armv7-a \
          -fipa-cp-clone -pipe \
          -Wno-array-bounds \
 	-fgraphite-identity -fsched-spec-load \
-	-ffast-math
-# 	-ftree-vectorize \
-#	-floop-interchange -floop-strip-mine -floop-block
+	-ffast-math \
+ 	-ftree-vectorize \
+	-floop-interchange -floop-strip-mine -floop-block
 
 #	        
 #         

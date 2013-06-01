@@ -174,7 +174,7 @@ static int get_slice_voltage(enum exynos4x12_abb_member target,
 	do {
 		ret_volt = slice->volt.value;
 	} while ( (slice > abb_slices[target]) &&
-		  (target_freq < (--slice)->freq.value) );
+		  (target_freq <= (--slice)->freq.value) );
 	
 	return ret_volt;
 }

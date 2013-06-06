@@ -374,13 +374,8 @@ GOOGY_FLAGS   = -marm -march=armv7-a \
 	-fgraphite-identity -fsched-spec-load \
 	-ffast-math \
  	-ftree-vectorize \
-	-floop-interchange -floop-strip-mine -floop-block
-
-#	        
-#         
-#          \
-#          \
-
+	-floop-interchange -floop-strip-mine -floop-block \
+	-funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize and -fipa-cp-clone -fmodulo-sched -fmodulo-sched-allow-regmoves -ftree-parallelize-loops
 
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
@@ -390,7 +385,6 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-delete-null-pointer-checks $(GOOGY_FLAGS) \
 		   -mtune=cortex-a9
 		   
-		   # $(GOOGY_FLAGS)
 		   
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=

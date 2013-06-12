@@ -1,6 +1,6 @@
 VERSION = 3
 PATCHLEVEL = 0
-SUBLEVEL = 80
+SUBLEVEL = 81
 EXTRAVERSION =
 NAME = Sneaky Weasel
 
@@ -368,15 +368,17 @@ KBUILD_CPPFLAGS := -D__KERNEL__
 GOOGY_FLAGS   = -marm -march=armv7-a \
 		-mcpu=cortex-a9 -mfpu=vfp3 \
          -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
-         -fmodulo-sched -fmodulo-sched-allow-regmoves \
+        -fmodulo-sched -fmodulo-sched-allow-regmoves \
          -fipa-cp-clone -pipe \
          -Wno-array-bounds \
 	-fgraphite-identity -fsched-spec-load \
 	-ffast-math \
  	-ftree-vectorize \
 	-floop-interchange -floop-strip-mine -floop-block \
-	-funswitch-loops -fpredictive-commoning -fgcse-after-reload -ftree-vectorize and -fipa-cp-clone -fmodulo-sched -fmodulo-sched-allow-regmoves -ftree-parallelize-loops
-
+	-fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fipa-cp-clone \
+	-fmodulo-sched -fmodulo-sched-allow-regmoves \
+	-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
+#
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
@@ -384,7 +386,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks $(GOOGY_FLAGS) \
 		   -mtune=cortex-a9
-		   
+# $(GOOGY_FLAGS)
 		   
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=

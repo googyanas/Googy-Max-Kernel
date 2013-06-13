@@ -370,14 +370,13 @@ GOOGY_FLAGS   = -marm -march=armv7-a \
          -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
         -fmodulo-sched -fmodulo-sched-allow-regmoves \
          -fipa-cp-clone -pipe \
-         -Wno-array-bounds \
+         -Wno-array-bounds -ffast-math -fno-pic \
 	-fgraphite-identity -fsched-spec-load \
 	-ffast-math \
- 	-ftree-vectorize \
 	-floop-interchange -floop-strip-mine -floop-block \
 	-fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fipa-cp-clone \
-	-fmodulo-sched -fmodulo-sched-allow-regmoves \
-	-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
+	-fmodulo-sched -fmodulo-sched-allow-regmoves
+#	-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
 #
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \

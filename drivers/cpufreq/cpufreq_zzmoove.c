@@ -11,7 +11,7 @@
  * published by the Free Software Foundation.
  *
  * --------------------------------------------------------------------------------------------------------------------------------------------------------
- * - ZZMoove Governor v0.5 by ZaneZam 2012/13 Changelog:                                                                                                                          -
+ * - ZZMoove Governor v0.5.1a by ZaneZam 2012/13 Changelog:                                                                                                                          -
  * --------------------------------------------------------------------------------------------------------------------------------------------------------
  *
  * Version 0.1 - first release
@@ -467,77 +467,52 @@ static struct dbs_tuners {
 #define MN_FREQ 0
 #define MN_UP 1
 #define MN_DOWN 2
+#define freq_table_size (17)
 
 /*
  * Table modified for use with Samsung I9300 by ZaneZam November 2012
  * zzmoove v0.3 - table modified to reach overclocking frequencies up to 1600mhz
  * zzmoove v0.4 - added fast scaling columns to frequency table
- * zzmoove v0.5 - removed fast scaling colums and use line jumps instead. 4 steps and 2 modes possible now (with/without fast downscaling)
+ * zzmoove v0.5 - removed fast scaling colums and use line jumps instead. 4 steps and 2 modes (with/without fast downscaling) possible now
  *                table modified to reach overclocking frequencies up to 1800mhz
  *                fixed wrong frequency stepping
  *                added search limit for more efficent frequency searching and better hard/softlimit handling
  */
 
-static int mn_freqs[17][3]={
-    {1800000,1800000,1700000},
-    {1700000,1800000,1600000},
-    {1600000,1700000,1500000},
-    {1500000,1600000,1400000},
-    {1400000,1500000,1300000},
-    {1300000,1400000,1200000},
-    {1200000,1300000,1100000},
-    {1100000,1200000,1000000},
-    {1000000,1100000, 900000},
-    { 900000,1000000, 800000},
-    { 800000, 900000, 700000},
-    { 700000, 800000, 600000},
-    { 600000, 700000, 400000},
-    { 500000, 600000, 300000},
-    { 400000, 500000, 200000},
-    { 300000, 400000, 200000},
-    { 200000, 300000, 200000}
-};
-
-/*
- * Table modified for use with Samsung I9300 by ZaneZam November 2012
- * zzmoove v0.3 - table modified to reach overclocking frequencies up to 1600mhz
- * zzmoove v0.4 - added fast scaling columns to frequency table
- * zzmoove v0.5 - removed fast scaling colums and use line jumps instead. 4 steps and 2 modes possible now (with/without fast downscaling)
- *                table modified to reach overclocking frequencies up to 1800mhz
- *                fixed wrong frequency stepping
- *                added search limit for more efficent frequency searching and better hard/softlimit handling
- */
-
-static int mn_freqs_power[17][3]={
-    {1800000,1800000,1700000},
-    {1700000,1800000,1600000},
-    {1600000,1800000,1500000},
-    {1500000,1700000,1400000},
-    {1400000,1600000,1300000},
-    {1300000,1500000,1200000},
-    {1200000,1400000,1100000},
-    {1100000,1300000,1000000},
-    {1000000,1200000, 900000},
-    { 900000,1100000, 800000},
-    { 800000,1000000, 700000},
-    { 700000, 900000, 600000},
-    { 600000, 800000, 500000},
-    { 500000, 700000, 400000},
-    { 400000, 600000, 300000},
-    { 300000, 500000, 200000},
-    { 200000, 400000, 200000}
+static int mn_freqs[17][5]={
+    {1800000,1800000,1700000,1800000,1700000},
+    {1700000,1800000,1600000,1800000,1600000},
+    {1600000,1700000,1500000,1800000,1500000},
+    {1500000,1600000,1400000,1700000,1400000},
+    {1400000,1500000,1300000,1600000,1300000},
+    {1300000,1400000,1200000,1500000,1200000},
+    {1200000,1300000,1100000,1400000,1100000},
+    {1100000,1200000,1000000,1300000,1000000},
+    {1000000,1100000, 900000,1200000, 900000},
+    { 900000,1000000, 800000,1100000, 800000},
+    { 800000, 900000, 700000,1000000, 700000},
+    { 700000, 800000, 600000, 900000, 600000},
+    { 600000, 700000, 400000, 800000, 500000},
+    { 500000, 600000, 300000, 700000, 400000},
+    { 400000, 500000, 200000, 600000, 300000},
+    { 300000, 400000, 200000, 500000, 200000},
+    { 200000, 300000, 200000, 400000, 200000}
 };
 
 static int mn_get_next_freq(unsigned int curfreq, unsigned int updown, unsigned int load) {
     int i=0;
     int f=0;
+    int power=0;
     
     if (load < dbs_tuners_ins.smooth_up)
-    {
-	    for(i = max_scaling_freq_soft; i < 17; i++)
+	power=0;
+    else
+        power=2;
+    
+	    for(i = max_scaling_freq_soft; i < freq_table_size; i++)
     	    {
 		if(curfreq == mn_freqs[i][MN_FREQ]) {
-		    if(dbs_tuners_ins.fast_scaling != 0 && i != 0 && i != 17 && updown != fast_scaling_down) {
+		    if(dbs_tuners_ins.fast_scaling != 0 && i != 0 && i != freq_table_size && updown != fast_scaling_down) {
 			f = i;
 			if(updown == 1){
 			f = f - scaling_mode;
@@ -545,35 +520,14 @@ static int mn_get_next_freq(unsigned int curfreq, unsigned int updown, unsigned 
 		    	    i = f;
 			} else {
 			f = f + scaling_mode;
-		    	if(f <= 16) 			// ZZ: we don't want to jump out of the array if we do fs scaling
+		    	if(f <= (freq_table_size - 1)) 			// ZZ: we don't want to jump out of the array if we do fs scaling
 		    	    i = f;
 			}
 		    }
-		return mn_freqs[i][updown]; 		// updown 1|2
+		return mn_freqs[i][updown+power]; 		// updown 1|2 or 3|4
 		}
 	    }
-    }
-    else
-    {
-	    for(i = max_scaling_freq_soft; i < 17; i++)
-    	    {
-        	if(curfreq == mn_freqs_power[i][MN_FREQ]) {
-		    if(dbs_tuners_ins.fast_scaling != 0 && i != 0 && i != 17 && updown != fast_scaling_down) {
-			f = i;
-			if(updown == 1){
-			f = f - scaling_mode;
-		    	if(f >= 1) 			// ZZ: we don't want to jump out of the array if we do fs scaling
-		    	    i = f;
-			} else {
-			f = f + scaling_mode;
-		    	if(f <= 16) 			// ZZ: we don't want to jump out of the array if we do fs scaling
-		    	    i = f;
-			}
-		    }
-		return mn_freqs_power[i][updown]; 	// updown 1|2
-    		}
-    	    }
-    }
+    
     return (curfreq); // not found
 }
 
@@ -1096,11 +1050,7 @@ static ssize_t store_freq_limit(struct kobject *a,
 	unsigned int input;
 	int ret;
 	int i=0;
-	int valid_freq[17]={1800000, 1700000, 1600000, 1500000, 1400000, 1300000, 1200000, 1100000, 1000000, 900000, 800000, 700000, 600000, 500000, 400000, 300000, 200000};
 	ret = sscanf(buf, "%u", &input);
-	
-	if (ret != 1 || input > 1800000 || (input < 200000 && input != 0))
-		return -EINVAL;
 	
 	if (input == 0) {
 	     max_scaling_freq_soft = max_scaling_freq_hard;
@@ -1108,8 +1058,8 @@ static ssize_t store_freq_limit(struct kobject *a,
 	     return count;
 	}
 	
-        for (i=0; i<17; i++) {
-	    if (input == valid_freq[i] && i > max_scaling_freq_hard) { 	// ZZ: check if we would go over scaling hard limit, if so drop input
+        for (i=0; i < freq_table_size; i++) {
+	    if (input == mn_freqs[i][MN_FREQ] && i > max_scaling_freq_hard) { 	// ZZ: check if we would go over scaling hard limit, if so drop input
 		dbs_tuners_ins.freq_limit = input;			// ZZ: if we are under max hard limit accept input
 		if (i > max_scaling_freq_soft) {			// ZZ: check if we have to adjust actual scaling range because we use a lower frequency now
 		    max_scaling_freq_soft = i;				// ZZ: if so set it to new soft limit
@@ -1130,14 +1080,10 @@ static ssize_t store_freq_limit_sleep(struct kobject *a,
 	unsigned int input;
 	int ret;
 	int i=0;
-	int valid_freq[17]={1800000, 1700000, 1600000, 1500000, 1400000, 1300000, 1200000, 1100000, 1000000, 900000, 800000, 700000, 600000, 500000, 400000, 300000, 200000};
 	ret = sscanf(buf, "%u", &input);
 
-	if (ret != 1 || input > 1800000 || (input < 200000 && input != 0))
-		return -EINVAL;
-
-        for (i=0; i<17; i++) {
-	    if ((input == valid_freq[i] && i > max_scaling_freq_hard) || input == 0) {
+        for (i=0; i < freq_table_size; i++) {
+	    if ((input == mn_freqs[i][MN_FREQ] && i > max_scaling_freq_hard) || input == 0) {
 		dbs_tuners_ins.freq_limit_sleep = input;
 	    return count;
 	    }
@@ -1253,14 +1199,10 @@ static ssize_t store_lcdfreq_kick_in_freq(struct kobject *a, struct attribute *b
 	unsigned int input;
 	int ret;
 	int i=0;
-	int valid_freq[17]={1800000, 1700000, 1600000, 1500000, 1400000, 1300000, 1200000, 1100000, 1000000, 900000, 800000, 700000, 600000, 500000, 400000, 300000, 200000};
 	ret = sscanf(buf, "%u", &input);
 
-	if (ret != 1 || input > 1800000 || (input < 200000 && input != 0))
-		return -EINVAL;
-
-        for (i=0; i<17; i++) {
-	    if ((input == valid_freq[i] && i > max_scaling_freq_hard) || input == 0) {
+        for (i=0; i < freq_table_size; i++) {
+	    if ((input == mn_freqs[i][MN_FREQ] && i >= max_scaling_freq_hard) || input == 0) {
 		dbs_tuners_ins.lcdfreq_kick_in_freq = input;
 	    return count;
 	    }
@@ -2017,8 +1959,8 @@ static void powersave_early_suspend(struct early_suspend *handler)
 	    fast_scaling_down = 2;					// ZZ: fast down scaling off
 	}
 
-	for (i=0; i<17; i++) {
-	if (freq_limit_asleep == valid_freq[i] || freq_limit_asleep == 0) { 	// ZZ: check sleep frequency
+	for (i=0; i < freq_table_size; i++) {
+	if (freq_limit_asleep == mn_freqs[i][MN_FREQ] || freq_limit_asleep == 0) { 	// ZZ: check sleep frequency
 	    if (max_scaling_freq_soft < max_scaling_freq_hard) { 		// ZZ: if the scaling soft value at sleep is lower (freq is higher) than sclaing hard value
 		max_scaling_freq_soft = max_scaling_freq_hard; 			// ZZ: bring it down to scaling hard value as we cannot be over max hard scaling
 		break;
@@ -2099,8 +2041,8 @@ static void powersave_late_resume(struct early_suspend *handler)
 	    fast_scaling_down = 2;
 	}
 	
-	for (i=0; i<17; i++) { 
-	if (freq_limit_awake == valid_freq[i] || freq_limit_awake == 0) { 
+	for (i=0; i < freq_table_size; i++) { 
+	if (freq_limit_awake == mn_freqs[i][MN_FREQ] || freq_limit_awake == 0) { 
 	    if (max_scaling_freq_soft < max_scaling_freq_hard) {	// ZZ: the same as at suspend we have to check if limit is active and over hard limit
 		max_scaling_freq_soft = max_scaling_freq_hard;		// ZZ: and if not we have to change back the scaling value to max hard value
 		break;
@@ -2166,8 +2108,8 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		max_scaling_freq_soft = 0;		// ZZ: set freq scaling start point to 0 (all frequencies up to table max)
 		
 		// ZZ: initialisation of freq search in scaling table
-		for (i=0; i<17; i++) {
-		if (policy->max == valid_freq[i]) {
+		for (i=0; i < freq_table_size; i++) {
+		if (policy->max == mn_freqs[i][MN_FREQ]) {
 		    max_scaling_freq_hard = i; // ZZ: init hard value
 		    max_scaling_freq_soft = i; // ZZ: init soft value
 		    break;
@@ -2225,7 +2167,6 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 	case CPUFREQ_GOV_STOP:
 		skip_hotplug_flag = 1; 			// ZZ: disable hotplugging during stop to avoid deadlocks if we are in the hotplugging logic
 		this_dbs_info->check_cpu_skip = 1;	// ZZ: and we disable cpu_check also on next 25 samples
-		for (i = 0; i < 1000; i++);		// ZZ: wait a few samples to be sure hotplugging is off (never be sure so this is dirty)
 
 		dbs_timer_exit(this_dbs_info);
 
@@ -2287,8 +2228,8 @@ if (dbs_tuners_ins.lcdfreq_enable == true) {
 		*/
 		
 		if (suspend_flag == 0) {
-		    for (i=0; i<17; i++) { 		// ZZ: trim search in scaling table
-		    if (policy->max == valid_freq[i]) {
+		    for (i=0; i < freq_table_size; i++) { 		// ZZ: trim search in scaling table
+		    if (policy->max == mn_freqs[i][MN_FREQ]) {
 			max_scaling_freq_hard = i; 	// ZZ: set new freq scaling number
 			break;
 		    }

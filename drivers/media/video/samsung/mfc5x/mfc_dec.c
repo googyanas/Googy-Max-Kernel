@@ -27,6 +27,10 @@
 #endif
 #include <mach/regs-mfc.h>
 
+#ifdef CONFIG_EXYNOS_MEDIA_MONITOR
+#include <mach/media_monitor.h>
+#endif
+
 #include "mfc_dec.h"
 #include "mfc_cmd.h"
 #include "mfc_log.h"
@@ -1980,6 +1984,10 @@ int mfc_init_decoding(struct mfc_inst_ctx *ctx, void *args)
 	INIT_LIST_HEAD(&ctx->presetcfgs);
 
 	mfc_print_buf();
+
+#ifdef CONFIG_EXYNOS_MEDIA_MONITOR
+	mhs_set_status(MHS_DECODING, true);
+#endif
 
 	return MFC_OK;
 

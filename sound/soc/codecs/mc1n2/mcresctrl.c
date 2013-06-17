@@ -5300,14 +5300,6 @@ void	McResCtrl_SetDngInfo
 
 	for(bItem = MCDRV_DNG_ITEM_HP; bItem <= MCDRV_DNG_ITEM_RC; bItem++)
 	{
-		if (bItem == MCDRV_DNG_ITEM_HP)
-		{
-			if (psDngInfo->abOnOff[bItem] == MCDRV_DNG_ON)
-			{
-				gsGlobalInfo.sDngInfo.abOnOff[bItem] =  MCDRV_DNG_OFF;
-				return;
-			}
-		}
 		if((dUpdateInfo & (MCDRV_DNGSW_HP_UPDATE_FLAG<<(8*bItem))) != 0UL)
 		{
 			if((psDngInfo->abOnOff[bItem] == MCDRV_DNG_OFF) || (psDngInfo->abOnOff[bItem] == MCDRV_DNG_ON))

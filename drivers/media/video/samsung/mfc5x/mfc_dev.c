@@ -47,6 +47,10 @@
 #endif
 #include <mach/regs-pmu.h>
 
+#ifdef CONFIG_EXYNOS_MEDIA_MONITOR
+#include <mach/media_monitor.h>
+#endif
+
 #include <asm/uaccess.h>
 
 #include "mfc_dev.h"
@@ -447,6 +451,11 @@ static int mfc_release(struct inode *inode, struct file *file)
 		return -EINVAL;
 
 	dev = mfc_ctx->dev;
+
+#ifdef CONFIG_EXYNOS_MEDIA_MONITOR
+	mhs_set_status(MHS_ENCODING, false); 
+	mhs_set_status(MHS_DECODING, false);
+#endif 
 
 	mutex_lock(&dev->lock);
 #if SUPPORT_SLICE_ENCODING

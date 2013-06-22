@@ -3059,8 +3059,8 @@ REGULATOR_INIT(ldo17, "VTF_2.8V", 2800000, 2800000, 0,
 REGULATOR_INIT(ldo18, "TOUCH_LED_3.3V", 3300000, 3300000, 0,
 		REGULATOR_CHANGE_STATUS, 1);
 #else
-REGULATOR_INIT(ldo18, "TOUCH_LED_3.3V", 3000000, 3300000, 0,
-	REGULATOR_CHANGE_STATUS | REGULATOR_CHANGE_VOLTAGE, 1);
+REGULATOR_INIT(ldo18, "TOUCH_LED_3.3V", 2500000, 3300000, 0,
+		REGULATOR_CHANGE_STATUS | REGULATOR_CHANGE_VOLTAGE, 1);
 #endif
 REGULATOR_INIT(ldo21, "VDDQ_M1M2_1.2V", 1200000, 1200000, 1,
 		REGULATOR_CHANGE_STATUS, 1);
@@ -3107,8 +3107,8 @@ static struct regulator_init_data buck2_init_data = {
 static struct regulator_init_data buck3_init_data = {
 	.constraints	= {
 		.name		= "G3D_1.1V",
-		.min_uV		= 900000,
-		.max_uV		= 1200000,
+		.min_uV		= 800000,
+		.max_uV		= 1400000,
 		.always_on	= 0,
 		.boot_on	= 0,
 		.apply_uV	= 1,
@@ -5022,7 +5022,7 @@ struct gpio_keys_button u1_buttons[] = {
 	},			/* power key */
 #if !defined(CONFIG_MACH_U1_NA_SPR) && !defined(CONFIG_MACH_U1_NA_USCC)
 	{
-		.code = KEY_HOMEPAGE,
+		.code = KEY_HOME,
 		.gpio = GPIO_OK_KEY,
 		.active_low = 1,
 		.type = EV_KEY,
@@ -5293,12 +5293,20 @@ static void mxt224_power_off(void)
 	/* printk("mxt224_power_off is finished\n"); */
 }
 
+void mxt224_gpio_sleep_mode(bool enable)
+{
+	if (enable)
+		s3c_gpio_slp_cfgpin(GPIO_TSP_LDO_ON, S3C_GPIO_SLP_PREV);
+	else
+		s3c_gpio_slp_cfgpin(GPIO_TSP_LDO_ON, S3C_GPIO_SLP_OUT0);
+}
+
 /*
   Configuration for MXT224
 */
 #define MXT224_THRESHOLD_BATT		40
-#define MXT224_THRESHOLD_BATT_INIT		55
-#define MXT224_THRESHOLD_CHRG		70
+#define MXT224_THRESHOLD_BATT_INIT		45
+#define MXT224_THRESHOLD_CHRG		55
 #define MXT224_NOISE_THRESHOLD_BATT		30
 #define MXT224_NOISE_THRESHOLD_CHRG		40
 #if defined(CONFIG_MACH_U1_NA_SPR) || defined(CONFIG_MACH_U1_NA_USCC)
@@ -5323,7 +5331,7 @@ static u8 t8_config[] = { GEN_ACQUISITIONCONFIG_T8,
 static u8 t9_config[] = { TOUCH_MULTITOUCHSCREEN_T9,
 	131, 0, 0, 19, 11, 0, 32, MXT224_THRESHOLD_BATT, 2, 1,
 	0,
-	15,			/* MOVHYSTI */
+	5,			/* MOVHYSTI */
 	1, MXT224_MOVFILTER_BATT, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
 	223, 1, 0, 0, 0, 0, 143, 55, 143, 90, 18
 };
@@ -5381,7 +5389,7 @@ static const u8 *mxt224_config[] = {
 #define MXT224E_NEXTTCHDI_NORMAL		0
 #define MXT224E_NEXTTCHDI_CHRG		1
 #else
-#define MXT224E_THRESHOLD_BATT		50
+#define MXT224E_THRESHOLD_BATT		40
 #define MXT224E_T48_THRESHOLD_BATT		28
 #define MXT224E_THRESHOLD_CHRG		40
 #define MXT224E_CALCFG_BATT		0x42
@@ -5422,7 +5430,7 @@ static u8 t8_config_e[] = { GEN_ACQUISITIONCONFIG_T8,
 static u8 t9_config_e[] = { TOUCH_MULTITOUCHSCREEN_T9,
 	139, 0, 0, 19, 11, 0, MXT224E_BLEN_BATT, MXT224E_THRESHOLD_BATT, 2, 1,
 	10,
-	15,			/* MOVHYSTI */
+	5,			/* MOVHYSTI */
 	1, MXT224E_MOVFILTER_BATT, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
 	223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
 	18, 15, 50, 50, MXT224E_NEXTTCHDI_NORMAL
@@ -5480,7 +5488,7 @@ static u8 t48_config_chrg_e[] = { PROCG_NOISESUPPRESSION_T48,
 	0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
 	10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
 	0, 0, 0, 0, MXT224E_BLEN_CHRG, MXT224E_THRESHOLD_CHRG, 2,
-	15,			/* MOVHYSTI */
+	5,			/* MOVHYSTI */
 	1, 47,
 	MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 50, 143,
 	80, 18, 10, MXT224E_NEXTTCHDI_CHRG
@@ -5506,7 +5514,7 @@ static u8 t8_config_e[] = { GEN_ACQUISITIONCONFIG_T8,
 static u8 t9_config_e[] = { TOUCH_MULTITOUCHSCREEN_T9,
 	139, 0, 0, 19, 11, 0, MXT224E_BLEN_BATT, MXT224E_THRESHOLD_BATT, 2, 1,
 	10,
-	10,			/* MOVHYSTI */
+	5,			/* MOVHYSTI */
 	1, MXT224E_MOVFILTER_BATT, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
 	223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
 	18, 15, 50, 50, 0
@@ -5515,7 +5523,7 @@ static u8 t9_config_e[] = { TOUCH_MULTITOUCHSCREEN_T9,
 static u8 t9_config_e[] = { TOUCH_MULTITOUCHSCREEN_T9,
 	139, 0, 0, 19, 11, 0, MXT224E_BLEN_BATT, MXT224E_THRESHOLD_BATT, 2, 1,
 	10,
-	15,			/* MOVHYSTI */
+	5,			/* MOVHYSTI */
 	1, MXT224E_MOVFILTER_BATT, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
 	223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
 	18, 15, 50, 50, MXT224E_NEXTTCHDI_NORMAL
@@ -5587,7 +5595,7 @@ static u8 t48_config_chrg_e[] = { PROCG_NOISESUPPRESSION_T48,
 	0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
 	10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
 	0, 0, 0, 0, 0, MXT224E_THRESHOLD_CHRG, 2,
-	15,			/* MOVHYSTI */
+	5,			/* MOVHYSTI */
 	1, 47,
 	MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 50, 143,
 	80, 18, 10, 0
@@ -6334,7 +6342,7 @@ static int max17042_low_batt_cb(void)
 #ifdef RECAL_SOC_FOR_MAXIM
 static bool max17042_need_soc_recal(void)
 {
-	pr_info("%s: HW(0x%x)\n", __func__, system_rev);
+	pr_debug("%s: HW(0x%x)\n", __func__, system_rev);
 
 	if (system_rev >= NO_NEED_RECAL_SOC_HW_REV)
 		return false;
@@ -7080,7 +7088,54 @@ static struct platform_device watchdog_reset_device = {
 };
 #endif
 
+#ifdef CONFIG_CPUPOWER
+#include <linux/power/cpupower.h>
+static unsigned int table_default_power[1] = {
+	1024
+};
+
+static struct cputopo_power default_cpu_power = {
+	.max  = 1,
+	.step = 1,
+	.table = table_default_power,
+};
+
+static unsigned int table_ca9_power[18] = {
+/* freq< 
+    100  200  300  400  500
+    600  700  800  900
+   1000 1100 1200 1300
+   1400 1500 1600 other*/
+	8192, 8192, 8192, 8192, 8192,
+	8192, 1024, 1024, 1024,
+	1024, 1024, 1024, 1024,
+	1024, 1024, 1024, 1024,
+};
+
+static struct cputopo_power CA9_cpu_power = {
+	.max  = 16,
+	.step = 100000,
+	.table = table_ca9_power,
+};
+
+/* This table list all possible cpu power configuration */
+static struct cputopo_power *u1_cpupower_data[2] = {
+	&default_cpu_power,
+	&CA9_cpu_power,
+};
+
+static struct platform_device u1_cpupower_dev = {
+	.name = "cpupower",
+	.dev = {
+		.platform_data = u1_cpupower_data,
+	},
+};
+#endif
+
 static struct platform_device *smdkc210_devices[] __initdata = {
+#ifdef CONFIG_CPUPOWER
+	&u1_cpupower_dev,
+#endif
 #ifdef CONFIG_SEC_WATCHDOG_RESET
 	&watchdog_reset_device,
 #endif
@@ -7471,7 +7526,7 @@ static void __init exynos4_reserve_mem(void)
 			.start = 0,
 		},
 #endif
-#ifndef CONFIG_ION_EXYNOS_CONTIGHEAP_SIZE
+#ifdef CONFIG_ION_EXYNOS_CONTIGHEAP_SIZE
 #ifdef CONFIG_VIDEO_SAMSUNG_MEMSIZE_FIMC1
 		{
 			.name = "fimc1",

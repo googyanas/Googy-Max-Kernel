@@ -1143,7 +1143,6 @@ void do_timer(unsigned long ticks)
 	jiffies_64 += ticks;
 	update_wall_time();
 	sched_clock_clksrc_update();
-	prepare_calc_load();
 	calc_global_load(ticks);
 }
 

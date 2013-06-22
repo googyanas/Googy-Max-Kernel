@@ -100,16 +100,6 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
 
-config CPU_FREQ_DEFAULT_GOV_ZZMOOVE
-    bool "zzmoove"
-    select CPU_FREQ_GOV_ZZMOOVE
-    select CPU_FREQ_GOV_PERFORMANCE
-    help
-    Use the CPUFreq governor 'zzmoove' as default, using predefined
-    frequency lookup tables and optimized scaling triggers instead of
-    % frequency steps to get smooth up/downscaling dependant on CPU load.
-	  
-	  
 config CPU_FREQ_DEFAULT_GOV_INTERACTIVE
 	bool "interactive"
 	select CPU_FREQ_GOV_INTERACTIVE
@@ -132,6 +122,19 @@ config CPU_FREQ_DEFAULT_GOV_ADAPTIVE
 config CPU_FREQ_DEFAULT_GOV_PEGASUSQ
 	bool "pegasusq"
 	select CPU_FREQ_GOV_PEGASUSQ
+
+config CPU_FREQ_DEFAULT_GOV_LULZACTIVEQ
+	bool "lulzactiveq"
+	select CPU_FREQ_GOV_LULZACTIVEQ
+
+config CPU_FREQ_DEFAULT_GOV_ZZMOOVE
+    bool "zzmoove"
+    select CPU_FREQ_GOV_ZZMOOVE
+    select CPU_FREQ_GOV_PERFORMANCE
+    help
+    Use the CPUFreq governor 'zzmoove' as default, using predefined
+    frequency lookup tables and optimized scaling triggers instead of
+    % frequency steps to get smooth up/downscaling dependant on CPU load.
 
 endchoice
 
@@ -171,26 +174,6 @@ config CPU_FREQ_GOV_USERSPACE
 	  For details, take a look at <file:Documentation/cpu-freq/>.
 
 	  If in doubt, say Y.
-
-config CPU_FREQ_GOV_HOTPLUG
-       tristate "'hotplug' cpufreq governor"
-       depends on CPU_FREQ && NO_HZ && HOTPLUG_CPU
-       help
-         'hotplug' - this driver mimics the frequency scaling behavior
-         in 'ondemand', but with several key differences.  First is
-         that frequency transitions use the CPUFreq table directly,
-         instead of incrementing in a percentage of the maximum
-         available frequency.  Second 'hotplug' will offline auxillary
-         CPUs when the system is idle, and online those CPUs once the
-         system becomes busy again.  This last feature is needed for
-         architectures which transition to low power states when only
-         the "master" CPU is online, or for thermally constrained
-         devices.
-
-         If you don't have one of these architectures or devices, use
-         'ondemand' instead.
-
-         If in doubt, say N.
 
 config CPU_FREQ_GOV_ONDEMAND
 	tristate "'ondemand' cpufreq policy governor"
@@ -272,17 +255,6 @@ config CPU_FREQ_GOV_CONSERVATIVE
 
 	  If in doubt, say N.
 
-config CPU_FREQ_GOV_ZZMOOVE
-  tristate "'zzmoove' cpufreq governor"
-  depends on CPU_FREQ
-  help
-    'zzmoove' - based on cpufreq_conservative, using predefined
-    frequency lookup tables and optimized scaling triggers instead of
-    % frequency steps to get smooth up/downscaling dependant on CPU load.
-
-    If in doubt, say N.
-	  
-	  
 config CPU_FREQ_GOV_ADAPTIVE
 	tristate "'adaptive' cpufreq policy governor"
 	help
@@ -307,20 +279,6 @@ config CPU_FREQ_GOV_ADAPTIVE
 config CPU_FREQ_GOV_PEGASUSQ
 	tristate "'pegasusq' cpufreq policy governor"
 
-config CPU_FREQ_GOV_LULZACTIVEQ
-        tristate "'lulzactiveq' cpufreq governor"
-        depends on CPU_FREQ
-        help
-          'lulzactiveq' - hotplug mechanism added in lulzactive
-
-config CPU_FREQ_GOV_LULZACTIVE
-	tristate "'lulzactive' cpufreq governor"
-	depends on CPU_FREQ
-	help
-	  'lulzactive' - a new interactive governor by Tegrak!
-
-	  If in doubt, say N.
-
 config CPU_FREQ_GOV_SLP
 	tristate "'slp' cpufreq policy governor"
 
@@ -331,6 +289,22 @@ config SLP_CHECK_CPU_LOAD
 config SLP_GOV_DYNAMIC_PARAMS
         bool "check SLP GOV. Dynamic Params feature"
 	depends on CPU_FREQ_GOV_SLP
+
+config CPU_FREQ_GOV_LULZACTIVEQ
+        tristate "'lulzactiveq' cpufreq governor"
+        depends on CPU_FREQ
+        help
+          'lulzactiveq' - hotplug mechanism added in lulzactive
+
+config CPU_FREQ_GOV_ZZMOOVE
+  tristate "'zzmoove' cpufreq governor"
+  depends on CPU_FREQ
+  help
+    'zzmoove' - based on cpufreq_conservative, using predefined
+    frequency lookup tables and optimized scaling triggers instead of
+    % frequency steps to get smooth up/downscaling dependant on CPU load.
+
+    If in doubt, say N.
 
 config CPU_FREQ_DVFS_MONITOR
 	bool "dvfs monitor"

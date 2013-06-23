@@ -1,6 +1,6 @@
 VERSION = 3
 PATCHLEVEL = 0
-SUBLEVEL = 82
+SUBLEVEL = 83
 EXTRAVERSION =
 NAME = Sneaky Weasel
 
@@ -194,7 +194,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= arm
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
-# CROSS_COMPILE=/home/googy/Desktop/arm-linaro2/bin/arm-linux-gnueabihf-
+# CROSS_COMPILE=/usr/bin/arm-linux-gnueabi-
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -331,7 +331,7 @@ include $(srctree)/scripts/Kbuild.include
 
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
-CC		= $(CROSS_COMPILE)gcc
+CC		= $(CROSS_COMPILE)gcc-4.7
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
@@ -351,7 +351,7 @@ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 CFLAGS_MODULE   =
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  = --strip-debug
-CFLAGS_KERNEL	=
+CFLAGS_KERNEL	= 
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
@@ -367,16 +367,16 @@ KBUILD_CPPFLAGS := -D__KERNEL__
 
 GOOGY_FLAGS   = -marm -march=armv7-a \
 		-mcpu=cortex-a9 -mfpu=vfp3 \
+         -Wno-array-bounds -ffast-math -fno-pic \
          -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
         -fmodulo-sched -fmodulo-sched-allow-regmoves \
          -fipa-cp-clone -pipe \
-         -Wno-array-bounds -ffast-math -fno-pic \
 	-fgraphite-identity -fsched-spec-load \
-	-ffast-math \
 	-floop-interchange -floop-strip-mine -floop-block \
 	-fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fipa-cp-clone \
-	-fmodulo-sched -fmodulo-sched-allow-regmoves
-#	-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
+	-fmodulo-sched -fmodulo-sched-allow-regmoves \
+	-mno-unaligned-access \
+	-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
 #
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \

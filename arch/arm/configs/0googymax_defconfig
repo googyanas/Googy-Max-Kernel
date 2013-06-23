@@ -3,11 +3,11 @@
 # Automatically generated make config: don't edit
 # Linux/arm 3.0.31 Kernel Configuration
 #
-CONFIG_LOCALVERSION="-Googy-Max-1.5.1_test_public"
+CONFIG_LOCALVERSION="-Googy-Max-1.5.1"
 CONFIG_SWAP=y
 CONFIG_XVMALLOC=y
 CONFIG_ZRAM=y
-CONFIG_ZRAM_FOR_ANDROID=y
+# CONFIG_ZRAM_FOR_ANDROID is not set
 #CONFIG_ZRAM_LZO is not set
 #CONFIG_LZO_COMPRESS is not set
 #CONFIG_LZO_DECOMPRESS is not set

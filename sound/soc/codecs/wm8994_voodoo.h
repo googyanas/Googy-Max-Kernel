@@ -6,7 +6,15 @@
  * published by the Free Software Foundation.
  */
 
-#define VOODOO_SOUND_VERSION 10
+#define VOODOO_SOUND_VERSION 11
+
+// Microphone control
+#define MICLEVEL_GENERAL	28
+#define MICLEVEL_CAMERA		26
+#define MICLEVEL_CALL		25
+
+#define MICLEVEL_MIN		0
+#define MICLEVEL_MAX		31
 
 #if defined(CONFIG_MACH_MIDAS)
 #define GALAXY_S3
@@ -36,6 +44,15 @@
 #define M110S
 #endif
 
+enum {
+	OUTPUT_HP = 0,
+	OUTPUT_SPEAKER,
+	OUTPUT_RECEIVER,
+	OUTPUT_OTHER,
+	OUTPUT_MAX
+};
+
+
 enum debug_log { LOG_OFF, LOG_INFOS, LOG_VERBOSE };
 bool debug_log(short unsigned int level);
 
@@ -58,6 +75,8 @@ void update_hpvol(bool with_fade);
 void update_fm_radio_headset_restore_freqs(bool with_mute);
 void update_fm_radio_headset_normalize_gain(bool with_mute);
 void update_recording_preset(bool with_mute);
+void set_mic_level(void);
+unsigned int get_mic_level(int reg_index, unsigned int val);
 void update_full_bitwidth(bool with_mute);
 void update_osr128(bool with_mute);
 void update_fll_tuning(bool with_mute);

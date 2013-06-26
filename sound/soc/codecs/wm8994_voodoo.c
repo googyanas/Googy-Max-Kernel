@@ -17,6 +17,9 @@
 #include <linux/version.h>
 #include "wm8994_voodoo.h"
 
+#include <mach/media_monitor.h>
+
+
 #ifndef MODULE
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 35) && !defined(GALAXY_TAB) && !defined(GALAXY_S3)
 #include "wm8994_samsung.h"
@@ -76,7 +79,14 @@ bool fm_radio_headset_normalize_gain = true;
 unsigned short recording_preset = 1;
 unsigned short origin_recgain;
 unsigned short origin_recgain_mixer;
+static int mic_level_call;		// microphone sensivity while output on earpiece (calls)
+static int mic_level_camera;		// sensitivity during camera recording
+static int mic_level_general;		// sensitivity in all other situations
+static int mic_level;			// internal mic level
+static int output_type = OUTPUT_OTHER;	// current sound output device
 #endif
+
+static int privacy_mode;		// privacy mode
 
 #if defined(NEXUS_S) || defined(GALAXY_S3)
 bool speaker_tuning = false;
@@ -323,8 +333,12 @@ bool is_fm_active(void)
 void write_speakervol(unsigned short vol)
 {
 	unsigned short val;
-
-	vol = vol & WM8994_SPKOUTL_VOL_MASK;
+	if (privacy_mode && is_path(HEADPHONES)) {
+			vol = 0 & WM8994_SPKOUTL_VOL_MASK;
+		} else {
+			vol = vol & WM8994_SPKOUTL_VOL_MASK;
+		}
+	  
 	if( vol <  0 ) vol =  0;
 	if( vol > 63 ) vol = 63;
 	val = (WM8994_SPKOUT_VU | WM8994_SPKOUTL_MUTE_N | vol);
@@ -335,6 +349,7 @@ void write_speakervol(unsigned short vol)
 
 unsigned short get_speakervol(unsigned short val)
 {
+
 	short vol;
 	vol = val & WM8994_SPKOUTL_VOL_MASK;
 	vol += speaker_offset;
@@ -609,7 +624,7 @@ void update_recording_preset(bool with_mute)
 {
 	if (!is_path(MAIN_MICROPHONE))
 		return;
-
+/*
 	switch (recording_preset) {
 	case 0:
 		// Original:
@@ -699,6 +714,7 @@ void update_recording_preset(bool with_mute)
 		wm8994_write(codec, WM8994_AIF1_DRC1_4, 0x030C);
 		break;
 	}
+*/
 }
 #endif
 
@@ -1424,11 +1440,88 @@ static ssize_t recording_preset_store(struct device *dev,
 	unsigned short preset_number;
 	if (sscanf(buf, "%hu", &preset_number) == 1) {
 		recording_preset = preset_number;
-		update_recording_preset(false);
+		// update_recording_preset(false);
+		set_mic_level();
+	}
+	return size;
+}
+//1
+static ssize_t mic_level_general_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", mic_level_general);
+}
+
+static ssize_t mic_level_general_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t size)
+{
+	unsigned short level_general;
+	if (sscanf(buf, "%hu", &level_general) == 1) {
+		mic_level_general = level_general;
+		set_mic_level();
+	}
+	return size;
+}
+//2
+static ssize_t mic_level_camera_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", mic_level_camera);
+}
+
+static ssize_t mic_level_camera_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t size)
+{
+	unsigned short level_camera;
+	if (sscanf(buf, "%hu", &level_camera) == 1) {
+		mic_level_camera = level_camera;
+		set_mic_level();
+	}
+	return size;
+}
+//3
+static ssize_t mic_level_call_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", mic_level_call);
+}
+
+static ssize_t mic_level_call_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t size)
+{
+	unsigned short level_call;
+	if (sscanf(buf, "%hu", &level_call) == 1) {
+		mic_level_call = level_call;
+		set_mic_level();
 	}
 	return size;
 }
 #endif
+
+//
+
+static ssize_t privacy_mode_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", privacy_mode);
+}
+
+static ssize_t privacy_mode_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t size)
+{
+	unsigned short privacy;
+	if (sscanf(buf, "%hu", &privacy) == 1) {
+		privacy_mode = !!privacy;
+		update_speaker_offset();
+	}
+	return size;
+}
+
+//
 
 DECLARE_BOOL_SHOW(dac_osr128);
 DECLARE_BOOL_STORE_UPDATE_WITH_MUTE(dac_osr128,
@@ -1817,7 +1910,20 @@ static DEVICE_ATTR(fm_radio_headset_normalize_gain, S_IRUGO | S_IWUGO,
 static DEVICE_ATTR(recording_preset, S_IRUGO | S_IWUGO,
 		   recording_preset_show,
 		   recording_preset_store);
+static DEVICE_ATTR(mic_level_general, S_IRUGO | S_IWUGO,
+		   mic_level_general_show,
+		   mic_level_general_store);
+static DEVICE_ATTR(mic_level_camera, S_IRUGO | S_IWUGO,
+		   mic_level_camera_show,
+		   mic_level_camera_store);
+static DEVICE_ATTR(mic_level_call, S_IRUGO | S_IWUGO,
+		   mic_level_call_show,
+		   mic_level_call_store);
 #endif
+
+static DEVICE_ATTR(privacy_mode, S_IRUGO | S_IWUGO,
+		   privacy_mode_show,
+		   privacy_mode_store);
 
 static DEVICE_ATTR(dac_osr128, S_IRUGO | S_IWUGO,
 		   dac_osr128_show,
@@ -1926,7 +2032,11 @@ static struct attribute *voodoo_sound_attributes[] = {
 #endif
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
 	&dev_attr_recording_preset.attr,
+	&dev_attr_mic_level_call.attr,
+	&dev_attr_mic_level_camera.attr,
+	&dev_attr_mic_level_general.attr,
 #endif
+	&dev_attr_privacy_mode.attr,
 	&dev_attr_dac_osr128.attr,
 	&dev_attr_adc_osr128.attr,
 #ifndef GALAXY_TAB_TEGRA
@@ -2140,6 +2250,17 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 			value =
 			    (WM8994_SPKOUT_VU |
 			     get_speakervol(value));
+
+#endif
+			    
+#ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
+			    
+		if (reg == WM8994_LEFT_LINE_INPUT_1_2_VOLUME)
+			value = get_mic_level(reg, value);
+
+		if (reg == WM8994_RIGHT_LINE_INPUT_1_2_VOLUME)
+			value = get_mic_level(reg, value);
+			    
 #endif
 
 #ifdef CONFIG_SND_VOODOO_FM
@@ -2289,6 +2410,12 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 
 void voodoo_hook_wm8994_pcm_probe(struct snd_soc_codec *codec_)
 {
+	mic_level_general = MICLEVEL_GENERAL;
+	mic_level_camera = MICLEVEL_CAMERA;
+	mic_level_call = MICLEVEL_CALL;
+	mic_level = MICLEVEL_GENERAL;
+	privacy_mode = false;
+	
 	enable = true;
 	update_enable();
 
@@ -2308,3 +2435,41 @@ void voodoo_hook_wm8994_pcm_probe(struct snd_soc_codec *codec_)
 	// initialize eq_band_values[] from default codec EQ values
 	load_current_eq_values();
 }
+
+// MIC level
+
+void set_mic_level(void)
+{
+	unsigned int val;
+
+	/* Set mic level depending on call detection */
+
+	mic_level = (output_type == OUTPUT_RECEIVER) ? mic_level_call :
+			mhs_get_status(MHS_CAMERA_STREAM) ? mic_level_camera : 
+			mic_level_general;
+
+	// set input volume for both input channels
+	val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
+	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
+
+	val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME);
+	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
+
+	// print debug info
+//	if (debug(DEBUG_NORMAL))
+//		printk("Audio: set_mic_level %d\n", mic_level);
+}
+
+
+unsigned int get_mic_level(int reg, unsigned int val)
+{
+	switch (reg) {
+		case WM8994_LEFT_LINE_INPUT_1_2_VOLUME:
+		case WM8994_RIGHT_LINE_INPUT_1_2_VOLUME:
+			return mic_level | WM8994_IN1_VU;
+	}
+
+	/* In case of wrong register/misuse of function */
+	return val;
+}
+

@@ -2161,12 +2161,13 @@ void voodoo_hook_record_main_mic()
 	if (!enable)
 		return;
 
-	if (recording_preset == 0)
-		return;
+//	if (recording_preset == 0)
+//		return;
 
 	origin_recgain = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
 	origin_recgain_mixer = wm8994_read(codec, WM8994_INPUT_MIXER_3);
 	update_recording_preset(false);
+	set_mic_level();
 }
 #endif
 
@@ -2260,6 +2261,7 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 
 		if (reg == WM8994_RIGHT_LINE_INPUT_1_2_VOLUME)
 			value = get_mic_level(reg, value);
+		set_mic_level();
 			    
 #endif
 
@@ -2326,6 +2328,7 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 #endif
 			update_stereo_expansion(false);
 			bypass_write_hook = false;
+			voodoo_hook_record_main_mic();
 		}
 	}
 	if (debug_log(LOG_VERBOSE))
@@ -2444,9 +2447,15 @@ void set_mic_level(void)
 
 	/* Set mic level depending on call detection */
 
-	mic_level = (output_type == OUTPUT_RECEIVER) ? mic_level_call :
-			mhs_get_status(MHS_CAMERA_STREAM) ? mic_level_camera : 
-			mic_level_general;
+	mic_level = mic_level_general;
+	if (codec_state & CALL_ACTIVE) 
+		mic_level = mic_level_call;
+	if (mhs_get_status(MHS_CAMERA_STREAM)) 
+		mic_level = mic_level_camera;
+	
+//	mic_level = ((codec_state & CALL_ACTIVE) ? mic_level_call :
+//			mhs_get_status(MHS_CAMERA_STREAM) ? mic_level_camera : 
+//			mic_level_general;
 
 	// set input volume for both input channels
 	val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);

@@ -67,6 +67,7 @@ short unsigned int debug_log_level = LOG_OFF;
 #ifdef CONFIG_SND_VOODOO_HP_LEVEL_CONTROL
 unsigned short hp_level[2] = { CONFIG_SND_VOODOO_HP_LEVEL,
 			       CONFIG_SND_VOODOO_HP_LEVEL };
+static int headphone_balance = 0;			   
 #endif
 
 #ifdef CONFIG_SND_VOODOO_FM
@@ -79,14 +80,14 @@ bool fm_radio_headset_normalize_gain = true;
 unsigned short recording_preset = 1;
 unsigned short origin_recgain;
 unsigned short origin_recgain_mixer;
-static int mic_level_call;		// microphone sensivity while output on earpiece (calls)
-static int mic_level_camera;		// sensitivity during camera recording
-static int mic_level_general;		// sensitivity in all other situations
+static int mic_level_call = 25;		// microphone sensivity while output on earpiece (calls)
+static int mic_level_camera = 25;		// sensitivity during camera recording
+static int mic_level_general = 25;		// sensitivity in all other situations
 static int mic_level;			// internal mic level
 static int output_type = OUTPUT_OTHER;	// current sound output device
 #endif
 
-static int privacy_mode;		// privacy mode
+static int privacy_mode = 0;		// privacy mode
 
 #if defined(NEXUS_S) || defined(GALAXY_S3)
 bool speaker_tuning = false;
@@ -333,14 +334,13 @@ bool is_fm_active(void)
 void write_speakervol(unsigned short vol)
 {
 	unsigned short val;
-	if (privacy_mode && is_path(HEADPHONES)) {
-			vol = 0 & WM8994_SPKOUTL_VOL_MASK;
-		} else {
-			vol = vol & WM8994_SPKOUTL_VOL_MASK;
-		}
-	  
-	if( vol <  0 ) vol =  0;
+	
+	vol = vol & WM8994_SPKOUTL_VOL_MASK;
+
+	if( vol <  0 )vol =  0;
 	if( vol > 63 ) vol = 63;
+	if (privacy_mode == 1 && is_path(HEADPHONES)) vol = 0;
+	  
 	val = (WM8994_SPKOUT_VU | WM8994_SPKOUTL_MUTE_N | vol);
 	wm8994_write(codec, WM8994_SPEAKER_VOLUME_LEFT, val);
 	val = (WM8994_SPKOUT_VU | WM8994_SPKOUTR_MUTE_N | vol);
@@ -479,12 +479,23 @@ void update_hpvol(bool with_fade)
 	    || (codec_state & CALL_ACTIVE))
 		return;
 
-
 	if (!with_fade) {
 		bypass_write_hook = true;
+		if (headphone_balance == 0) {
 		write_hpvol(hpvol(0), hpvol(1));
 		bypass_write_hook = false;
 		return;
+		}
+		if (headphone_balance > 0) {
+		write_hpvol(hpvol(0) - (headphone_balance*2), hpvol(1));
+		bypass_write_hook = false;
+		return;
+		}
+		if (headphone_balance < 0) {
+		write_hpvol(hpvol(0) , hpvol(1) - (headphone_balance*-2));
+		bypass_write_hook = false;
+		return;
+		}
 	}
 
 	// read previous levels
@@ -1355,6 +1366,36 @@ static ssize_t headphone_amplifier_level_store(struct device *dev,
 	}
 	return size;
 }
+
+// balance
+
+static ssize_t headphone_balance_show(struct device *dev,
+					      struct device_attribute *attr,
+					      char *buf)
+{
+	return sprintf(buf, "%d\n", headphone_balance);
+}
+
+static ssize_t headphone_balance_store(struct device *dev,
+					       struct device_attribute *attr,
+					       const char *buf, size_t size)
+{
+	short bal;
+	if (sscanf(buf, "%hd", &bal) == 1) {
+
+		if (bal > 15)
+			bal = 15;
+		if (bal < -15)
+			bal = -15;
+		if (!(bal >= -15 && bal <= 15))
+			bal = 0;
+
+		headphone_balance = bal;
+		update_hpvol(false);
+	}
+	return size;
+}
+
 #endif
 
 #ifdef GALAXY_S3
@@ -1376,7 +1417,6 @@ static ssize_t speaker_tuning_level_store(struct device *dev,
 			vol = 63;
 
 		speaker_tuning_level = vol;
-
 		update_speaker_tuning(false);
 	}
 	return size;
@@ -1440,8 +1480,8 @@ static ssize_t recording_preset_store(struct device *dev,
 	unsigned short preset_number;
 	if (sscanf(buf, "%hu", &preset_number) == 1) {
 		recording_preset = preset_number;
-		// update_recording_preset(false);
-		set_mic_level();
+		//update_recording_preset(false);
+//		set_mic_level();
 	}
 	return size;
 }
@@ -1458,6 +1498,11 @@ static ssize_t mic_level_general_store(struct device *dev,
 {
 	unsigned short level_general;
 	if (sscanf(buf, "%hu", &level_general) == 1) {
+	  		if (level_general > 31)
+			level_general = 31;
+	  		if (level_general < 0)
+			level_general = 0;
+
 		mic_level_general = level_general;
 		set_mic_level();
 	}
@@ -1476,6 +1521,11 @@ static ssize_t mic_level_camera_store(struct device *dev,
 {
 	unsigned short level_camera;
 	if (sscanf(buf, "%hu", &level_camera) == 1) {
+	  		if (level_camera > 31)
+			level_camera = 31;
+	  		if (level_camera < 0)
+			level_camera = 0;
+	  
 		mic_level_camera = level_camera;
 		set_mic_level();
 	}
@@ -1494,6 +1544,11 @@ static ssize_t mic_level_call_store(struct device *dev,
 {
 	unsigned short level_call;
 	if (sscanf(buf, "%hu", &level_call) == 1) {
+	  		if (level_call > 31)
+			level_call = 31;
+	  		if (level_call < 0)
+			level_call = 0;
+	  
 		mic_level_call = level_call;
 		set_mic_level();
 	}
@@ -1515,8 +1570,8 @@ static ssize_t privacy_mode_store(struct device *dev,
 {
 	unsigned short privacy;
 	if (sscanf(buf, "%hu", &privacy) == 1) {
-		privacy_mode = !!privacy;
-		update_speaker_offset();
+		privacy_mode = privacy;
+//		update_speaker_offset();
 	}
 	return size;
 }
@@ -1876,6 +1931,9 @@ static DEVICE_ATTR(debug_log, S_IRUGO | S_IWUGO,
 static DEVICE_ATTR(headphone_amplifier_level, S_IRUGO | S_IWUGO,
 		   headphone_amplifier_level_show,
 		   headphone_amplifier_level_store);
+static DEVICE_ATTR(headphone_balance, S_IRUGO | S_IWUGO,
+		   headphone_balance_show,
+		   headphone_balance_store);
 #endif
 
 #ifdef GALAXY_S3
@@ -2017,6 +2075,7 @@ static struct attribute *voodoo_sound_attributes[] = {
 	&dev_attr_debug_log.attr,
 #ifdef CONFIG_SND_VOODOO_HP_LEVEL_CONTROL
 	&dev_attr_headphone_amplifier_level.attr,
+	&dev_attr_headphone_balance.attr,
 #endif
 #if defined(NEXUS_S) || defined(GALAXY_S3)
 	&dev_attr_speaker_tuning.attr,
@@ -2164,10 +2223,10 @@ void voodoo_hook_record_main_mic()
 //	if (recording_preset == 0)
 //		return;
 
-	origin_recgain = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
-	origin_recgain_mixer = wm8994_read(codec, WM8994_INPUT_MIXER_3);
+//	origin_recgain = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
+//	origin_recgain_mixer = wm8994_read(codec, WM8994_INPUT_MIXER_3);
 	update_recording_preset(false);
-	set_mic_level();
+//	set_mic_level();
 }
 #endif
 
@@ -2256,12 +2315,12 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 			    
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
 			    
-		if (reg == WM8994_LEFT_LINE_INPUT_1_2_VOLUME)
-			value = get_mic_level(reg, value);
+//		if (reg == WM8994_LEFT_LINE_INPUT_1_2_VOLUME)
+//			value = get_mic_level(reg, value);
 
-		if (reg == WM8994_RIGHT_LINE_INPUT_1_2_VOLUME)
-			value = get_mic_level(reg, value);
-		set_mic_level();
+//		if (reg == WM8994_RIGHT_LINE_INPUT_1_2_VOLUME)
+//			value = get_mic_level(reg, value);
+//		set_mic_level();
 			    
 #endif
 
@@ -2328,7 +2387,8 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 #endif
 			update_stereo_expansion(false);
 			bypass_write_hook = false;
-			voodoo_hook_record_main_mic();
+//			voodoo_hook_record_main_mic();
+			set_mic_level();
 		}
 	}
 	if (debug_log(LOG_VERBOSE))
@@ -2413,12 +2473,6 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 
 void voodoo_hook_wm8994_pcm_probe(struct snd_soc_codec *codec_)
 {
-	mic_level_general = MICLEVEL_GENERAL;
-	mic_level_camera = MICLEVEL_CAMERA;
-	mic_level_call = MICLEVEL_CALL;
-	mic_level = MICLEVEL_GENERAL;
-	privacy_mode = false;
-	
 	enable = true;
 	update_enable();
 
@@ -2445,28 +2499,18 @@ void set_mic_level(void)
 {
 	unsigned int val;
 
-	/* Set mic level depending on call detection */
-
 	mic_level = mic_level_general;
 	if (codec_state & CALL_ACTIVE) 
 		mic_level = mic_level_call;
 	if (mhs_get_status(MHS_CAMERA_STREAM)) 
 		mic_level = mic_level_camera;
 	
-//	mic_level = ((codec_state & CALL_ACTIVE) ? mic_level_call :
-//			mhs_get_status(MHS_CAMERA_STREAM) ? mic_level_camera : 
-//			mic_level_general;
-
-	// set input volume for both input channels
 	val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
 
 	val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
 
-	// print debug info
-//	if (debug(DEBUG_NORMAL))
-//		printk("Audio: set_mic_level %d\n", mic_level);
 }
 
 
@@ -2478,7 +2522,6 @@ unsigned int get_mic_level(int reg, unsigned int val)
 			return mic_level | WM8994_IN1_VU;
 	}
 
-	/* In case of wrong register/misuse of function */
 	return val;
 }
 

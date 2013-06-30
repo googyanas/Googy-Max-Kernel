@@ -8,6 +8,7 @@
 
 #define VOODOO_SOUND_VERSION 11
 
+#define HEADPHONE_BALANCE       0
 // Microphone control
 #define MICLEVEL_GENERAL	28
 #define MICLEVEL_CAMERA		26

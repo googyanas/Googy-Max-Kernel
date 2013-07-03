@@ -84,7 +84,6 @@ static int mic_level_call = 25;		// microphone sensivity while output on earpiec
 static int mic_level_camera = 25;		// sensitivity during camera recording
 static int mic_level_general = 25;		// sensitivity in all other situations
 static int mic_level;			// internal mic level
-static int output_type = OUTPUT_OTHER;	// current sound output device
 #endif
 
 static int privacy_mode = 0;		// privacy mode
@@ -633,8 +632,9 @@ void update_fm_radio_headset_normalize_gain(bool with_mute)
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
 void update_recording_preset(bool with_mute)
 {
-	if (!is_path(MAIN_MICROPHONE))
-		return;
+//	if (!is_path(MAIN_MICROPHONE))
+//		return;
+// set_mic_level();
 /*
 	switch (recording_preset) {
 	case 0:
@@ -1502,6 +1502,8 @@ static ssize_t mic_level_general_store(struct device *dev,
 			level_general = 31;
 	  		if (level_general < 0)
 			level_general = 0;
+			if (!(level_general >= 0 && level_general <= 31))
+			level_general = 25;
 
 		mic_level_general = level_general;
 		set_mic_level();
@@ -1525,6 +1527,8 @@ static ssize_t mic_level_camera_store(struct device *dev,
 			level_camera = 31;
 	  		if (level_camera < 0)
 			level_camera = 0;
+			if (!(level_camera >= 0 && level_camera <= 31))
+			level_camera = 25;
 	  
 		mic_level_camera = level_camera;
 		set_mic_level();
@@ -1548,6 +1552,8 @@ static ssize_t mic_level_call_store(struct device *dev,
 			level_call = 31;
 	  		if (level_call < 0)
 			level_call = 0;
+			if (!(level_call >= 0 && level_call <= 31))
+			level_call = 25;
 	  
 		mic_level_call = level_call;
 		set_mic_level();
@@ -2223,9 +2229,9 @@ void voodoo_hook_record_main_mic()
 //	if (recording_preset == 0)
 //		return;
 
-//	origin_recgain = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
-//	origin_recgain_mixer = wm8994_read(codec, WM8994_INPUT_MIXER_3);
-	update_recording_preset(false);
+	origin_recgain = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
+	origin_recgain_mixer = wm8994_read(codec, WM8994_INPUT_MIXER_3);
+//	update_recording_preset(false);
 //	set_mic_level();
 }
 #endif
@@ -2497,19 +2503,24 @@ void voodoo_hook_wm8994_pcm_probe(struct snd_soc_codec *codec_)
 
 void set_mic_level(void)
 {
-	unsigned int val;
+  unsigned int mic_val;
 
-	mic_level = mic_level_general;
+//	if (!is_path(MAIN_MICROPHONE))
+//		return;
+
 	if (codec_state & CALL_ACTIVE) 
 		mic_level = mic_level_call;
-	if (mhs_get_status(MHS_CAMERA_STREAM)) 
+	else if (mhs_get_status(MHS_CAMERA_STREAM)) 
 		mic_level = mic_level_camera;
+	else mic_level = mic_level_general;
 	
-	val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
+	mic_val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
+	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
 
-	val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME);
+	mic_val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
+	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
 
 }
 

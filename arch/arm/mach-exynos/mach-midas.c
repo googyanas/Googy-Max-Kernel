@@ -1566,9 +1566,9 @@ static struct samsung_battery_platform_data samsung_battery_pdata = {
 	.chg_curr_usb = 900,
 	.chg_curr_cdp = 1000,
 #if defined(CONFIG_MACH_T0_USA_VZW)
-	.chg_curr_wpc = 650,
+	.chg_curr_wpc = 900,
 #else
-	.chg_curr_wpc = 475,
+	.chg_curr_wpc = 900,
 #endif
 	.chg_curr_etc = 900,
 

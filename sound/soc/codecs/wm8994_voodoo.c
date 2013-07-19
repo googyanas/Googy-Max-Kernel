@@ -434,14 +434,14 @@ int hpvol(int channel)
 
 	vol = hp_level[channel];
 
-	if (is_path_media_or_fm_no_call_no_record()) {
+//ggy3	if (is_path_media_or_fm_no_call_no_record()) {
 		// negative digital gain compensation
 		if (digital_gain < 0)
 			vol = (vol - ((digital_gain / 100) + 5) / 10);
 
 		if (vol > 63)
 			return 63;
-	}
+//ggy3	}
 
 	return vol;
 }
@@ -474,27 +474,29 @@ void update_hpvol(bool with_fade)
 
 	// don't affect headphone amplifier volume
 	// when not on heapdhones or if call is active
-	if (!is_path(HEADPHONES)
-	    || (codec_state & CALL_ACTIVE))
-		return;
+//ggy2	if (!is_path(HEADPHONES) || (codec_state & CALL_ACTIVE))
+//ggy3	if (!is_path(HEADPHONES) )
+//ggy3		return;
 
 	if (!with_fade) {
 		bypass_write_hook = true;
-		if (headphone_balance == 0) {
-		write_hpvol(hpvol(0), hpvol(1));
-		bypass_write_hook = false;
-		return;
-		}
-		if (headphone_balance > 0) {
-		write_hpvol(hpvol(0) - (headphone_balance*2), hpvol(1));
-		bypass_write_hook = false;
-		return;
-		}
 		if (headphone_balance < 0) {
 		write_hpvol(hpvol(0) , hpvol(1) - (headphone_balance*-2));
 		bypass_write_hook = false;
-		return;
+		return; 
 		}
+		
+		  if (headphone_balance > 0) {
+		  write_hpvol(hpvol(0) - (headphone_balance*2), hpvol(1));
+		  bypass_write_hook = false;
+		  return;
+		  }
+		  
+		    if (headphone_balance == 0) {
+		    write_hpvol(hpvol(0), hpvol(1));
+		    bypass_write_hook = false;
+		    return;		      
+		    }
 	}
 
 	// read previous levels
@@ -857,7 +859,8 @@ bool is_path_media_or_fm_no_call_no_record()
 unsigned short speaker_tuning_level = 44;
 void update_speaker_tuning(bool with_mute)
 {
-	if (!(is_path(SPEAKER) || (codec_state & CALL_ACTIVE)))
+//gg2	if (!(is_path(SPEAKER) || (codec_state & CALL_ACTIVE)))
+	if (!(is_path(SPEAKER) ))
 		return;
 
 	if (speaker_tuning) {
@@ -995,7 +998,8 @@ void update_fll_tuning(bool with_mute)
 unsigned short mono_downmix_get_value(unsigned short val, bool can_reverse)
 {
 	// Takes care not switching to Stereo on speaker or during a call
-	if (!is_path(SPEAKER) && !(codec_state & CALL_ACTIVE)) {
+//ggy2	if (!is_path(SPEAKER) && !(codec_state & CALL_ACTIVE)) {
+	if (!is_path(SPEAKER) ) {
 		if (mono_downmix) {
 			val |= WM8994_AIF1DAC1_MONO;
 		} else {
@@ -1068,7 +1072,7 @@ unsigned short digital_gain_get_value(unsigned short val)
 	int i;
 	int step = -375;
 
-	if (is_path_media_or_fm_no_call_no_record()) {
+//ggy3	if (is_path_media_or_fm_no_call_no_record()) {
 
 		if (digital_gain <= 0) {
 			// clear the actual DAC volume for this value
@@ -1085,7 +1089,7 @@ unsigned short digital_gain_get_value(unsigned short val)
 				       "real AIF gain: %d mdB\n",
 				       digital_gain, step, i, i * step);
 		}
-	}
+//ggy3	}
 
 	return val;
 }
@@ -1111,10 +1115,10 @@ void update_headphone_eq(bool update_bands)
 	int gains_1;
 	int gains_2;
 
-	if (!is_path_media_or_fm_no_call_no_record()) {
+//ggy3	if (!is_path_media_or_fm_no_call_no_record()) {
 		// don't apply the EQ
-		return;
-	}
+//ggy3		return;
+//ggy3	}
 
 	if (debug_log(LOG_INFOS))
 		printk("Voodoo sound: EQ gains (dB): %hd, %hd, %hd, %hd, %hd\n",
@@ -1149,10 +1153,10 @@ void update_headphone_eq_bands()
 	int k = 0;
 	int first_reg = WM8994_AIF1_DAC1_EQ_BAND_1_A;
 
-	if (!is_path_media_or_fm_no_call_no_record()) {
+//ggy3	if (!is_path_media_or_fm_no_call_no_record()) {
 		// don't apply the EQ
-		return;
-	}
+//ggy3		return;
+//ggy3	}
 	for (i = 0; i < ARRAY_SIZE(eq_band_values); i++) {
 		if (debug_log(LOG_INFOS))
 			printk("Voodoo sound: send EQ Band %d\n", i + 1);
@@ -1251,9 +1255,9 @@ return;
 #endif
 	// don't apply the limiter if not playing media
 	// (exclude FM radio, it has its own DRC settings)
-	if (!is_path_media_or_fm_no_call_no_record()
-	    || is_path(RADIO_HEADPHONES))
-		return;
+//ggy3	if (!is_path_media_or_fm_no_call_no_record()
+//ggy3	    || is_path(RADIO_HEADPHONES))
+//ggy3		return;
 
 	// don't apply the limiter without stereo_expansion or headphone_eq
 	// or a positive digital gain
@@ -2284,7 +2288,7 @@ unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec_,
 
 #ifdef CONFIG_SND_VOODOO_HP_LEVEL_CONTROL
 		if (true
-		    && !(codec_state & CALL_ACTIVE)
+//gg2		    && !(codec_state & CALL_ACTIVE)
 #ifdef GALAXY_S3
 			&& !bypass_write_hook_clamp
 #else
@@ -2514,11 +2518,11 @@ void set_mic_level(void)
 		mic_level = mic_level_camera;
 	else mic_level = mic_level_general;
 	
-	mic_val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
+//	mic_val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
 	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
 
-	mic_val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME);
+//	mic_val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
 	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
 

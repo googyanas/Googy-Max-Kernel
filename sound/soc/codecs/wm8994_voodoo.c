@@ -435,13 +435,15 @@ int hpvol(int channel)
 	vol = hp_level[channel];
 
 //ggy3	if (is_path_media_or_fm_no_call_no_record()) {
+	if (is_path(HEADPHONES) ) {
+
 		// negative digital gain compensation
 		if (digital_gain < 0)
 			vol = (vol - ((digital_gain / 100) + 5) / 10);
 
 		if (vol > 63)
 			return 63;
-//ggy3	}
+	}
 
 	return vol;
 }
@@ -475,8 +477,8 @@ void update_hpvol(bool with_fade)
 	// don't affect headphone amplifier volume
 	// when not on heapdhones or if call is active
 //ggy2	if (!is_path(HEADPHONES) || (codec_state & CALL_ACTIVE))
-//ggy3	if (!is_path(HEADPHONES) )
-//ggy3		return;
+	if (!is_path(HEADPHONES) )
+		return;
 
 	if (!with_fade) {
 		bypass_write_hook = true;
@@ -1037,7 +1039,8 @@ unsigned short dac_direct_get_value(unsigned short val, bool can_reverse)
 	if(is_fm_active())
 		return val & (~WM8994_DAC1L_TO_HPOUT1L | WM8994_DAC1R_TO_MIXOUTR);
 #endif
-	if (is_path_media_or_fm_no_call_no_record()) {
+//ggy3	if (is_path_media_or_fm_no_call_no_record()) {
+		if (is_path(HEADPHONES) ) {
 
 		if (dac_direct) {
 			if (val == WM8994_DAC1L_TO_MIXOUTL)
@@ -1073,6 +1076,7 @@ unsigned short digital_gain_get_value(unsigned short val)
 	int step = -375;
 
 //ggy3	if (is_path_media_or_fm_no_call_no_record()) {
+		if (is_path(HEADPHONES) ) {
 
 		if (digital_gain <= 0) {
 			// clear the actual DAC volume for this value
@@ -1089,7 +1093,7 @@ unsigned short digital_gain_get_value(unsigned short val)
 				       "real AIF gain: %d mdB\n",
 				       digital_gain, step, i, i * step);
 		}
-//ggy3	}
+	}
 
 	return val;
 }
@@ -1119,6 +1123,8 @@ void update_headphone_eq(bool update_bands)
 		// don't apply the EQ
 //ggy3		return;
 //ggy3	}
+	if (!is_path(HEADPHONES) )
+		return;
 
 	if (debug_log(LOG_INFOS))
 		printk("Voodoo sound: EQ gains (dB): %hd, %hd, %hd, %hd, %hd\n",
@@ -1157,6 +1163,9 @@ void update_headphone_eq_bands()
 		// don't apply the EQ
 //ggy3		return;
 //ggy3	}
+	if (!is_path(HEADPHONES) )
+		return;
+
 	for (i = 0; i < ARRAY_SIZE(eq_band_values); i++) {
 		if (debug_log(LOG_INFOS))
 			printk("Voodoo sound: send EQ Band %d\n", i + 1);
@@ -1258,6 +1267,8 @@ return;
 //ggy3	if (!is_path_media_or_fm_no_call_no_record()
 //ggy3	    || is_path(RADIO_HEADPHONES))
 //ggy3		return;
+	if (!is_path(HEADPHONES) )
+		return;
 
 	// don't apply the limiter without stereo_expansion or headphone_eq
 	// or a positive digital gain

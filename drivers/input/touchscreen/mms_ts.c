@@ -3596,7 +3596,7 @@ static void mms_ts_late_resume(struct early_suspend *h)
 static struct mms_ts_info * touchwake_data;
 void touchscreen_disable(void)
 {
-  if (touchwake_data != NULL) 
+  if (likely(touchwake_data != NULL)) 
     mms_ts_suspend(&touchwake_data->client->dev);
 
     return;
@@ -3605,6 +3605,7 @@ EXPORT_SYMBOL(touchscreen_disable);
 
 void touchscreen_enable(void)
 {
+  if (likely(touchwake_data != NULL))
     mms_ts_resume(&touchwake_data->client->dev);
 
     return;

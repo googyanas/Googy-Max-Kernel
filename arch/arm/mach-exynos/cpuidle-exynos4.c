@@ -773,7 +773,7 @@ static struct cpuidle_state exynos4_cpuidle_set[] = {
 	[0] = {
 		.enter			= exynos4_enter_idle,
 		.exit_latency		= 1,
-		.target_residency	= 10000,
+		.target_residency	= 5,
 		.flags			= CPUIDLE_FLAG_TIME_VALID,
 		.name			= "IDLE",
 		.desc			= "ARM clock gating(WFI)",
@@ -782,7 +782,11 @@ static struct cpuidle_state exynos4_cpuidle_set[] = {
 	[1] = {
 		.enter			= exynos4_enter_lowpower,
 		.exit_latency		= 300,
-		.target_residency	= 10000,
+#ifdef CONFIG_MACH_T0
+		.target_residency	= 7500,
+#else
+		.target_residency	= 1000,
+#endif
 		.flags			= CPUIDLE_FLAG_TIME_VALID,
 		.name			= "LOW_POWER",
 		.desc			= "ARM power down",

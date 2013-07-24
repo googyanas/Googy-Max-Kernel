@@ -1,6 +1,6 @@
 VERSION = 3
 PATCHLEVEL = 0
-SUBLEVEL = 83
+SUBLEVEL = 87
 EXTRAVERSION =
 NAME = Sneaky Weasel
 
@@ -331,7 +331,7 @@ include $(srctree)/scripts/Kbuild.include
 
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
-CC		= $(CROSS_COMPILE)gcc-4.7
+CC		= $(CROSS_COMPILE)gcc
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
@@ -365,27 +365,22 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-GOOGY_FLAGS   = -marm -march=armv7-a \
-		-mcpu=cortex-a9 -mfpu=vfp3 \
-         -Wno-array-bounds -ffast-math -fno-pic \
-         -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
-        -fmodulo-sched -fmodulo-sched-allow-regmoves \
-         -fipa-cp-clone -pipe \
-	-fgraphite-identity -fsched-spec-load \
-	-floop-interchange -floop-strip-mine -floop-block \
-	-fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fipa-cp-clone \
-	-fmodulo-sched -fmodulo-sched-allow-regmoves \
-	-mno-unaligned-access \
-	-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
-#
+GOOGY_FLAGS   = -marm -march=armv7-a -mcpu=cortex-a9 -Wno-array-bounds -fno-pic -mno-unaligned-access
+#        	-ffast-math -mfpu=vfp3 -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
+#        	-fmodulo-sched -fmodulo-sched-allow-regmoves \
+#        	-fipa-cp-clone -pipe \
+#	 	-fgraphite-identity -fsched-spec-load \
+#	 	-floop-interchange -floop-strip-mine -floop-block \
+#	 	-fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fipa-cp-clone \
+#	 	-fmodulo-sched -fmodulo-sched-allow-regmoves \
+#	 	-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks $(GOOGY_FLAGS) \
-		   -mtune=cortex-a9
-# $(GOOGY_FLAGS)
+		   -fno-delete-null-pointer-checks \
+		   -mtune=cortex-a9 $(GOOGY_FLAGS)
 		   
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=

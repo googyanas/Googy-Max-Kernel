@@ -18,6 +18,9 @@ struct cfq_io_context {
 	unsigned long ttime_samples;
 	unsigned long ttime_mean;
 
+	unsigned int raising_time_left;
+	unsigned int saved_idle_window;
+
 	struct list_head queue_list;
 	struct hlist_node cic_list;
 
@@ -32,9 +35,9 @@ struct cfq_io_context {
  * the corresponding I/O scheduler needs to see a ioprio update.
  */
 enum {
-  IOC_CFQ_IOPRIO_CHANGED,
-  IOC_BFQ_IOPRIO_CHANGED,
-  IOC_IOPRIO_CHANGED_BITS
+	IOC_CFQ_IOPRIO_CHANGED,
+	IOC_BFQ_IOPRIO_CHANGED,
+	IOC_IOPRIO_CHANGED_BITS
 };
 
 /*
@@ -64,7 +67,7 @@ struct io_context {
 	struct radix_tree_root radix_root;
 	struct hlist_head cic_list;
 	struct radix_tree_root bfq_radix_root;
-  	struct hlist_head bfq_cic_list;
+	struct hlist_head bfq_cic_list;
 	void __rcu *ioc_data;
 };
 

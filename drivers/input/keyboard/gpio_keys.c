@@ -462,7 +462,7 @@ static inline int64_t get_time_inms(void) {
 #else
 #define HOME_KEY_VAL	0xac
 #endif
-extern void mdnie_toggle_negative(void);
+// extern void mdnie_toggle_negative(void);
 int homekey_trg_cnt = 4;
 int homekey_trg_ms = 300;
 
@@ -541,7 +541,7 @@ static void gpio_keys_report_event(struct gpio_button_data *bdata)
 		else {
 			if(homekey_count>=homekey_trg_cnt - 1)
 			{
-				mdnie_toggle_negative();
+//				mdnie_toggle_negative();
 				homekey_count = 0;
 			}
 			homekey_lasttime = get_time_inms();

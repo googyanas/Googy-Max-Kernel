@@ -32,7 +32,7 @@ struct mhs_context {
 #ifdef CONFIG_SND_WOLFSON_SOUND_CONTROL
 extern void set_mic_level(void);
 #endif
-// extern void do_mdnie_refresh(struct work_struct *work);
+extern void do_mdnie_refresh(struct work_struct *work);
 
 void mhs_set_status(enum mhs_type type, bool status)
 {

@@ -109,6 +109,14 @@ config FB_S5P_MDNIE
 	---help---
 	This enables support for Samsung MDNIE feature
 
+config FB_S5P_MDNIE_CONTROL
+	bool "Samsung MDNIE Register Value Intercept Control"
+	depends on FB_S5P
+	depends on FB_S5P_MDNIE
+	default "0"
+	---help---
+	This enables control support for Samsung MDNIE feature
+
 config FB_MDNIE_PWM
 	bool "Samsung MDNIE PWM"
 	depends on FB_S5P
@@ -290,6 +298,10 @@ config S6E8AA0_AMS480GYXX
 	---help---
 	This enables support for Samsung S6E8AA0 AMS480GYXX(M0) PANEL
 
+config S6E8AA0_AMS465XX
+	bool "AMS465XX(Superior)"
+	---help---
+	This enables support for Samsung S6E8AA0 AMS465XX(Superior) PANEL
 endchoice
 
 config AID_DIMMING
@@ -298,6 +310,11 @@ config AID_DIMMING
        default n
        ---help---
          This enables support for Samsung S6E8AA0 MIPI LCD AID DIMMING
+
+config LCD_REVERSE
+       bool "LCD REVERSE"
+       depends on FB_S5P_S6E8AA0
+       default n
 
 config LCD_FREQ_SWITCH
        bool "support for LCD Frequency switch"
@@ -310,9 +327,9 @@ config LCD_FREQ_SWITCH_ACCOUNTING
        default n
 
 config CPU_FREQ_LCD_FREQ_DFS
-       bool "support for CPU frequency based LCD freq scaling"
-       depends on LCD_FREQ_SWITCH && CPU_FREQ
-       default n       
+	bool "support for CPU frequency based LCD freq scaling"
+	depends on LCD_FREQ_SWITCH && CPU_FREQ
+	default n
 
 config FB_S5P_V2
 	tristate "S5P Framebuffer version 2 support"
@@ -362,9 +379,3 @@ config FB_S5P_V2_TL2796
 	---help---
 	  This enables support for Samsung  TL2796 WVGA LCD panel
 endchoice
-
-config MDNIE_MOD
-	tristate "mdnie sharpness mod"
-	depends on S6E8AA0_AMS480GYXX || FB_S5P_LD9040 || FB_S5P_NT35560
-	default y
-

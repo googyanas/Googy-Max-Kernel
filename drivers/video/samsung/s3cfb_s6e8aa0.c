@@ -186,6 +186,10 @@ static unsigned int elvss_offset_table[ELVSS_STATUS_MAX] = {
 extern void (*lcd_early_suspend)(void);
 extern void (*lcd_late_resume)(void);
 
+#ifdef CONFIG_FB_S5P_MDNIE_CONTROL
+extern void mdnie_update_brightness(int brightness, bool is_auto, bool force);
+#endif
+
 #if defined(GPIO_OLED_DET)
 static void oled_detection_work(struct work_struct *work)
 {
@@ -825,7 +829,11 @@ static int init_aid_dimming_table(struct lcd_info *lcd)
 	}
 
 	for (i = 0; i < GAMMA_MAX; i++) {
+#if defined(CONFIG_LCD_REVERSE)
+		memcpy(lcd->f8[i], SEQ_REVERSE_PANEL_CONDITION_SET_500MBPS, AID_PARAM_SIZE);
+#else
 		memcpy(lcd->f8[i], SEQ_PANEL_CONDITION_SET_500MBPS, AID_PARAM_SIZE);
+#endif
 		lcd->f8[i][0x12] = aid_command_table[i][0];
 		lcd->f8[i][0x01] = aid_command_table[i][1];
 	}
@@ -893,9 +901,6 @@ static int update_brightness(struct lcd_info *lcd, u8 force)
 
 	brightness = lcd->bd->props.brightness;
 
-	if (unlikely(!lcd->auto_brightness && brightness > 250))
-		brightness = 250;
-
 	lcd->bl = get_backlight_level_from_brightness(brightness);
 
 	if ((force) || ((lcd->ldi_enable) && (lcd->current_bl != lcd->bl))) {
@@ -912,6 +917,10 @@ static int update_brightness(struct lcd_info *lcd, u8 force)
 
 		dev_info(&lcd->ld->dev, "brightness=%d, bl=%d, candela=%d\n", brightness, lcd->bl, candela_table[lcd->bl]);
 	}
+
+#ifdef CONFIG_FB_S5P_MDNIE_CONTROL
+	mdnie_update_brightness(brightness, lcd->auto_brightness, false);
+#endif
 
 	mutex_unlock(&lcd->bl_lock);
 
@@ -943,8 +952,13 @@ static int s6e8ax0_ldi_init(struct lcd_info *lcd)
 
 	/* 4.8" HD for M0/C1*/
 	if (lcd->id[1] == 0x20 || lcd->id[1] == 0x40 || lcd->id[1] == 0x60) {
+#if defined(CONFIG_LCD_REVERSE)
+		s6e8ax0_write(lcd, SEQ_REVERSE_PANEL_CONDITION_SET_500MBPS,\
+			ARRAY_SIZE(SEQ_REVERSE_PANEL_CONDITION_SET_500MBPS));
+#else
 		s6e8ax0_write(lcd, SEQ_PANEL_CONDITION_SET_500MBPS,\
 			ARRAY_SIZE(SEQ_PANEL_CONDITION_SET_500MBPS));
+#endif
 		s6e8ax0_write(lcd, SEQ_DISPLAY_CONDITION_SET, ARRAY_SIZE(SEQ_DISPLAY_CONDITION_SET));
 		s6e8ax0_gamma_ctl(lcd);
 		s6e8ax0_write(lcd, SEQ_ETC_SOURCE_CONTROL, ARRAY_SIZE(SEQ_ETC_SOURCE_CONTROL));
@@ -1281,16 +1295,13 @@ struct lcd_info *g_lcd;
 void s6e8ax0_early_suspend(void)
 {
 	struct lcd_info *lcd = g_lcd;
-	int err = 0;
 
 	set_dsim_lcd_enabled(0);
 
 	dev_info(&lcd->ld->dev, "+%s\n", __func__);
 #if defined(GPIO_OLED_DET)
 	disable_irq(lcd->irq);
-	err = gpio_request(GPIO_OLED_DET, "OLED_DET");
-	if (err)
-		pr_err("fail to request gpio RESET_REQ_N : %d\n", err);
+	gpio_request(GPIO_OLED_DET, "OLED_DET");
 	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
 	gpio_direction_output(GPIO_OLED_DET, GPIO_LEVEL_LOW);
@@ -1325,7 +1336,7 @@ static void s6e8ax0_read_id(struct lcd_info *lcd, u8 *buf)
 {
 	int ret = 0;
 
-	ret = s6e8ax0_read(lcd, LDI_ID_REG, LDI_ID_LEN, buf, 3);
+	ret = s6e8ax0_read(lcd, LDI_ID_REG, LDI_ID_LEN, buf, 2);
 	if (!ret) {
 		lcd->connected = 0;
 		dev_info(&lcd->ld->dev, "panel is not connected well\n");
@@ -1337,7 +1348,7 @@ static int s6e8ax0_read_mtp(struct lcd_info *lcd, u8 *mtp_data)
 {
 	int ret;
 
-	ret = s6e8ax0_read(lcd, LDI_MTP_ADDR, LDI_MTP_LENGTH, mtp_data, 0);
+	ret = s6e8ax0_read(lcd, LDI_MTP_ADDR, LDI_MTP_LENGTH, mtp_data, 1);
 
 	return ret;
 }

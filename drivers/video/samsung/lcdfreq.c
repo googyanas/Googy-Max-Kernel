@@ -21,6 +21,10 @@
 
 #include "s3cfb.h"
 
+#ifdef CONFIG_MACH_T0
+#include <linux/platform_data/mms152_ts.h>
+#endif
+
 enum lcdfreq_level_idx {
 	LEVEL_NORMAL,
 	LEVEL_LIMIT,
@@ -54,40 +58,38 @@ struct lcdfreq_info {
 };
 
 #ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
-u64    time_in_state[LCDFREQ_LEVEL_END];
-struct timeval  last_switch;
-static void init_accounting(void);
-static void refresh_last_switch(void);
- 
-void init_accounting(void)
+u64		time_in_state[LCDFREQ_LEVEL_END];
+struct timeval	last_switch;
+
+static void init_accounting()
 {
-  int i;
+	int i;
 
-  for (i = 0; i < LCDFREQ_LEVEL_END; i++) {
-    time_in_state[i] = 0;
-  }
+	for (i = 0; i < LCDFREQ_LEVEL_END; i++) {
+		time_in_state[i] = 0;
+	}
 
-  do_gettimeofday(&last_switch);
+	do_gettimeofday(&last_switch);
 }
 
-void refresh_last_switch(void)
+static void refresh_last_switch()
 {
-  do_gettimeofday(&last_switch);
+	do_gettimeofday(&last_switch);
 }
 
 static void do_time_slice(enum lcdfreq_level_idx idx)
 {
-  u64 delta;
-  struct timeval now;  
-  
-  do_gettimeofday(&now);
-  
-  delta = (now.tv_sec - last_switch.tv_sec) * USEC_PER_SEC +
-        (now.tv_usec - last_switch.tv_usec);
+	u64 delta;
+	struct timeval now;	
+	
+	do_gettimeofday(&now);
+	
+	delta = (now.tv_sec - last_switch.tv_sec) * USEC_PER_SEC +
+		    (now.tv_usec - last_switch.tv_usec);
 
-  time_in_state[idx] += delta;
+	time_in_state[idx] += delta;
 
-  last_switch = now;
+	last_switch = now;
 }
 #endif
 
@@ -170,11 +172,9 @@ static int set_lcdfreq_div(struct device *dev, enum lcdfreq_level_idx level)
 		dev_err(dev, "fail to change lcd freq\n");
 		goto exit;
 	}
-
 #ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
-  do_time_slice(lcdfreq->level);
+	do_time_slice(lcdfreq->level);
 #endif
-
 	lcdfreq->level = level;
 
 exit:
@@ -239,20 +239,20 @@ static int lcdfreq_lock_free(struct device *dev)
 #include <linux/cpufreq.h>
 struct device *ddev;
 atomic_t *usagep;
- 
+
 int _lcdfreq_lock(int lock)
 {
-  int ext_lock;
-  if(ddev != NULL) {
-    ext_lock = atomic_read(usagep);
-    if(!!lock && !ext_lock) {
-      return lcdfreq_lock(ddev);
-    } else if(!!ext_lock) {
-      return lcdfreq_lock_free(ddev);
-    }
-  }
-  
-  return -EINVAL;
+	int ext_lock;
+	if(ddev != NULL) {
+		ext_lock = atomic_read(usagep);
+		if(!!lock && !ext_lock) {
+			return lcdfreq_lock(ddev);
+		} else if(!!ext_lock) {
+			return lcdfreq_lock_free(ddev);
+		}
+	}
+	
+	return -EINVAL;
 }
 #endif
 
@@ -356,7 +356,9 @@ static ssize_t level_store(struct device *dev,
 		dev_err(dev, "%s fail\n", __func__);
 		return -EINVAL;
 	}
-
+#ifdef CONFIG_MACH_T0
+	tsp_lcd_infom((bool *) value);
+#endif
 	return count;
 }
 
@@ -371,22 +373,6 @@ static ssize_t usage_show(struct device *dev,
 	return sprintf(buf, "%d\n", atomic_read(&lcdfreq->usage));
 }
 
-#ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
-static ssize_t time_in_state_show(struct device *dev,
-    struct device_attribute *attr, char *buf)
-{
-  struct fb_info *fb = dev_get_drvdata(dev);
-  struct s3cfb_window *win = fb->par;
-  struct s3cfb_global *fbdev = get_fimd_global(win->id);
-  struct lcdfreq_info *lcdfreq = fbdev->data;
-
-  do_time_slice(lcdfreq->level);
-
-  return sprintf(buf, "%llu %d (60Hz)\n%llu %d (40Hz)\n", 
-    (unsigned long long)time_in_state[LEVEL_NORMAL], LEVEL_NORMAL,
-    (unsigned long long)time_in_state[LEVEL_LIMIT], LEVEL_LIMIT);
-}
-#endif
 
 static ssize_t freq_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -432,11 +418,26 @@ static ssize_t freq_store(struct device *dev,
 	return count;
 }
 
-static DEVICE_ATTR(freq, S_IRUGO|S_IWUSR, freq_show, freq_store);
+#ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
+static ssize_t time_in_state_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fb = dev_get_drvdata(dev);
+	struct s3cfb_window *win = fb->par;
+	struct s3cfb_global *fbdev = get_fimd_global(win->id);
+	struct lcdfreq_info *lcdfreq = fbdev->data;
 
+	do_time_slice(lcdfreq->level);
+
+	return sprintf(buf, "%llu %d\n%llu %d", 
+		(unsigned long long)time_in_state[LEVEL_NORMAL], LEVEL_NORMAL,
+		(unsigned long long)time_in_state[LEVEL_LIMIT], LEVEL_LIMIT);
+}
+#endif
+
+static DEVICE_ATTR(freq, S_IRUGO|S_IWUSR, freq_show, freq_store);
 static DEVICE_ATTR(level, S_IRUGO|S_IWUSR, level_show, level_store);
 static DEVICE_ATTR(usage, S_IRUGO, usage_show, NULL);
-
 #ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
 static DEVICE_ATTR(time_in_state, S_IRUGO, time_in_state_show, NULL);
 #endif
@@ -444,9 +445,9 @@ static DEVICE_ATTR(time_in_state, S_IRUGO, time_in_state_show, NULL);
 static struct attribute *lcdfreq_attributes[] = {
 	&dev_attr_level.attr,
 	&dev_attr_usage.attr,
-	&dev_attr_freq.attr, 
+	&dev_attr_freq.attr,
 #ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
-  &dev_attr_time_in_state.attr,
+	&dev_attr_time_in_state.attr,
 #endif
 	NULL,
 };
@@ -468,7 +469,7 @@ static void lcdfreq_early_suspend(struct early_suspend *h)
 	lcdfreq->level = LEVEL_NORMAL;
 	atomic_set(&lcdfreq->usage, 0);
 #ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
-  do_time_slice(lcdfreq->level);
+	do_time_slice(lcdfreq->level);
 #endif
 	mutex_unlock(&lcdfreq->lock);
 
@@ -484,6 +485,9 @@ static void lcdfreq_late_resume(struct early_suspend *h)
 
 	mutex_lock(&lcdfreq->lock);
 	lcdfreq->enable = true;
+#ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
+	refresh_last_switch();
+#endif
 	mutex_unlock(&lcdfreq->lock);
 
 	return;
@@ -630,12 +634,12 @@ int lcdfreq_init(struct fb_info *fb)
 	lcdfreq->enable = true;
 
 #ifdef CONFIG_CPU_FREQ_LCD_FREQ_DFS
-  ddev = lcdfreq->dev;
-  usagep = &lcdfreq->usage;
+	ddev = lcdfreq->dev;
+	usagep = &lcdfreq->usage;
 #endif
 
 #ifdef CONFIG_LCD_FREQ_SWITCH_ACCOUNTING
-  init_accounting();
+	init_accounting();
 #endif
 
 	dev_info(lcdfreq->dev, "%s is done\n", __func__);

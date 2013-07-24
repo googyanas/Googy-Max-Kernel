@@ -83,12 +83,12 @@ enum NEGATIVE {
 
 struct mdnie_tunning_info {
 	char *name;
-	const unsigned short *seq;
+	unsigned short *seq;
 };
 
 struct mdnie_tunning_info_cabc {
 	char *name;
-	const unsigned short *seq;
+	unsigned short *seq;
 	unsigned int idx_lut;
 };
 
@@ -119,8 +119,7 @@ struct mdnie_info {
 
 extern struct mdnie_info *g_mdnie;
 
-int mdnie_send_sequence(struct mdnie_info *mdnie, const unsigned short *seq);
-extern void set_mdnie_value(struct mdnie_info *mdnie, u8 force);
+int mdnie_send_sequence(struct mdnie_info *mdnie, unsigned short *seq);
 #if defined(CONFIG_FB_MDNIE_PWM)
 extern void set_mdnie_pwm_value(struct mdnie_info *mdnie, int value);
 #endif

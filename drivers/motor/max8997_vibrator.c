@@ -30,7 +30,7 @@
 static int pwm_duty_max;
 static int pwm_duty_min;
 
-static unsigned long pwm_val = 100; /* duty in percent */
+static unsigned long pwm_val = 50; /* duty in percent */
 static int pwm_duty; /* duty value */
 
 struct vibrator_drvdata {
@@ -354,7 +354,7 @@ static int __devinit vibrator_probe(struct platform_device *pdev)
 	g_data = ddata;
 	pwm_duty_max = g_data->pdata->duty;
 	pwm_duty_min = pwm_duty_max/2;
-	pwm_duty = (pwm_val * pwm_duty_min) / 100 + pwm_duty_min;
+	pwm_duty = (pwm_duty_min + pwm_duty_max)/2;
 #endif
 
 	return 0;

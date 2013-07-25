@@ -941,7 +941,10 @@ static irqreturn_t mms_ts_interrupt(int irq, void *dev_id)
 			}
 			continue;
 		}
-
+/* #ifdef CONFIG_TOUCH_WAKE
+  if (!device_is_suspended())
+  {
+#endif */
 		if (info->panel == 'M') {
 			input_mt_slot(info->input_dev, id);
 			input_mt_report_slot_state(info->input_dev,
@@ -4051,7 +4054,7 @@ static void mms_ts_late_resume(struct early_suspend *h)
 static struct mms_ts_info * touchwake_data;
 void touchscreen_disable(void)
 {
-  if (likely(touchwake_data != NULL)) 
+  if (touchwake_data != NULL) 
     mms_ts_suspend(&touchwake_data->client->dev);
 
     return;
@@ -4060,7 +4063,6 @@ EXPORT_SYMBOL(touchscreen_disable);
 
 void touchscreen_enable(void)
 {
-  if (likely(touchwake_data != NULL))
     mms_ts_resume(&touchwake_data->client->dev);
 
     return;

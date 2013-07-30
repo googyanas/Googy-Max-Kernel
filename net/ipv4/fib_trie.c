@@ -109,11 +109,10 @@ struct leaf {
 };
 
 struct leaf_info {
-    struct hlist_node hlist;
-    int plen;
-    u32 mask_plen; /* ntohl(inet_make_mask(plen)) */
-    struct list_head falh;
-    struct rcu_head rcu;
+	struct hlist_node hlist;
+	struct rcu_head rcu;
+	int plen;
+	struct list_head falh;
 };
 
 struct tnode {
@@ -452,7 +451,6 @@ static struct leaf_info *leaf_info_new(int plen)
 	struct leaf_info *li = kmalloc(sizeof(struct leaf_info),  GFP_KERNEL);
 	if (li) {
 		li->plen = plen;
-		li->mask_plen = ntohl(inet_make_mask(plen));
 		INIT_LIST_HEAD(&li->falh);
 	}
 	return li;
@@ -1361,8 +1359,10 @@ static int check_leaf(struct fib_table *tb, struct trie *t, struct leaf *l,
 
 	hlist_for_each_entry_rcu(li, node, hhead, hlist) {
 		struct fib_alias *fa;
+		int plen = li->plen;
+		__be32 mask = inet_make_mask(plen);
 
-		if (l->key != (key & li->mask_plen))
+		if (l->key != (key & ntohl(mask)))
 			continue;
 
 		list_for_each_entry_rcu(fa, &li->falh, fa_list) {
@@ -1396,7 +1396,7 @@ static int check_leaf(struct fib_table *tb, struct trie *t, struct leaf *l,
 #ifdef CONFIG_IP_FIB_TRIE_STATS
 				t->stats.semantic_match_passed++;
 #endif
-				res->prefixlen = li->plen;
+				res->prefixlen = plen;
 				res->nh_sel = nhsel;
 				res->type = fa->fa_type;
 				res->scope = fa->fa_info->fib_scope;
@@ -1404,7 +1404,7 @@ static int check_leaf(struct fib_table *tb, struct trie *t, struct leaf *l,
 				res->table = tb;
 				res->fa_head = &li->falh;
 				if (!(fib_flags & FIB_LOOKUP_NOREF))
-					atomic_inc(&fi->fib_clntref);
+					atomic_inc(&res->fi->fib_clntref);
 				return 0;
 			}
 		}

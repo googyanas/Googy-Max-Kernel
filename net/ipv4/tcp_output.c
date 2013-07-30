@@ -246,9 +246,6 @@ void tcp_select_initial_window(int __space, __u32 mss,
 			*rcv_wnd = min(*rcv_wnd, init_cwnd * mss);
 	}
 
-	/* Lock the initial TCP window size to 64K*/
-	*rcv_wnd = 64240;
-
 	/* Set the clamp no higher than max representable value */
 	(*window_clamp) = min(65535U << (*rcv_wscale), *window_clamp);
 }
@@ -836,13 +833,11 @@ static int tcp_transmit_skb(struct sock *sk, struct sk_buff *skb, int clone_it,
 							   &md5);
 	tcp_header_size = tcp_options_size + sizeof(struct tcphdr);
 
-	if (tcp_packets_in_flight(tp) == 0)
+	if (tcp_packets_in_flight(tp) == 0) {
 		tcp_ca_event(sk, CA_EVENT_TX_START);
-
-	/* if no packet is in qdisc/device queue, then allow XPS to select
-	 * another queue.
-	 */
-	skb->ooo_okay = sk_wmem_alloc_get(sk) == 0;
+		skb->ooo_okay = 1;
+	} else
+		skb->ooo_okay = 0;
 
 	skb_push(skb, tcp_header_size);
 	skb_reset_transport_header(skb);
@@ -1584,11 +1579,8 @@ static int tcp_tso_should_defer(struct sock *sk, struct sk_buff *skb)
 			goto send_now;
 	}
 
-	/* Ok, it looks like it is advisable to defer.
-	 * Do not rearm the timer if already set to not break TCP ACK clocking.
-	 */
-	if (!tp->tso_deferred)
-		tp->tso_deferred = 1 | (jiffies << 1);
+	/* Ok, it looks like it is advisable to defer.  */
+	tp->tso_deferred = 1 | (jiffies << 1);
 
 	return 1;
 

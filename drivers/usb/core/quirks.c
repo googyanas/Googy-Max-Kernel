@@ -110,9 +110,6 @@ static const struct usb_device_id usb_quirk_list[] = {
 	/* Edirol SD-20 */
 	{ USB_DEVICE(0x0582, 0x0027), .driver_info = USB_QUIRK_RESET_RESUME },
 
-	/* Alcor Micro Corp. Hub */
-	{ USB_DEVICE(0x058f, 0x9254), .driver_info = USB_QUIRK_RESET_RESUME },
-
 	/* appletouch */
 	{ USB_DEVICE(0x05ac, 0x021a), .driver_info = USB_QUIRK_RESET_RESUME },
 
@@ -176,9 +173,11 @@ static const struct usb_device_id usb_quirk_list[] = {
 	{ USB_DEVICE(0x04cc, 0x2333), .driver_info = USB_QUIRK_HSIC_TUNE },
 
 	/* Qualcomm MDM9x15 */
-	{ USB_DEVICE(0x05c6, 0x9048), .driver_info = USB_QUIRK_HSIC_TUNE },
+	{ USB_DEVICE(0x05c6, 0x9048),
+		.driver_info = USB_QUIRK_HSIC_TUNE | USB_QUIRK_NO_DPM_RESUME},
 
-	{ USB_DEVICE(0x05c6, 0x904C), .driver_info = USB_QUIRK_HSIC_TUNE },
+	{ USB_DEVICE(0x05c6, 0x904C),
+		.driver_info = USB_QUIRK_HSIC_TUNE | USB_QUIRK_NO_DPM_RESUME},
 	{ }  /* terminating entry must be last */
 };
 

@@ -579,7 +579,6 @@ static int fsg_set_halt(struct fsg_dev *fsg, struct usb_ep *ep)
 /* Caller must hold fsg->lock */
 static void wakeup_thread(struct fsg_common *common)
 {
-	smp_wmb();	/* ensure the write of bh->state is complete */
 	/* Tell the main thread that something has happened */
 	common->thread_wakeup_needed = 1;
 	if (common->thread_task)
@@ -797,7 +796,6 @@ static int sleep_thread(struct fsg_common *common)
 	}
 	__set_current_state(TASK_RUNNING);
 	common->thread_wakeup_needed = 0;
-	smp_rmb();	/* ensure the latest bh->state is visible */
 	return rc;
 }
 
@@ -2480,16 +2478,7 @@ static int do_scsi_command(struct fsg_common *common)
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
 		reply = check_command(common, 10, DATA_DIR_TO_HOST,
-#if defined(CONFIG_USB_CDFS_SUPPORT)
-#ifdef _SUPPORT_MAC_
 				      (0xf<<6) | (1<<1), 1,
-#else
-				      (7<<6) | (1<<1), 1,
-#endif
-#else
-				      (7<<6) | (1<<1), 1,
-#endif
-
 				      "READ TOC");
 		if (reply == 0)
 			reply = do_read_toc(common, bh);

@@ -44,7 +44,8 @@ CONFIG_BROADCOM_WIFI=y
 CONFIG_BCMDHD_FW_PATH="/system/etc/firmware/fw_bcmdhd.bin"
 CONFIG_BCMDHD_NVRAM_PATH="/system/etc/wifi/bcmdhd.cal"
 # CONFIG_WLAN_COUNTRY_CODE is not set
-
+CONFIG_KSM=y
+CONFIG_UKSM=y
 
 #
 CONFIG_ARM=y

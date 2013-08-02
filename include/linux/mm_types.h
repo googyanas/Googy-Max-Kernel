@@ -201,6 +201,11 @@ struct vm_area_struct {
 #ifdef CONFIG_ZRAM_FOR_ANDROID
 	int vma_swap_done;
 #endif /* CONFIG_ZRAM_FOR_ANDROID */
+
+#ifdef CONFIG_UKSM
+  struct vma_slot *uksm_vma_slot;
+#endif
+  
 };
 
 struct core_thread {

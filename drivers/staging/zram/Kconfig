@@ -43,6 +43,10 @@ config ZRAM_SNAPPY
 	bool "Snappy compression"
 	depends on SNAPPY_COMPRESS
 	depends on SNAPPY_DECOMPRESS
+config ZRAM_LZ4
+	bool "LZ4 compression"
+	depends on LZ4_COMPRESS
+	depends on LZ4_DECOMPRESS
 endchoice
 
 config ZRAM_FOR_ANDROID

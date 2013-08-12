@@ -317,7 +317,16 @@ bool check_for_speaker(void)
 
 bool check_for_headphone(void)
 {
-	return check_for_dapm(snd_soc_dapm_hp, "HP");
+//	return check_for_dapm(snd_soc_dapm_hp, "HP");
+	if( wm8994->micdet[0].jack != NULL )
+	{
+		if ((wm8994->micdet[0].jack->status & SND_JACK_HEADPHONE) ||
+		(wm8994->micdet[0].jack->status & SND_JACK_HEADSET))
+			return true;
+	}
+
+	return false;
+
 }
 
 void handler_output_detection(void)
@@ -358,8 +367,11 @@ bool debug(int level)
 
 void set_headphone(void)
 {
+
 	unsigned int val;
 
+	if (!sound_control)
+		return;
 	// get current register value, unmask volume bits, merge with sound control volume and write back
 	val = wm8994_read(codec, WM8994_LEFT_OUTPUT_VOLUME);
 	val = (val & ~WM8994_HPOUT1L_VOL_MASK) | headphone_l;
@@ -394,8 +406,11 @@ unsigned int get_headphone_r(unsigned int val)
 
 void set_speaker(void)
 {
+
 	unsigned int val;
 
+	if (!sound_control)
+		return;
 	// read current register values, get corrected value and write back to audio hub
 	val = wm8994_read(codec, WM8994_SPEAKER_VOLUME_LEFT);
 	val = get_speaker_channel_volume(speaker_l, val);
@@ -429,8 +444,11 @@ unsigned int get_speaker_channel_volume(int channel, unsigned int val)
 
 void set_eq(void)
 {
+
 	unsigned int val;
 
+	if (!sound_control)
+		return;
 	/* Set equalizer active flag
 	 *
 	 * Equalizer will only be switched on if
@@ -473,9 +491,12 @@ void set_eq(void)
 
 void set_eq_gains(void)
 {
+
 	unsigned int val, out;
 	unsigned int gain1, gain2, gain3, gain4, gain5;
 
+	if (!sound_control)
+		return;
 	/* Determine data index */
 	switch (output_type) {
 		case OUTPUT_HP:	
@@ -526,12 +547,15 @@ void set_eq_gains(void)
 
 void set_eq_bands()
 {
+
 	// Set band frequencies either for headphone eq or for speaker tuning
 	int i = WM8994_AIF1_DAC1_EQ_BAND_1_A;
 	int j = 0;
 	int k = 0;
 	int o;
 	
+	if (!sound_control)
+		return;
 	/* Determine data index */
 	switch (output_type) {
 		case OUTPUT_HP:	
@@ -570,8 +594,11 @@ void set_eq_bands()
 
 void set_eq_satprevention(void)
 {
+
 	unsigned int val, i;
 
+  	if (!sound_control)
+		return;
 	/* Read current value for DRC1_i register, modify value and write back to audio hub.
 	 * Iterate from WM8994_AIF1_DRC1_1 to WM8994_AIF1_DRC1_4 */
 
@@ -610,8 +637,11 @@ unsigned int get_eq_satprevention(int reg_index, unsigned int val)
 
 void set_speaker_boost(void)
 {
+
 	unsigned int val, boostval;
 
+  	if (!sound_control)
+		return;
 	/* Speaker boost is only active on external speaker and its EQ is on */
 	boostval = (output_type == OUTPUT_SPEAKER && eq_speaker) ? \
 			speaker_boost_level : SPEAKER_BOOST_DEFAULT;
@@ -632,8 +662,11 @@ void set_speaker_boost(void)
 
 void set_dac_direct(void)
 {
+
 	unsigned int val;
 
+    	if (!sound_control)
+		return;
 	// get current values for output mixers 1 and 2 (l + r) from audio hub
 	// modify the data accordingly and write back to audio hub
 	val = wm8994_read(codec, WM8994_OUTPUT_MIXER_1);
@@ -681,8 +714,11 @@ unsigned int get_dac_direct_r(unsigned int val)
 
 void set_dac_oversampling()
 {
+
 	unsigned int val;
 
+    	if (!sound_control)
+		return;
 	// read current value of oversampling register
 	val = wm8994_read(codec, WM8994_OVERSAMPLING);
 
@@ -704,8 +740,11 @@ void set_dac_oversampling()
 
 void set_fll_tuning(void)
 {
+
 	unsigned int val;
 
+    	if (!sound_control)
+		return;
 	// read current value of FLL control register 4 and mask out loop gain value
 	val = wm8994_read(codec, WM8994_FLL1_CONTROL_4);
 	val &= ~WM8994_FLL1_LOOP_GAIN_MASK;
@@ -726,8 +765,11 @@ void set_fll_tuning(void)
 
 void set_stereo_expansion(void)
 {
+
 	unsigned int val;
 
+    	if (!sound_control)
+		return;
 	// read current value of DAC1 filter register and mask out gain value and enable bit
 	val = wm8994_read(codec, WM8994_AIF1_DAC1_FILTERS_2);
 	val &= ~(WM8994_AIF1DAC1_3D_GAIN_MASK);
@@ -753,8 +795,11 @@ void set_stereo_expansion(void)
 
 void set_mono_downmix(void)
 {
+
 	unsigned int val;
 
+    	if (!sound_control)
+		return;
 	if (output_type == OUTPUT_HP) {
 		val = wm8994_read(codec, WM8994_AIF1_DAC1_FILTERS_1);
 
@@ -784,8 +829,11 @@ unsigned int get_mono_downmix(unsigned int val)
 
 void set_mic_level(void)
 {
+
 	unsigned int val;
 
+    	if (!sound_control)
+		return;
 	/* Set mic level depending on call detection */
 
 	mic_level = (output_type == OUTPUT_RECEIVER) ? mic_level_call :

@@ -361,7 +361,7 @@ unsigned short get_speakervol(unsigned short val)
 void update_speaker_offset(void)
 {
 
-  	if(!enable) return;
+//  	if(!enable) return;
 	write_speakervol(57 + speaker_offset);
 }
 
@@ -477,7 +477,7 @@ void update_hpvol(bool with_fade)
 	unsigned short hp_level_registers[2] = { WM8994_LEFT_OUTPUT_VOLUME,
 						 WM8994_RIGHT_OUTPUT_VOLUME };
 
-  	if(!enable) return;
+//  	if(!enable) return;
 	// don't affect headphone amplifier volume
 	// when not on heapdhones or if call is active
 //ggy2	if (!is_path(HEADPHONES) || (codec_state & CALL_ACTIVE))
@@ -558,7 +558,7 @@ void update_fm_radio_headset_restore_freqs(bool with_mute)
 {
 
 	unsigned short val;
-  	if(!enable) return;
+//  	if(!enable) return;
 	DECLARE_WM8994(codec);
 
 	bypass_write_hook = true;
@@ -609,7 +609,7 @@ void update_fm_radio_headset_restore_freqs(bool with_mute)
 
 void update_fm_radio_headset_normalize_gain(bool with_mute)
 {
-  	if(!enable) return;
+//  	if(!enable) return;
 
 	DECLARE_WM8994(codec);
 
@@ -644,7 +644,7 @@ void update_fm_radio_headset_normalize_gain(bool with_mute)
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
 void update_recording_preset(bool with_mute)
 {
-  	if(!enable) return;
+//  	if(!enable) return;
 
 //	if (!is_path(MAIN_MICROPHONE))
 //		return;
@@ -871,7 +871,7 @@ bool is_path_media_or_fm_no_call_no_record()
 unsigned short speaker_tuning_level = 44;
 void update_speaker_tuning(bool with_mute)
 {
-  	if(!enable) return;
+//  	if(!enable) return;
 
 //gg2	if (!(is_path(SPEAKER) || (codec_state & CALL_ACTIVE)))
 	if (!(is_path(SPEAKER) ))
@@ -980,7 +980,7 @@ void update_osr128(bool with_mute)
 {
 
 	unsigned short val;
-  	if(!enable) return;
+//  	if(!enable) return;
 	val = osr128_get_value(wm8994_read(codec, WM8994_OVERSAMPLING));
 	bypass_write_hook = true;
 	wm8994_write(codec, WM8994_OVERSAMPLING, val);
@@ -1005,7 +1005,7 @@ void update_fll_tuning(bool with_mute)
 {
 
 	unsigned short val;
-  	if(!enable) return;
+//  	if(!enable) return;
 	val = fll_tuning_get_value(wm8994_read(codec, WM8994_FLL1_CONTROL_4));
 	bypass_write_hook = true;
 	wm8994_write(codec, WM8994_FLL1_CONTROL_4, val);
@@ -1033,7 +1033,7 @@ void update_mono_downmix(bool with_mute)
 {
 
 	unsigned short val1, val2, val3;
-  	if(!enable) return;
+//  	if(!enable) return;
 	val1 = mono_downmix_get_value(wm8994_read
 				      (codec, WM8994_AIF1_DAC1_FILTERS_1),
 				      true);
@@ -1076,7 +1076,7 @@ void update_dac_direct(bool with_mute)
 {
 
 	unsigned short val1, val2;
-  	if(!enable) return;
+//  	if(!enable) return;
 	val1 = dac_direct_get_value(wm8994_read(codec,
 						WM8994_OUTPUT_MIXER_1), true);
 	val2 = dac_direct_get_value(wm8994_read(codec,
@@ -1122,7 +1122,7 @@ void update_digital_gain(bool with_mute)
 {
 
 	unsigned short val1, val2;
-  	if(!enable) return;
+//  	if(!enable) return;
 	val1 = digital_gain_get_value(wm8994_read(codec,
 						WM8994_AIF1_DAC1_LEFT_VOLUME));
 	val2 = digital_gain_get_value(wm8994_read(codec,
@@ -1142,7 +1142,7 @@ void update_headphone_eq(bool update_bands)
 	int gains_1;
 	int gains_2;
 
-  	if(!enable) return;
+//  	if(!enable) return;
 //ggy3	if (!is_path_media_or_fm_no_call_no_record()) {
 		// don't apply the EQ
 //ggy3		return;
@@ -1184,7 +1184,7 @@ void update_headphone_eq_bands()
 	int k = 0;
 	int first_reg = WM8994_AIF1_DAC1_EQ_BAND_1_A;
 
-  	if(!enable) return;
+//  	if(!enable) return;
 //ggy3	if (!is_path_media_or_fm_no_call_no_record()) {
 		// don't apply the EQ
 //ggy3		return;
@@ -1237,7 +1237,7 @@ void update_stereo_expansion(bool with_mute)
 
 	short unsigned int val;
 
-  	if(!enable) return;
+//  	if(!enable) return;
 	val = wm8994_read(codec, WM8994_AIF1_DAC1_FILTERS_2);
 	if (stereo_expansion) {
 		val &= ~(WM8994_AIF1DAC1_3D_GAIN_MASK);

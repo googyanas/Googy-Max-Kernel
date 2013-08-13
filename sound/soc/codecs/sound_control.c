@@ -1068,7 +1068,7 @@ static ssize_t band_show(int output, int band, char *buf)
 {							\
 	.attr = {					\
 		  .name = #name_,			\
-		  .mode = S_IRUGO | S_IWUSR | S_IWGRP,	\
+		  .mode = S_IRUGO | S_IWUGO,	\
 		},					\
 	.show = show_sound_property,			\
 	.store = store_sound_property,			\

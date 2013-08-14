@@ -333,8 +333,9 @@ void handler_output_detection(void)
 {
 	int new_output = OUTPUT_OTHER;
 
-	if (check_for_headphone())
+	if (check_for_headphone()) {
 		new_output = OUTPUT_HP;
+		set_eq();}
 	else if (check_for_speaker())
 		new_output = OUTPUT_SPEAKER;
 	else if (check_for_receiver())
@@ -1276,6 +1277,8 @@ static ssize_t store_sound_property(struct device *dev,
 
 		case SWITCH_EQ_HEADPHONE:
 			eq = val & (EQ_ENABLED | EQ_SATPREVENT);
+//			eq = true;
+			handler_output_detection();
 			set_eq();
 			break;
 
@@ -1329,6 +1332,7 @@ static ssize_t store_sound_property(struct device *dev,
 				headphone_r = val;
 
 			set_headphone();
+			set_eq();
 			break;
 
 		case SPEAKER_LEFT:

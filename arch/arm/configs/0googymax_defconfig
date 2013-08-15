@@ -3,7 +3,7 @@
 # Automatically generated make config: don't edit
 # Linux/arm 3.0.31 Kernel Configuration
 #
-CONFIG_LOCALVERSION="-Googy-Max-1.6.7"
+CONFIG_LOCALVERSION="-Googy-Max-1.6.8"
 CONFIG_SWAP=y
 CONFIG_XVMALLOC=y
 # CONFIG_ZCACHE is not set

@@ -672,7 +672,7 @@ static void set_max_pktsize(struct s3c_udc *dev, enum usb_device_speed speed)
 	} else {
 		ep0_fifo_size = 64;
 		ep_fifo_size = 64;
-		ep_fifo_size2 = 1023;
+		ep_fifo_size2 = 64;
 		dev->gadget.speed = USB_SPEED_FULL;
 	}
 

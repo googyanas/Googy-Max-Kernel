@@ -1,7 +1,4 @@
-/*
- * Copyright (C) 2010 ARM Limited. All rights reserved.
- *
- * This program is free software and is provided to you under the terms of the GNU General Public License version 2
+/* * Copyright (C) 2010-2012 ARM Limited. All rights reserved. * * This program is free software and is provided to you under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation, and any use by you of this program is subject to the terms of such GNU licence.
  *
  * A copy of the licence is included with the program, and can also be obtained from Free Software
@@ -32,6 +29,7 @@
 
 #ifdef CONFIG_CPU_FREQ
 #include <mach/asv.h>
+#include <mach/regs-pmu.h>
 #define EXYNOS4_ASV_ENABLED
 #endif
 
@@ -269,6 +267,7 @@ static unsigned int get_mali_dvfs_status(void)
 {
 	return maliDvfsStatus.currentStep;
 }
+
 #if MALI_PMM_RUNTIME_JOB_CONTROL_ON
 int get_mali_dvfs_control_status(void)
 {
@@ -285,6 +284,7 @@ mali_bool set_mali_dvfs_current_step(unsigned int step)
 	return MALI_TRUE;
 }
 #endif
+
 static mali_bool set_mali_dvfs_status(u32 step,mali_bool boostup)
 {
 	u32 validatedStep=step;
@@ -377,7 +377,7 @@ static mali_bool mali_dvfs_table_update(void)
 			mali_dvfs[i].vol = asv_3d_volt_5_table[exynos_result_of_asv_group][i];
 			MALI_PRINT(("mali_dvfs[%d].vol = %d\n", i, mali_dvfs[i].vol));
 		}
-	} else if (target_asv == 0x4){ //SUPPORT_1200MHZ
+	} else {
 		for (i = 0; i < MALI_DVFS_STEPS; i++) {
 			mali_dvfs[i].vol = asv_3d_volt_8_table[exynos_result_of_asv_group][i];
 			MALI_PRINT(("mali_dvfs[%d].vol = %d\n", i, mali_dvfs[i].vol));
@@ -525,7 +525,6 @@ static mali_bool mali_dvfs_status(u32 utilization)
 #ifdef EXYNOS4_ASV_ENABLED
 	static mali_bool asv_applied = MALI_FALSE;
 #endif
-
 	MALI_DEBUG_PRINT(1, ("> mali_dvfs_status: %d \n",utilization));
 #ifdef EXYNOS4_ASV_ENABLED
 	if (asv_applied == MALI_FALSE) {
@@ -544,9 +543,10 @@ static mali_bool mali_dvfs_status(u32 utilization)
 	MALI_DEBUG_PRINT(1, ("= curStatus %d, nextStatus %d, maliDvfsStatus.currentStep %d \n", curStatus, nextStatus, maliDvfsStatus.currentStep));
 
 	/*if next status is same with current status, don't change anything*/
-	if ((curStatus != nextStatus && stay_count == 0)) {
+	if ((curStatus!=nextStatus && stay_count==0)) {
 		/*check if boost up or not*/
-		if (nextStatus > maliDvfsStatus.currentStep) boostup = 1;
+		if (nextStatus > maliDvfsStatus.currentStep)
+			boostup = 1;
 
 		/*change mali dvfs status*/
 		if (!change_mali_dvfs_status(nextStatus,boostup)) {
@@ -563,13 +563,10 @@ static mali_bool mali_dvfs_status(u32 utilization)
 }
 
 
-
 int mali_dvfs_is_running(void)
 {
 	return bMaliDvfsRun;
-
 }
-
 
 
 void mali_dvfs_late_resume(void)

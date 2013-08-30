@@ -91,7 +91,7 @@ static unsigned int eq_bands[EQ_TYPE_MAX][5][4] = { { { 0 } } };
 static int dac_direct;			// dac_direct for headphone eq
 static int dac_oversampling;		// 128bit oversampling for headphone eq
 static int fll_tuning;			// fll tuning to avoid jitter
-static int stereo_expansion_gain;	// stereo expansion effect if greater than zero
+static int stereo_3D_gain;	// stereo 3D effect if greater than zero
 static int mono_downmix;		// mono downmix
 static int privacy_mode;		// privacy mode
 
@@ -143,7 +143,7 @@ unsigned int get_dac_direct_r(unsigned int val);
 
 void set_dac_oversampling(void);
 void set_fll_tuning(void);
-void set_stereo_expansion(void);
+void set_stereo_3D(void);
 void set_mono_downmix(void);
 unsigned int get_mono_downmix(unsigned int val);
 
@@ -773,9 +773,9 @@ void set_fll_tuning(void)
 }
 
 
-// Stereo expansion
+// Stereo 3D
 
-void set_stereo_expansion(void)
+void set_stereo_3D(void)
 {
 
 	unsigned int val;
@@ -787,16 +787,16 @@ void set_stereo_expansion(void)
 	val &= ~(WM8994_AIF1DAC1_3D_GAIN_MASK);
 	val &= ~(WM8994_AIF1DAC1_3D_ENA_MASK);
 
-	// depending on whether stereo expansion is 0 (=off) or not, modify values for gain
+	// depending on whether stereo 3D is 0 (=off) or not, modify values for gain
 	// and enabled bit accordingly, also print debug
-	if (stereo_expansion_gain != STEREO_EXPANSION_GAIN_OFF) {
-		val |= (stereo_expansion_gain << WM8994_AIF1DAC1_3D_GAIN_SHIFT) | WM8994_AIF1DAC1_3D_ENA;
+	if (stereo_3D_gain != STEREO_3D_GAIN_OFF) {
+		val |= (stereo_3D_gain << WM8994_AIF1DAC1_3D_GAIN_SHIFT) | WM8994_AIF1DAC1_3D_ENA;
 
 		if (unlikely(debug(DEBUG_NORMAL)))
-			printk("Audio: set_stereo_expansion set to %d\n", stereo_expansion_gain);
+			printk("Audio: set_stereo_3D set to %d\n", stereo_3D_gain);
 	} else
 		if (unlikely(debug(DEBUG_NORMAL)))
-			printk("Audio: set_stereo_expansion off\n");
+			printk("Audio: set_stereo_3D off\n");
 
 	// write value back to audio hub
 	wm8994_write(codec, WM8994_AIF1_DAC1_FILTERS_2, val);
@@ -911,7 +911,7 @@ void initialize_global_variables(void)
 
 	fll_tuning = false;
 
-	stereo_expansion_gain = STEREO_EXPANSION_GAIN_OFF;
+	stereo_3D_gain = STEREO_3D_GAIN_OFF;
 
 	mono_downmix = false;
 
@@ -952,7 +952,7 @@ void reset_sound_control(void)
 	set_dac_direct();
 	set_dac_oversampling();
 	set_fll_tuning();
-	set_stereo_expansion();
+	set_stereo_3D();
 	set_mono_downmix();
 
 	handler_output_detection();
@@ -1118,7 +1118,7 @@ static struct device_attribute sound_control_attrs[] = {
 
 	SOUND_ATTR(speaker_boost_level),
 
-	SOUND_ATTR(stereo_expansion),
+	SOUND_ATTR(stereo_3D),
 
 	SOUND_ATTR(mic_level_general),
 	SOUND_ATTR(mic_level_camera),
@@ -1167,7 +1167,7 @@ enum {
 
 	SPEAKER_BOOST_LEVEL,
 
-	STEREO_EXPANSION,
+	STEREO_3D,
 
 	MIC_LEVEL_GENERAL,
 	MIC_LEVEL_CAMERA,
@@ -1230,8 +1230,8 @@ static ssize_t show_sound_property(struct device *dev,
 			return sprintf(buf, "%d", speaker_boost_level);
 
 
-		case STEREO_EXPANSION:
-			return sprintf(buf, "%d", stereo_expansion_gain);
+		case STEREO_3D:
+			return sprintf(buf, "%d", stereo_3D_gain);
 
 		case MIC_LEVEL_GENERAL:
 			return sprintf(buf, "%d", mic_level_general);
@@ -1373,10 +1373,10 @@ static ssize_t store_sound_property(struct device *dev,
 			set_speaker_boost();
 			break;
 
-		case STEREO_EXPANSION:
-			sanitize_min_max(val, STEREO_EXPANSION_GAIN_OFF, STEREO_EXPANSION_GAIN_MAX);
-			stereo_expansion_gain = val;
-			set_stereo_expansion();
+		case STEREO_3D:
+			sanitize_min_max(val, STEREO_3D_GAIN_OFF, STEREO_3D_GAIN_MAX);
+			stereo_3D_gain = val;
+			set_stereo_3D();
 			break;
 
 		case MIC_LEVEL_GENERAL:

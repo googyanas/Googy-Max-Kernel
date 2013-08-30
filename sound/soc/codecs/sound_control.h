@@ -94,10 +94,10 @@ enum {
 #define FLL_LOOP_GAIN_DEFAULT	0
 #define FLL_LOOP_GAIN_TUNED	5
 
-// Stereo expansion
-#define STEREO_EXPANSION_GAIN_DEFAULT	0
-#define STEREO_EXPANSION_GAIN_OFF		0
-#define STEREO_EXPANSION_GAIN_MAX		31
+// Stereo 3D
+#define STEREO_3D_GAIN_DEFAULT	0
+#define STEREO_3D_GAIN_OFF	0
+#define STEREO_3D_GAIN_MAX	31
 
 // headphone levels
 #define HEADPHONE_DEFAULT 	50

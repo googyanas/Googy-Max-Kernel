@@ -227,7 +227,7 @@ extern struct ctl_table epoll_table[];
 int sysctl_legacy_va_layout;
 #endif
 
-// extern int late_init_android_gadget(int romtype);
+extern int late_init_android_gadget(int romtype);
 extern int mfc_late_init(void);
 #ifdef CONFIG_CPU_EXYNOS4210
 extern int u1_gps_ntt_init(void);
@@ -260,7 +260,7 @@ rom_feature_set_sysctl(struct ctl_table *table, int write,
 		}
 		rom_feature_set_save = rom_feature_set;
 		printk("Initializing USB with rom_feature_set: %d\n", rom_feature_set);
-//		late_init_android_gadget(rom_feature_set);
+		late_init_android_gadget(rom_feature_set);
 #ifdef CONFIG_MALI_CM
 		if(!OLDMALIEXPR) new_late_mali_driver_init();
 		else late_mali_driver_init();

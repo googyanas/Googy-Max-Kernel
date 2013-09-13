@@ -633,6 +633,10 @@ static inline int valid_io_request(struct zram *zram, struct bio *bio)
 		return 0;
 	}
 
+	if (unlikely((bio->bi_sector << SECTOR_SHIFT) + bio->bi_size >=
+		     zram->disksize))
+		return 0;
+
 	/* I/O request is valid */
 	return 1;
 }

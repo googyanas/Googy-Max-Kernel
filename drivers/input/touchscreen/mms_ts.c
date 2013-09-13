@@ -96,7 +96,6 @@ static spinlock_t gestures_lock;
 #include <linux/platform_data/mms_ts.h>
 
 #include <asm/unaligned.h>
-#include "../keyboard/cypress/cypress-touchkey.h"
 
 #define MAX_FINGERS		10
 #define MAX_WIDTH		30
@@ -806,7 +805,7 @@ static irqreturn_t mms_ts_interrupt(int irq, void *dev_id)
 #endif
 
                 // report state to cypress-touchkey for backlight timeout
-                AOSPROM touchscreen_state_report(0);
+//                AOSPROM touchscreen_state_report(0);
 
 				dev_notice(&client->dev,
 					"finger [%d] up, palm %d\n", id, palm);
@@ -936,7 +935,7 @@ static irqreturn_t mms_ts_interrupt(int irq, void *dev_id)
 			info->finger_state[id] = 1;
 
             // report state to cypress-touchkey for backlight timeout
-            AOSPROM touchscreen_state_report(1);
+//            AOSPROM touchscreen_state_report(1);
 
 			dev_notice(&client->dev,
 				"finger [%d] down, palm %d\n", id, palm);

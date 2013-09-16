@@ -36,17 +36,17 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include "lz4.h"
+#include <linux/lz4.h>
 #include <asm/unaligned.h>
 #include "lz4defs.h"
 
 /*
  * LZ4_compressCtx :
  * -----------------
- * Compress &#39;isize&#39; bytes from &#39;source&#39; into an output buffer &#39;dest&#39; of
- * maximum size &#39;maxOutputSize&#39;.  * If it cannot achieve it, compression
+ * Compress 'isize' bytes from 'source' into an output buffer 'dest' of
+ * maximum size 'maxOutputSize'.  * If it cannot achieve it, compression
  * will stop, and result of the function will be zero.
- * return : the number of bytes written in buffer &#39;dest&#39;, or 0 if the
+ * return : the number of bytes written in buffer 'dest', or 0 if the
  * compression fails
  */
 static inline int lz4_compressctx(void *ctx,
@@ -415,7 +415,7 @@ _last_literals:
 	return (int)(((char *)op) - dest);
 }
 
-int lz4_compress2(const unsigned char *src, size_t src_len,
+int lz4_compress(const unsigned char *src, size_t src_len,
 			unsigned char *dst, size_t *dst_len, void *wrkmem)
 {
 	int ret = -1;
@@ -437,7 +437,7 @@ int lz4_compress2(const unsigned char *src, size_t src_len,
 exit:
 	return ret;
 }
-EXPORT_SYMBOL_GPL(lz4_compress2);
+EXPORT_SYMBOL_GPL(lz4_compress);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("LZ4 compressor");

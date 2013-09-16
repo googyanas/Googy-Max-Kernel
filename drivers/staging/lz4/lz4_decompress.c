@@ -302,7 +302,7 @@ exit_0:
 EXPORT_SYMBOL_GPL(lz4_decompress_fast);
 #endif
 
-int lz4_decompress_unknownoutputsize2(const char *src, size_t src_len,
+int lz4_decompress_unknownoutputsize(const char *src, size_t src_len,
 		char *dest, size_t *dest_len)
 {
 	int ret = -1;
@@ -319,7 +319,7 @@ exit_0:
 	return ret;
 }
 #ifndef STATIC
-EXPORT_SYMBOL_GPL(lz4_decompress_unknownoutputsize2);
+EXPORT_SYMBOL_GPL(lz4_decompress_unknownoutputsize);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("LZ4 Decompressor");

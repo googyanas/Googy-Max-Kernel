@@ -415,7 +415,7 @@ _last_literals:
 	return (int)(((char *)op) - dest);
 }
 
-int lz4_compress2(const unsigned char *src, size_t src_len,
+int lz4_compress(const unsigned char *src, size_t src_len,
 			unsigned char *dst, size_t *dst_len, void *wrkmem)
 {
 	int ret = -1;
@@ -437,7 +437,7 @@ int lz4_compress2(const unsigned char *src, size_t src_len,
 exit:
 	return ret;
 }
-EXPORT_SYMBOL_GPL(lz4_compress2);
+EXPORT_SYMBOL_GPL(lz4_compress);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("LZ4 compressor");

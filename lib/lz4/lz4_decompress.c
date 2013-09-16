@@ -1,7 +1,7 @@
 /*
  * LZ4 Decompressor for Linux kernel
  *
- * Copyright (C) 2013, LG Electronics, Kyungsik Lee <kyungsik.lee@lge.com>
+ * Copyright (C) 2013 LG Electronics Co., Ltd. (http://www.lge.com/)
  *
  * Based on LZ4 implementation by Yann Collet.
  *
@@ -41,7 +41,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #endif
-#include "lz4.h"
+#include <linux/lz4.h>
 
 #include <asm/unaligned.h>
 
@@ -283,7 +283,7 @@ _output_error:
 	return (int) (-(((char *) ip) - source));
 }
 
-int lz4_decompress_fast(const char *src, size_t *src_len, char *dest,
+int lz4_decompress(const char *src, size_t *src_len, char *dest,
 		size_t actual_dest_len)
 {
 	int ret = -1;
@@ -299,10 +299,10 @@ exit_0:
 	return ret;
 }
 #ifndef STATIC
-EXPORT_SYMBOL_GPL(lz4_decompress_fast);
+EXPORT_SYMBOL_GPL(lz4_decompress);
 #endif
 
-int lz4_decompress_unknownoutputsize2(const char *src, size_t src_len,
+int lz4_decompress_unknownoutputsize(const char *src, size_t src_len,
 		char *dest, size_t *dest_len)
 {
 	int ret = -1;
@@ -319,7 +319,7 @@ exit_0:
 	return ret;
 }
 #ifndef STATIC
-EXPORT_SYMBOL_GPL(lz4_decompress_unknownoutputsize2);
+EXPORT_SYMBOL_GPL(lz4_decompress_unknownoutputsize);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("LZ4 Decompressor");

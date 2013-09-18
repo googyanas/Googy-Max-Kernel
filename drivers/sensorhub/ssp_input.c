@@ -14,6 +14,10 @@
  */
 #include "ssp.h"
 
+#ifdef CONFIG_TOUCH_WAKE
+#include <linux/touch_wake.h>
+#endif
+
 /*************************************************************************/
 /* SSP Kernel -> HAL input evnet function                                */
 /*************************************************************************/
@@ -50,13 +54,13 @@ void report_gyro_data(struct ssp_data *data, struct sensor_value *gyrodata)
 	data->buf[GYROSCOPE_SENSOR].z = gyrodata->z - data->gyrocal.z;
 
 	if (data->uGyroDps == GYROSCOPE_DPS250)	{
-		lTemp[0] = (long)data->buf[GYROSCOPE_SENSOR].x / 2;
-		lTemp[1] = (long)data->buf[GYROSCOPE_SENSOR].y / 2;
-		lTemp[2] = (long)data->buf[GYROSCOPE_SENSOR].z / 2;
+		lTemp[0] = (long)data->buf[GYROSCOPE_SENSOR].x >> 1;
+		lTemp[1] = (long)data->buf[GYROSCOPE_SENSOR].y >> 1;
+		lTemp[2] = (long)data->buf[GYROSCOPE_SENSOR].z >> 1;
 	} else if (data->uGyroDps == GYROSCOPE_DPS2000)	{
-		lTemp[0] = (long)data->buf[GYROSCOPE_SENSOR].x * 4;
-		lTemp[1] = (long)data->buf[GYROSCOPE_SENSOR].y * 4;
-		lTemp[2] = (long)data->buf[GYROSCOPE_SENSOR].z * 4;
+		lTemp[0] = (long)data->buf[GYROSCOPE_SENSOR].x << 2;
+		lTemp[1] = (long)data->buf[GYROSCOPE_SENSOR].y << 2;
+		lTemp[2] = (long)data->buf[GYROSCOPE_SENSOR].z << 2;
 	} else {
 		lTemp[0] = (long)data->buf[GYROSCOPE_SENSOR].x;
 		lTemp[1] = (long)data->buf[GYROSCOPE_SENSOR].y;
@@ -119,20 +123,16 @@ void report_prox_data(struct ssp_data *data, struct sensor_value *proxdata)
 	ssp_dbg("[SSP] Proximity Sensor Detect : %u, raw : %u\n",
 		proxdata->prox[0], proxdata->prox[1]);
 
+#ifdef CONFIG_TOUCH_WAKE
+	if (proxdata->prox[0]) { // true if proximity detected
+		proximity_detected();
+	} else {
+    		proximity_off();
+  	}
+#endif
+
 	data->buf[PROXIMITY_SENSOR].prox[0] = proxdata->prox[0];
 	data->buf[PROXIMITY_SENSOR].prox[1] = proxdata->prox[1];
-
-#if defined(CONFIG_MACH_T0_USA_SPR) || defined(CONFIG_MACH_T0_USA_USCC)\
-	|| defined(CONFIG_MACH_T0_USA_VZW) || defined(CONFIG_MACH_T0_USA_TMO)\
-	|| defined(CONFIG_MACH_T0_USA_ATT)
-	if (data->check_ap_rev() == 0x04)
-		proxdata->prox[0] = 0;
-#endif
-
-#if defined(CONFIG_MACH_T0_USA_TMO)
-	if (data->check_ap_rev() == 0x05)
-		proxdata->prox[0] = 0;
-#endif
 
 	input_report_abs(data->prox_input_dev, ABS_DISTANCE,
 		(!proxdata->prox[0]));
@@ -355,7 +355,7 @@ iRet_pressure_input_unreg_device:
 	input_unregister_device(gyro_input_dev);
 iRet_gyro_input_unreg_device:
 	input_unregister_device(acc_input_dev);
-	return -1;
+	return ERROR;
 
 iRet_acc_input_unreg_device:
 	pr_err("[SSP]: %s - could not register input device\n", __func__);
@@ -370,7 +370,7 @@ iRet_gyro_input_free_device:
 	input_free_device(acc_input_dev);
 iRet_acc_input_free_device:
 	pr_err("[SSP]: %s - could not allocate input device\n", __func__);
-	return -1;
+	return ERROR;
 }
 
 void remove_input_dev(struct ssp_data *data)

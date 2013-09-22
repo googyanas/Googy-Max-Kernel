@@ -1030,9 +1030,9 @@ static int exynos4212_vpll_set_rate(struct clk *clk, unsigned long rate)
 	__raw_writel(vpll_con0, EXYNOS4_VPLL_CON0);
 	__raw_writel(vpll_con1, EXYNOS4_VPLL_CON1);
 
-	do {
-		vpll_con0 = __raw_readl(EXYNOS4_VPLL_CON0);
-	} while (!(vpll_con0 & 0x1 << EXYNOS4_VPLLCON0_LOCKED_SHIFT));
+//	do {
+//		vpll_con0 = __raw_readl(EXYNOS4_VPLL_CON0);
+//	} while (!(vpll_con0 & 0x1 << EXYNOS4_VPLLCON0_LOCKED_SHIFT));
 
 	clk->rate = rate;
 

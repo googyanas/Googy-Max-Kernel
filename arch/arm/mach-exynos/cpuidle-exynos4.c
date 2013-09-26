@@ -603,7 +603,7 @@ static int exynos4_enter_core0_aftr(struct cpuidle_device *dev,
 
 early_wakeup:
 #ifdef CONFIG_EXYNOS4_CPUFREQ
-	if ((exynos_result_of_asv > 1) && !soc_is_exynos4210())
+	if (!soc_is_exynos4210())
 		exynos4x12_set_abb_member(ABB_ARM, abb_val);
 #endif
 
@@ -729,7 +729,7 @@ early_wakeup:
 			       ARRAY_SIZE(exynos4_lpa_save));
 
 #ifdef CONFIG_EXYNOS4_CPUFREQ
-	if ((exynos_result_of_asv > 1) && !soc_is_exynos4210()) {
+	if (!soc_is_exynos4210()) {
 		exynos4x12_set_abb_member(ABB_ARM, abb_val);
 		exynos4x12_set_abb_member(ABB_INT, abb_val_int);
 	}

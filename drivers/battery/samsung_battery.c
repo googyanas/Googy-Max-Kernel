@@ -44,15 +44,13 @@
 #if defined(CONFIG_STMPE811_ADC)
 #include <linux/stmpe811-adc.h>
 #endif
-#include <linux/delay.h>
 
 static char *supply_list[] = {
 	"battery",
 };
 
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 static void battery_error_control(struct battery_info *info);
 #endif
 
@@ -216,10 +214,9 @@ static int battery_set_adc_power(struct battery_info *info, bool en)
 		pr_info("%s: %s: is_en(%d), en(%d)\n", __func__,
 					ADC_REG_NAME, is_en, en);
 
-	if (!is_en && en) {
+	if (!is_en && en)
 		ret = regulator_enable(regulator);
-		udelay(100);
-	} else if (is_en && !en)
+	else if (is_en && !en)
 		ret = regulator_force_disable(regulator);
 
 	info->adc_pwr_st = en;
@@ -272,31 +269,6 @@ static int battery_get_vf(struct battery_info *info)
 	case VF_DET_GPIO:
 		present = !gpio_get_value(info->batdet_gpio);
 		break;
-	case VF_DET_ADC_GPIO:
-#if defined(CONFIG_S3C_ADC)
-		adc = s3c_adc_read(info->adc_client, info->pdata->vf_det_ch);
-#else
-		adc = 350;	/* temporary value */
-#endif
-		info->battery_vf_adc = adc;
-
-		if (info->cable_type != POWER_SUPPLY_TYPE_BATTERY) {
-			present = INRANGE(adc, info->pdata->vf_det_th_l,
-				info->pdata->vf_det_th_h);
-		} else {
-			pr_debug("%s: no charger -> LDO disable(adc=%d)\n",
-				__func__, info->battery_vf_adc);
-			present = 1;
-		}
-
-		present &= !gpio_get_value(info->batdet_gpio);
-
-		if (!present)
-			pr_info("%s: adc(%d), out of range(%d ~ %d)\n",
-						__func__, adc,
-						info->pdata->vf_det_th_l,
-						info->pdata->vf_det_th_h);
-		break;
 	default:
 		pr_err("%s: not support src(%d)\n", __func__,
 					info->pdata->vf_det_src);
@@ -342,8 +314,7 @@ int battery_get_info(struct battery_info *info,
 	union power_supply_propval value;
 	value.intval = 0;
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	/* do nothing */
 #else
 	if (info->battery_error_test) {
@@ -412,7 +383,7 @@ void battery_update_info(struct battery_info *info)
 	info->charge_type = value.intval;
 
 #if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_M0_CMCC) || defined(CONFIG_MACH_T0_CHN_CTC)
+	|| defined(CONFIG_MACH_M0_CMCC)
 	/* temperature error is higher priority */
 	if (!info->temper_state) {
 		info->psy_charger->get_property(info->psy_charger,
@@ -435,8 +406,7 @@ void battery_update_info(struct battery_info *info)
 					POWER_SUPPLY_PROP_CURRENT_MAX, &value);
 	info->input_current = value.intval;
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	if (info->cable_type == POWER_SUPPLY_TYPE_BATTERY) {
 		info->battery_health = POWER_SUPPLY_HEALTH_GOOD;
 		info->battery_present = 1;
@@ -600,7 +570,7 @@ void battery_event_control(struct battery_info *info)
 					"VIDEO", "MUSIC", "BROWSER",
 					"HOTSPOT", "CAMERA", "DATA CALL",
 					"GPS", "LTE", "WIFI",
-					"USE", "GPU", "UNKNOWN"
+					"USE", "UNKNOWN"
 	};
 
 	pr_debug("%s\n", __func__);
@@ -826,7 +796,7 @@ static bool battery_fullcharged_cond(struct battery_info *info)
 	pr_debug("%s\n", __func__);
 
 	/* max voltage - RECHG_DROP_VALUE: recharge voltage */
-	f_cond_vcell = info->pdata->recharge_voltage;
+	f_cond_vcell = info->pdata->voltage_max - RECHG_DROP_VALUE;
 	/* max soc - 5% */
 	f_cond_soc = 95;
 
@@ -911,8 +881,7 @@ static bool battery_vf_cond(struct battery_info *info)
 	}
 #endif
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	if (info->cable_type == POWER_SUPPLY_TYPE_BATTERY) {
 		info->vf_state = false;
 		return false;
@@ -940,8 +909,7 @@ static bool battery_health_cond(struct battery_info *info)
 {
 	pr_debug("%s\n", __func__);
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	if (info->cable_type == POWER_SUPPLY_TYPE_BATTERY) {
 		info->health_state = false;
 		return false;
@@ -988,17 +956,10 @@ static bool battery_temper_cond(struct battery_info *info)
 {
 	int ovh_stop, ovh_recover;
 	int frz_stop, frz_recover;
-#if defined(CONFIG_MACH_GC1) && defined(CONFIG_TARGET_LOCALE_USA)
-	int gpu_event = 13;
-#endif
 	pr_debug("%s\n", __func__);
 
 	/* update overheat temperature threshold */
-if (
-#if !defined(CONFIG_MACH_T0_USA_USCC)
-		(info->pdata->ctia_spec == true) &&
-#endif
-		(info->lpm_state)) {
+	if ((info->pdata->ctia_spec == true) && (info->lpm_state)) {
 		ovh_stop = info->pdata->lpm_overheat_stop_temp;
 		ovh_recover = info->pdata->lpm_overheat_recovery_temp;
 		frz_stop = info->pdata->lpm_freeze_stop_temp;
@@ -1019,26 +980,6 @@ if (
 		frz_stop = info->pdata->freeze_stop_temp;
 		frz_recover = info->pdata->freeze_recovery_temp;
 	}
-
-#if defined(CONFIG_MACH_GC1) && defined(CONFIG_TARGET_LOCALE_USA)
-	if (!info->lpm_state) {
-		if ((info->battery_temper >= info->pdata->overheat_stop_temp)
-			&& (activity_index >= 150)) {
-			ovh_stop = info->pdata->event_overheat_stop_temp;
-			info->event_type |= (1 << gpu_event);
-			pr_info("%s: set gpu(%d) event(0x%04x)\n",
-				__func__, activity_index, info->event_type);
-			battery_event_control(info);
-		} else if (info->event_type & (1 << gpu_event)) {
-			info->event_type &= ~(1 << gpu_event);
-			pr_info("%s: clear gpu(%d) event(0x%04x)\n",
-				__func__, activity_index, info->event_type);
-			battery_event_control(info);
-		} else {
-			pr_debug("%s: No set/clear gpu event case\n", __func__);
-		}
-	}
-#endif
 
 #if defined(CONFIG_MACH_T0_USA_SPR)
 	/* unver rev0.7, do not stop charging by tempereture */
@@ -1099,8 +1040,7 @@ if (
 		info->overheated_state = false;
 		info->temper_state = true;
 	} else {
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 		info->battery_health = POWER_SUPPLY_HEALTH_GOOD;
 #endif
 		info->overheated_state = false;
@@ -1285,14 +1225,6 @@ static void battery_indicator_icon(struct battery_info *info)
 				POWER_SUPPLY_STATUS_CHARGING;
 		}
 
-		/* in case of fast charging with TA, update charge type */
-		if ((info->cable_type == POWER_SUPPLY_TYPE_MAINS) &&
-			(info->charge_type == POWER_SUPPLY_CHARGE_TYPE_FAST) &&
-			(info->input_current < info->pdata->in_curr_limit)) {
-			pr_debug("%s: slow charge state\n", __func__);
-			info->charge_type = POWER_SUPPLY_CHARGE_TYPE_SLOW;
-		}
-
 		if (info->temper_state == true) {
 			info->charge_virt_state =
 				POWER_SUPPLY_STATUS_NOT_CHARGING;
@@ -1401,8 +1333,7 @@ static void battery_interval_calulation(struct battery_info *info)
 		pr_debug("%s: v_state charging\n", __func__);
 		info->monitor_mode = MONITOR_CHNG;
 		wake_unlock(&info->emer_wake_lock);
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 		if ((info->prev_cable_type == POWER_SUPPLY_TYPE_BATTERY &&
 			info->cable_type != POWER_SUPPLY_TYPE_BATTERY) &&
 			(info->battery_temper >=
@@ -1526,9 +1457,6 @@ static void battery_monitor_work(struct work_struct *work)
 	struct battery_info *info = container_of(work, struct battery_info,
 						 monitor_work);
 	int muic_cb_typ;
-#ifdef CONFIG_FAST_BOOT
-	bool low_batt_power_off = false;
-#endif
 	pr_debug("%s\n", __func__);
 
 	mutex_lock(&info->mon_lock);
@@ -1538,17 +1466,42 @@ static void battery_monitor_work(struct work_struct *work)
 		goto monitor_finish;
 	}
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	/* first, check cable-type */
 	info->cable_type = battery_get_cable(info);
 #endif
 
-	/* adc ldo , vf irq control */
-	if ((info->pdata->vf_det_src == VF_DET_GPIO) ||
-		(info->pdata->vf_det_src == VF_DET_ADC_GPIO)) {
-		info->cable_type = battery_get_cable(info);
+	/* If battery is not connected, clear flag for charge scenario */
+	if ((battery_vf_cond(info) == true) ||
+		(battery_health_cond(info) == true)) {
+		pr_info("%s: battery error\n", __func__);
+		info->overheated_state = false;
+		info->freezed_state = false;
+		info->temper_state = false;
+		info->full_charged_state = STATUS_NOT_FULL;
+		info->abstimer_state = false;
+		info->abstimer_active = false;
+		info->recharge_phase = false;
 
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
+		pr_info("%s: not support standever...\n", __func__);
+		battery_error_control(info);
+#else
+		if (info->pdata->battery_standever == true) {
+			pr_info("%s: support standever\n", __func__);
+			schedule_work(&info->error_work);
+		} else {
+			pr_info("%s: not support standever\n", __func__);
+			battery_charge_control(info, OFF_CURR, OFF_CURR);
+		}
+#endif
+	}
+
+	/* Check battery state from charger and fuelgauge */
+	battery_update_info(info);
+
+	/* adc ldo , vf irq control */
+	if (info->pdata->vf_det_src == VF_DET_GPIO) {
 		if (info->cable_type == POWER_SUPPLY_TYPE_BATTERY) {
 			if (info->batdet_irq_st) {
 				disable_irq(info->batdet_irq);
@@ -1565,36 +1518,6 @@ static void battery_monitor_work(struct work_struct *work)
 			}
 		}
 	}
-
-	/* If battery is not connected, clear flag for charge scenario */
-	if ((battery_vf_cond(info) == true) ||
-		(battery_health_cond(info) == true)) {
-		pr_info("%s: battery error\n", __func__);
-		info->overheated_state = false;
-		info->freezed_state = false;
-		info->temper_state = false;
-		info->full_charged_state = STATUS_NOT_FULL;
-		info->abstimer_state = false;
-		info->abstimer_active = false;
-		info->recharge_phase = false;
-
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
-		pr_info("%s: not support standever...\n", __func__);
-		battery_error_control(info);
-#else
-		if (info->pdata->battery_standever == true) {
-			pr_info("%s: support standever\n", __func__);
-			schedule_work(&info->error_work);
-		} else {
-			pr_info("%s: not support standever\n", __func__);
-			battery_charge_control(info, OFF_CURR, OFF_CURR);
-		}
-#endif
-	}
-
-	/* Check battery state from charger and fuelgauge */
-	battery_update_info(info);
 
 	/* if battery is missed state, do not check charge scenario */
 	if (info->battery_present == 0)
@@ -1672,21 +1595,13 @@ charge_ok:
 		if (!info->pdata->suspend_chging)
 			wake_lock(&info->charge_wake_lock);
 		battery_charge_control(info, info->pdata->chg_curr_usb,
-#ifdef CONFIG_BATTERY_MAX77693_CHARGER_CONTROL
-						info->pdata->in_curr_usb);
-#else
 						info->pdata->chg_curr_usb);
-#endif
 		break;
 	case POWER_SUPPLY_TYPE_USB_CDP:
 		if (!info->pdata->suspend_chging)
 			wake_lock(&info->charge_wake_lock);
 		battery_charge_control(info, info->pdata->chg_curr_cdp,
-#ifdef CONFIG_BATTERY_MAX77693_CHARGER_CONTROL
-						info->pdata->in_curr_cdp);
-#else
 						info->pdata->chg_curr_cdp);
-#endif
 		break;
 	case POWER_SUPPLY_TYPE_DOCK:
 		if (!info->pdata->suspend_chging)
@@ -1761,6 +1676,8 @@ monitor_finish:
 	if (info->pdata->led_indicator == true)
 		battery_indicator_led(info);
 
+	power_supply_changed(&info->psy_bat);
+
 	pr_info("[%d] bat: s(%d, %d), v(%d, %d), "
 		"t(%d.%d), "
 		"cs(%d, %d), cb(%d), cr(%d, %d)",
@@ -1802,54 +1719,32 @@ monitor_finish:
 	if (info->charge_current_avg < 0)
 		pr_info("%s: charging but discharging, power off\n", __func__);
 
-#ifdef CONFIG_FAST_BOOT
-	pr_debug("%s: state=%d, soc=%d, fake_shut_down=%d\n", __func__,
-		info->charge_virt_state, info->battery_soc, fake_shut_down);
-
-	if ((info->charge_virt_state == POWER_SUPPLY_STATUS_DISCHARGING)
-		&& (info->battery_soc == 0) && (fake_shut_down)) {
-		low_batt_power_off = true;
-		goto skip_updating_status;
-	}
-#endif
-
-	power_supply_changed(&info->psy_bat);
-
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	/* prevent suspend for ui-update */
 	if (info->prev_cable_type != info->cable_type ||
 		info->prev_battery_health != info->battery_health ||
 		info->prev_charge_virt_state != info->charge_virt_state ||
 		info->prev_battery_soc != info->battery_soc) {
-		pr_info("%s: update wakelock(%d)\n", __func__, HZ);
+		/* TBD : timeout value */
+		pr_info("%s : update wakelock (%d)\n", __func__, HZ);
 		wake_lock_timeout(&info->update_wake_lock, HZ);
 	}
+
 	info->prev_cable_type = info->cable_type;
 	info->prev_battery_health = info->battery_health;
 	info->prev_charge_virt_state = info->charge_virt_state;
 	info->prev_battery_soc = info->battery_soc;
+#endif
 
 	/* if cable is detached in lpm, guarantee some secs for playlpm */
 	if ((info->lpm_state == true) &&
 		(info->cable_type == POWER_SUPPLY_TYPE_BATTERY)) {
 		pr_info("%s: lpm with battery, maybe power off\n", __func__);
 		wake_lock_timeout(&info->monitor_wake_lock, 3 * HZ);
-	} else {
+	} else
 		wake_lock_timeout(&info->monitor_wake_lock, HZ / 4);
-	}
 
-#ifdef CONFIG_FAST_BOOT
-skip_updating_status:
-#endif
 	mutex_unlock(&info->mon_lock);
-
-#ifdef CONFIG_FAST_BOOT
-	if (low_batt_power_off == true) {
-		pr_info("%s: Power off the device in fake shutdown mode"\
-			"(soc==0, discharging !!!)\n", __func__);
-
-		kernel_power_off();
-	}
-#endif
 
 	return;
 }
@@ -1917,8 +1812,7 @@ static void battery_error_work(struct work_struct *work)
 	return;
 }
 
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)\
-	|| defined(CONFIG_MACH_T0_CHN_CTC)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 static void battery_error_control(struct battery_info *info)
 {
 	pr_info("%s\n", __func__);
@@ -1994,10 +1888,6 @@ static int samsung_battery_get_property(struct power_supply *ps,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:
 		val->intval = info->charge_virt_state;
-	#if defined(CONFIG_MACH_GC1)
-		info->psy_fuelgauge->set_property(info->psy_fuelgauge,
-			POWER_SUPPLY_PROP_RCOMP, val);
-	#endif
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_TYPE:
 		val->intval = info->charge_type;
@@ -2262,17 +2152,12 @@ static __devinit int samsung_battery_probe(struct platform_device *pdev)
 	pr_info("%s: Temperature source: %s\n", __func__,
 		temper_src_name[info->pdata->temper_src]);
 
+
 	/* not supported H/W rev for VF ADC */
 #if defined(CONFIG_MACH_T0) && defined(CONFIG_TARGET_LOCALE_USA)
 	if (system_rev < 7)
 		info->pdata->vf_det_src = VF_DET_CHARGER;
 #endif
-
-#if defined(CONFIG_MACH_GC1) && defined(CONFIG_TARGET_LOCALE_USA)
-	if (system_rev < 12)
-		info->pdata->vf_det_src = VF_DET_CHARGER;
-#endif
-
 	pr_info("%s: VF detect source: %s\n", __func__,
 		vf_src_name[info->pdata->vf_det_src]);
 
@@ -2336,8 +2221,10 @@ static __devinit int samsung_battery_probe(struct platform_device *pdev)
 	if (!info->pdata->suspend_chging)
 		wake_lock_init(&info->charge_wake_lock,
 			       WAKE_LOCK_SUSPEND, "battery-charging");
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	wake_lock_init(&info->update_wake_lock, WAKE_LOCK_SUSPEND,
 		       "battery-update");
+#endif
 
 	/* Init wq for battery */
 	INIT_WORK(&info->error_work, battery_error_work);
@@ -2450,10 +2337,6 @@ gpio_bat_det_finish:
 	}
 #endif
 
-#ifdef CONFIG_BATTERY_MAX77693_CHARGER_CONTROL
-	charger_control_init(info);
-#endif
-
 	pr_info("%s: probe complete\n", __func__);
 
 	return 0;
@@ -2470,8 +2353,9 @@ err_psy_reg_bat:
 	s3c_adc_release(info->adc_client);
 	wake_lock_destroy(&info->monitor_wake_lock);
 	wake_lock_destroy(&info->emer_wake_lock);
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	wake_lock_destroy(&info->update_wake_lock);
-
+#endif
 	mutex_destroy(&info->mon_lock);
 	mutex_destroy(&info->ops_lock);
 	mutex_destroy(&info->err_lock);
@@ -2504,8 +2388,9 @@ static int __devexit samsung_battery_remove(struct platform_device *pdev)
 
 	wake_lock_destroy(&info->monitor_wake_lock);
 	wake_lock_destroy(&info->emer_wake_lock);
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 	wake_lock_destroy(&info->update_wake_lock);
-
+#endif
 	if (!info->pdata->suspend_chging)
 		wake_lock_destroy(&info->charge_wake_lock);
 
@@ -2548,18 +2433,6 @@ static void samsung_battery_complete(struct device *dev)
 	info->monitor_mode = MONITOR_NORM;
 
 	battery_monitor_interval(info);
-
-#ifdef CONFIG_FAST_BOOT
-	if (((info->cable_type == POWER_SUPPLY_TYPE_MAINS)
-		|| (info->cable_type == POWER_SUPPLY_TYPE_USB)
-		|| (info->cable_type == POWER_SUPPLY_TYPE_USB_CDP))
-		&& (fake_shut_down)) {
-		pr_info("%s: Resetting the device in fake shutdown mode"\
-			"(TA/USB inserted !!!)\n", __func__);
-
-		kernel_power_off();
-	}
-#endif
 }
 
 static int samsung_battery_suspend(struct device *dev)

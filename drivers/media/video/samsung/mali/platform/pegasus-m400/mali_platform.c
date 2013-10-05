@@ -537,13 +537,11 @@ static _mali_osk_errcode_t enable_mali_clocks(void)
         }
         if (mali_gpu_clk <= mali_runtime_resume.clk)
                 set_mali_dvfs_current_step(MALI_DVFS_STEPS + 1);
-#if CPUFREQ_LOCK_DURING_440
         /* lock/unlock CPU freq by Mali */
         if (mali_gpu_clk >= 533)
+		err = cpufreq_lock_by_mali(1400);
+	else if (mali_gpu_clk == 440)
                 err = cpufreq_lock_by_mali(1200);
-        else if (mali_gpu_clk >= 440)
-                err = cpufreq_lock_by_mali(1000);
-#endif
 #else
         mali_regulator_set_voltage(mali_runtime_resume.vol, mali_runtime_resume.vol);
         mali_clk_set_rate(mali_runtime_resume.clk, GPU_MHZ);

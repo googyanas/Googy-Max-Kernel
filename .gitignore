@@ -97,6 +97,11 @@ include/config
 include/linux/version.h
 include/generated
 arch/*/include/generated
+kernel/config_data.h
+kernel/relocate_kernel_64.S
+drivers/tty/vt/defkeymap.c
+drivers/tty/vt/consolemap_deftbl.c
+kernel/timeconst.h
 
 # stgit generated dirs
 patches-*
@@ -117,9 +122,4 @@ GTAGS
 
 *.orig
 *~
-/kernel/config_data.h
-/kernel/relocate_kernel_64.S
-/drivers/tty/vt/defkeymap.c
-/drivers/tty/vt/consolemap_deftbl.c
-/kernel/timeconst.h
 \#*#

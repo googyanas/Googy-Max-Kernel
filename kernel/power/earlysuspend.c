@@ -55,6 +55,13 @@ enum {
 };
 static int state;
 
+#ifdef CONFIG_SPEEDUP_KEYRESUME
+        struct sched_param earlysuspend_s = { .sched_priority = 66 };
+        struct sched_param earlysuspend_v = { .sched_priority = 0 };
+        int earlysuspend_old_prio = 0;
+        int earlysuspend_old_policy = 0;
+#endif
+
 static void sync_system(struct work_struct *work)
 {
 	pr_info("%s +\n", __func__);
@@ -151,6 +158,17 @@ static void late_resume(struct work_struct *work)
 	int abort = 0;
 	struct timer_list timer;
 	struct pm_wd_data data;
+	
+#ifdef CONFIG_SPEEDUP_KEYRESUME                                
+         earlysuspend_old_prio = current->rt_priority;
+         earlysuspend_old_policy = current->policy;
+
+         /* just for this write, set us real-time */
+         if (!(unlikely(earlysuspend_old_policy == SCHED_FIFO) || unlikely(earlysuspend_old_policy == SCHED_RR))) {
+                if ((sched_setscheduler(current, SCHED_RR, &earlysuspend_s)) < 0)
+                           printk(KERN_ERR "[SEAN]up late_resume failed\n");
+           }
+#endif
 
 	pm_wd_add_timer(&timer, &data, 30);
 
@@ -185,7 +203,16 @@ static void late_resume(struct work_struct *work)
 abort:
 	mutex_unlock(&early_suspend_lock);
 
+#ifdef CONFIG_SPEEDUP_KEYRESUME
+         if (!(unlikely(earlysuspend_old_policy == SCHED_FIFO) || unlikely(earlysuspend_old_policy == SCHED_RR))) {
+                  earlysuspend_v.sched_priority = earlysuspend_old_prio;
+                  if ((sched_setscheduler(current, earlysuspend_old_policy, &earlysuspend_v)) < 0)
+                           printk(KERN_ERR "[SEAN]down late_resume failed\n");
+          }	
+#endif
+          
 	pm_wd_del_timer(&timer);
+
 }
 
 #ifdef CONFIG_FAST_BOOT

@@ -149,8 +149,13 @@ static void add_mm_counter_fast(struct mm_struct *mm, int member, int val)
 	else
 		add_mm_counter(mm, member, val);
 }
+#ifdef CONFIG_LOWMEM_CHECK
+#define inc_mm_counter_fast(mm, member, page) inc_mm_counter(mm, member, page)
+#define dec_mm_counter_fast(mm, member, page) dec_mm_counter(mm, member, page)
+#else
 #define inc_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, 1)
 #define dec_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, -1)
+#endif
 
 /* sync counter once per 64 page faults */
 #define TASK_RSS_EVENTS_THRESH	(64)

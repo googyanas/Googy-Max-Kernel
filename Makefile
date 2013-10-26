@@ -1,8 +1,8 @@
 VERSION = 3
 PATCHLEVEL = 0
-SUBLEVEL = 101
+SUBLEVEL = 100
 EXTRAVERSION =
-NAME = Sodden Ben Lomond
+NAME = Sneaky Weasel
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"

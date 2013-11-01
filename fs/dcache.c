@@ -36,6 +36,7 @@
 #include <linux/bit_spinlock.h>
 #include <linux/rculist_bl.h>
 #include <linux/prefetch.h>
+#include <linux/earlysuspend.h>
 #include "internal.h"
 
 /*
@@ -76,7 +77,10 @@
  *   dentry1->d_lock
  *     dentry2->d_lock
  */
-int sysctl_vfs_cache_pressure __read_mostly = 100;
+#define DEFAULT_VFS_CACHE_PRESSURE 45
+int sysctl_vfs_cache_pressure __read_mostly, resume_cache_pressure;
+int suspend_cache_pressure = 10;
+
 EXPORT_SYMBOL_GPL(sysctl_vfs_cache_pressure);
 
 static __cacheline_aligned_in_smp DEFINE_SPINLOCK(dcache_lru_lock);
@@ -3030,6 +3034,24 @@ ino_t find_inode_number(struct dentry *dir, struct qstr *name)
 }
 EXPORT_SYMBOL(find_inode_number);
 
+static void cpressure_early_suspend(struct early_suspend *handler)
+{
+  if (sysctl_vfs_cache_pressure != resume_cache_pressure)
+    resume_cache_pressure = sysctl_vfs_cache_pressure;
+  
+    sysctl_vfs_cache_pressure = suspend_cache_pressure;
+}
+
+static void cpressure_late_resume(struct early_suspend *handler)
+{
+  sysctl_vfs_cache_pressure = resume_cache_pressure;
+}
+
+static struct early_suspend cpressure_suspend = {
+  .suspend = cpressure_early_suspend,
+  .resume = cpressure_late_resume,
+};
+
 static __initdata unsigned long dhash_entries;
 static int __init set_dhash_entries(char *str)
 {
@@ -3104,6 +3126,9 @@ EXPORT_SYMBOL(d_genocide);
 
 void __init vfs_caches_init_early(void)
 {
+  sysctl_vfs_cache_pressure = resume_cache_pressure =
+      DEFAULT_VFS_CACHE_PRESSURE;
+
 	dcache_init_early();
 	inode_init_early();
 }
@@ -3127,4 +3152,5 @@ void __init vfs_caches_init(unsigned long mempages)
 	mnt_init();
 	bdev_cache_init();
 	chrdev_init();
+	register_early_suspend(&cpressure_suspend);
 }

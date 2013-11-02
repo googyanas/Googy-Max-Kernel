@@ -2559,11 +2559,11 @@ void set_mic_level_voodoo(void)
 	
 //	mic_val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
-	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
+//	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
 
 //	mic_val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME);
 	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
-	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
+//	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN2_VU);
 
 }
 

@@ -250,14 +250,14 @@ unsigned int sound_control_hook_wm8994_write(unsigned int reg, unsigned int val)
 			break;	
 			
 		// Microphone: left input level
-		case WM8994_LEFT_LINE_INPUT_3_4_VOLUME:
-			newval = get_mic_level(reg, val);
-			break;
+//		case WM8994_LEFT_LINE_INPUT_3_4_VOLUME:
+//			newval = get_mic_level(reg, val);
+//			break;
 
 		// Microphone: right input level
-		case WM8994_RIGHT_LINE_INPUT_3_4_VOLUME:
-			newval = get_mic_level(reg, val);
-			break;			
+//		case WM8994_RIGHT_LINE_INPUT_3_4_VOLUME:
+//			newval = get_mic_level(reg, val);
+//			break;			
 
 	}
 
@@ -860,11 +860,11 @@ void set_mic_level(void)
 	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, mic_level | WM8994_IN1_VU);
 
 	// set input volume for both input channels
-	val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME);
-	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN1_VU);
+//	val = wm8994_read(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME);
+//	wm8994_write(codec, WM8994_LEFT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN1_VU);
 
-	val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME);
-	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN1_VU);
+//	val = wm8994_read(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME);
+//	wm8994_write(codec, WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, mic_level | WM8994_IN1_VU);
 
 	// print debug info
 	if (debug(DEBUG_NORMAL))

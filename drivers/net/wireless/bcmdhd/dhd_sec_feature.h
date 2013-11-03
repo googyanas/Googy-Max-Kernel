@@ -121,3 +121,5 @@
 #define GET_MAC_FROM_OTP
 #endif
 
+#define READ_MACADDR
+

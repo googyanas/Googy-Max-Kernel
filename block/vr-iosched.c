@@ -224,7 +224,7 @@ if (list_empty(&vd->fifo_list[ddir]))
 return NULL;
 
 rq = rq_entry_fifo(vd->fifo_list[ddir].next);
-if (time_after_eq(jiffies, rq_fifo_time(rq)))
+if (time_after(jiffies, rq_fifo_time(rq)))
 return rq;
 
 return NULL;
@@ -240,7 +240,7 @@ struct request *rq_sync = vr_expired_request(vd, SYNC);
 struct request *rq_async = vr_expired_request(vd, ASYNC);
 
 if (rq_async && rq_sync) {
-if (time_after_eq(rq_fifo_time(rq_async), rq_fifo_time(rq_sync)))
+if (time_after(rq_fifo_time(rq_async), rq_fifo_time(rq_sync)))
 return rq_sync;
 }
 else if (rq_sync)

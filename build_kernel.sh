@@ -4,29 +4,29 @@ export RAMFS_SOURCE=`readlink -f $KERNELDIR/../ramfs-sgs3`
 export PARENT_DIR=`readlink -f ..`
 export USE_SEC_FIPS_MODE=true
 # export CROSS_COMPILE=$PARENT_DIR/android_prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-# export CROSS_COMPILE=/home/googy/Bureau/arm-2009q3/bin/arm-none-linux-gnueabi-
-# export CROSS_COMPILE=/home/googy/Downloads/linaro-4.7-2013.04/bin/arm-linux-gnueabihf-
-# export CROSS_COMPILE=/home/googy/Anas/linaro482/bin/arm-gnueabi-
-# export CROSS_COMPILE=/home/googy/Anas/linaro474/bin/arm-gnueabi-
-# export CROSS_COMPILE=/home/googy/Anas/linaro482/bin/arm-linux-gnueabihf-
-export CROSS_COMPILE=/usr/bin/arm-linux-gnueabihf-
-# export CROSS_COMPILE=/home/googy/Downloads/linaro_4.7.4-2013.08/bin/arm-gnueabi-
+# export CROSS_COMPILE=/media/Bureau/arm-2009q3/bin/arm-none-linux-gnueabi-
+# export CROSS_COMPILE=/media/Downloads/linaro-4.7-2013.04/bin/arm-linux-gnueabihf-
+# export CROSS_COMPILE=/media/Anas/linaro482/bin/arm-gnueabi-
+# export CROSS_COMPILE=/media/Anas/linaro474/bin/arm-gnueabi-
+# export CROSS_COMPILE=/media/Anas/linaro482/bin/arm-linux-gnueabihf-
+# export CROSS_COMPILE=/usr/bin/arm-linux-gnueabihf-
+export CROSS_COMPILE=/media/Anas/linaro_4.7.4-2013.10/bin/arm-gnueabi-
 
 # if [ "${1}" != "" ];then
 #  export KERNELDIR=`readlink -f ${1}`
 # fi
 
-RAMFS_TMP="/home/googy/tmp/ramfs-source-sgs3"
+RAMFS_TMP="/media/Anas/tmp/ramfs-source-sgs3"
 
 if [ "${2}" = "x" ];then
  make mrproper || exit 1
  make -j5 0googymax_defconfig || exit 1
 fi
 
-# if [ ! -f $KERNELDIR/.config ];
-# then
+if [ ! -f $KERNELDIR/.config ];
+then
   make -j5 0googymax_defconfig || exit 1
-# fi
+fi
 
 . $KERNELDIR/.config
 
@@ -52,7 +52,7 @@ rm -rf $RAMFS_TMP/tmp/*
 rm -rf $RAMFS_TMP/.hg
 #copy modules into ramfs
 mkdir -p $INITRAMFS/lib/modules
-# mv -f drivers/home/googy/video/samsung/mali_r3p0_lsi/mali.ko drivers/home/googy/video/samsung/mali_r3p0_lsi/mali_r3p0_lsi.ko
+# mv -f drivers/media/video/samsung/mali_r3p0_lsi/mali.ko drivers/media/video/samsung/mali_r3p0_lsi/mali_r3p0_lsi.ko
 # mv -f drivers/net/wireless/bcmdhd.cm/dhd.ko drivers/net/wireless/bcmdhd.cm/dhd_cm.ko
 find -name '*.ko' -exec cp -av {} $RAMFS_TMP/lib/modules/ \;
 ${CROSS_COMPILE}strip --strip-unneeded $RAMFS_TMP/lib/modules/*
@@ -70,9 +70,9 @@ make -j5 zImage || exit 1
 $KERNELDIR/mkshbootimg.py $KERNELDIR/boot.img $KERNELDIR/boot.img.pre $KERNELDIR/payload.tar
 # rm -f $KERNELDIR/boot.img.pre
 
-cd /home/googy/Anas/Googy-Max-Kernel
-mv -f -v /home/googy/Anas/Googy-Max-Kernel/Kernel/boot.img .
+cd /media/Anas/Googy-Max-Kernel
+mv -f -v /media/Anas/Googy-Max-Kernel/Kernel/boot.img .
 cp -f -v Googy-Max-Kernel_0.zip Googy-Max-Kernel_${1}_CWM.zip
 zip -v Googy-Max-Kernel_${1}_CWM.zip boot.img
 
-adb push /home/googy/Anas/Googy-Max-Kernel/Googy-Max-Kernel_${1}_CWM.zip /storage/extSdCard/Googy-Max-Kernel_${1}_CWM.zip || adb push /home/googy/Anas/Googy-Max-Kernel/Googy-Max-Kernel_${1}_CWM.zip /storage/sdcard1/Googy-Max-Kernel_${1}_CWM.zip
+adb push /media/Anas/Googy-Max-Kernel/Googy-Max-Kernel_${1}_CWM.zip /storage/extSdCard/Googy-Max-Kernel_${1}_CWM.zip || adb push /media/Anas/Googy-Max-Kernel/Googy-Max-Kernel_${1}_CWM.zip /storage/sdcard1/Googy-Max-Kernel_${1}_CWM.zip

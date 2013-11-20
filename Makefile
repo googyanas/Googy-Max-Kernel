@@ -367,22 +367,23 @@ KBUILD_CPPFLAGS := -D__KERNEL__
 
 GOOGY_FLAGS   = -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
         	-fmodulo-sched -fmodulo-sched-allow-regmoves \
-        	-fipa-cp-clone -pipe \
-		-munaligned-access
-#		-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4
-#		 -ffast-math -fno-pic
-#	 	-fgraphite-identity -fsched-spec-load \
-#	 	-floop-interchange -floop-strip-mine -floop-block \
-#	 	-fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fipa-cp-clone \
-#	 	-fmodulo-sched -fmodulo-sched-allow-regmoves
-# 4.8		-fno-inline-functions 
+        	-fipa-cp-clone -pipe -fno-pic \
+	 	-fgraphite-identity -fsched-spec-load \
+	 	-floop-interchange -floop-strip-mine -floop-block \
+	 	-fpredictive-commoning -fgcse-after-reload -ftree-vectorize -fipa-cp-clone \
+	 	-fmodulo-sched -fmodulo-sched-allow-regmoves
+#		-ftree-loop-distribution -floop-parallelize-all -ftree-parallelize-loops=4 \
+#	 	-fno-schedule-insns2
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security -Wno-array-bounds \
 		   -fno-delete-null-pointer-checks \
-		   -mtune=cortex-a9 -march=armv7-a -mcpu=cortex-a9 -mfpu=neon -marm $(GOOGY_FLAGS)
+		   -munaligned-access \
+		   -mtune=cortex-a9 -march=armv7-a -mcpu=cortex-a9 -mfpu=neon -marm 
+#		   $(GOOGY_FLAGS)
+#		   -fno-inline-functions -ffast-math \
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=

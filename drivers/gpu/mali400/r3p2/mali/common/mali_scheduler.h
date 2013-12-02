@@ -15,10 +15,10 @@
 #include "mali_gp_scheduler.h"
 #include "mali_pp_scheduler.h"
 
-_maliggy_osk_errcode_t maliggy_scheduler_initialize(void);
-void maliggy_scheduler_terminate(void);
+_mali_osk_errcode_t mali_scheduler_initialize(void);
+void mali_scheduler_terminate(void);
 
-u32 maliggy_scheduler_get_new_id(void);
+u32 mali_scheduler_get_new_id(void);
 
 /**
  * @brief Reset all groups
@@ -27,10 +27,10 @@ u32 maliggy_scheduler_get_new_id(void);
  * This must be called after the Mali HW has been powered on in order to reset
  * the HW.
  */
-MALI_STATIC_INLINE void maliggy_scheduler_reset_all_groups(void)
+MALI_STATIC_INLINE void mali_scheduler_reset_all_groups(void)
 {
-	maliggy_gp_scheduler_reset_all_groups();
-	maliggy_pp_scheduler_reset_all_groups();
+	mali_gp_scheduler_reset_all_groups();
+	mali_pp_scheduler_reset_all_groups();
 }
 
 /**
@@ -38,10 +38,10 @@ MALI_STATIC_INLINE void maliggy_scheduler_reset_all_groups(void)
  *
  * @param session Pointer to the session to zap
  */
-MALI_STATIC_INLINE void maliggy_scheduler_zap_all_active(struct maliggy_session_data *session)
+MALI_STATIC_INLINE void mali_scheduler_zap_all_active(struct mali_session_data *session)
 {
-	maliggy_gp_scheduler_zap_all_active(session);
-	maliggy_pp_scheduler_zap_all_active(session);
+	mali_gp_scheduler_zap_all_active(session);
+	mali_pp_scheduler_zap_all_active(session);
 }
 
 #endif /* __MALI_SCHEDULER_H__ */

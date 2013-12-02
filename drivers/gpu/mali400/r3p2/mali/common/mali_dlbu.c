@@ -20,15 +20,15 @@
  */
 #define MALI_DLBU_SIZE 0x400
 
-u32 maliggy_dlbu_phys_addr = 0;
-static maliggy_io_address maliggy_dlbu_cpu_addr = 0;
+u32 mali_dlbu_phys_addr = 0;
+static mali_io_address mali_dlbu_cpu_addr = 0;
 
 /**
  * DLBU register numbers
  * Used in the register read/write routines.
  * See the hardware documentation for more information about each register
  */
-typedef enum maliggy_dlbu_register {
+typedef enum mali_dlbu_register {
 	MALI_DLBU_REGISTER_MASTER_TLLIST_PHYS_ADDR = 0x0000, /**< Master tile list physical base address;
 	                                                     31:12 Physical address to the page used for the DLBU
 	                                                     0 DLBU enable - set this bit to 1 enables the AXI bus
@@ -60,7 +60,7 @@ typedef enum maliggy_dlbu_register {
 	                                                     2 enable PP2 for load balancing
 	                                                     1 enable PP1 for load balancing
 	                                                     0 enable PP0 for load balancing */
-} maliggy_dlbu_register;
+} mali_dlbu_register;
 
 typedef enum
 {
@@ -72,21 +72,21 @@ typedef enum
 	PP5ENABLE,
 	PP6ENABLE,
 	PP7ENABLE
-} maliggy_dlbu_pp_enable;
+} mali_dlbu_pp_enable;
 
-struct maliggy_dlbu_core
+struct mali_dlbu_core
 {
-	struct maliggy_hw_core     hw_core;           /**< Common for all HW cores */
+	struct mali_hw_core     hw_core;           /**< Common for all HW cores */
 	u32                     pp_cores_mask;     /**< This is a mask for the PP cores whose operation will be controlled by LBU
 	                                              see MALI_DLBU_REGISTER_PP_ENABLE_MASK register */
 };
 
-_maliggy_osk_errcode_t maliggy_dlbu_initialize(void)
+_mali_osk_errcode_t mali_dlbu_initialize(void)
 {
 
 	MALI_DEBUG_PRINT(2, ("Mali DLBU: Initializing\n"));
 
-	if (_MALI_OSK_ERR_OK == maliggy_mmu_get_table_page(&maliggy_dlbu_phys_addr, &maliggy_dlbu_cpu_addr))
+	if (_MALI_OSK_ERR_OK == mali_mmu_get_table_page(&mali_dlbu_phys_addr, &mali_dlbu_cpu_addr))
 	{
 		MALI_SUCCESS;
 	}
@@ -94,34 +94,34 @@ _maliggy_osk_errcode_t maliggy_dlbu_initialize(void)
 	return _MALI_OSK_ERR_FAULT;
 }
 
-void maliggy_dlbu_terminate(void)
+void mali_dlbu_terminate(void)
 {
 	MALI_DEBUG_PRINT(3, ("Mali DLBU: terminating\n"));
 
-	maliggy_mmu_release_table_page(maliggy_dlbu_phys_addr);
+	mali_mmu_release_table_page(mali_dlbu_phys_addr);
 }
 
-struct maliggy_dlbu_core *maliggy_dlbu_create(const _maliggy_osk_resource_t * resource)
+struct mali_dlbu_core *mali_dlbu_create(const _mali_osk_resource_t * resource)
 {
-	struct maliggy_dlbu_core *core = NULL;
+	struct mali_dlbu_core *core = NULL;
 
 	MALI_DEBUG_PRINT(2, ("Mali DLBU: Creating Mali dynamic load balancing unit: %s\n", resource->description));
 
-	core = _maliggy_osk_malloc(sizeof(struct maliggy_dlbu_core));
+	core = _mali_osk_malloc(sizeof(struct mali_dlbu_core));
 	if (NULL != core)
 	{
-		if (_MALI_OSK_ERR_OK == maliggy_hw_core_create(&core->hw_core, resource, MALI_DLBU_SIZE))
+		if (_MALI_OSK_ERR_OK == mali_hw_core_create(&core->hw_core, resource, MALI_DLBU_SIZE))
 		{
 			core->pp_cores_mask = 0;
-			if (_MALI_OSK_ERR_OK == maliggy_dlbu_reset(core))
+			if (_MALI_OSK_ERR_OK == mali_dlbu_reset(core))
 			{
 				return core;
 			}
 			MALI_PRINT_ERROR(("Failed to reset DLBU %s\n", core->hw_core.description));
-			maliggy_hw_core_delete(&core->hw_core);
+			mali_hw_core_delete(&core->hw_core);
 		}
 
-		_maliggy_osk_free(core);
+		_mali_osk_free(core);
 	}
 	else
 	{
@@ -131,24 +131,24 @@ struct maliggy_dlbu_core *maliggy_dlbu_create(const _maliggy_osk_resource_t * re
 	return NULL;
 }
 
-void maliggy_dlbu_delete(struct maliggy_dlbu_core *dlbu)
+void mali_dlbu_delete(struct mali_dlbu_core *dlbu)
 {
 	MALI_DEBUG_ASSERT_POINTER(dlbu);
 
-	maliggy_dlbu_reset(dlbu);
-	maliggy_hw_core_delete(&dlbu->hw_core);
-	_maliggy_osk_free(dlbu);
+	mali_dlbu_reset(dlbu);
+	mali_hw_core_delete(&dlbu->hw_core);
+	_mali_osk_free(dlbu);
 }
 
-_maliggy_osk_errcode_t maliggy_dlbu_reset(struct maliggy_dlbu_core *dlbu)
+_mali_osk_errcode_t mali_dlbu_reset(struct mali_dlbu_core *dlbu)
 {
 	u32 dlbu_registers[7];
-	_maliggy_osk_errcode_t err = _MALI_OSK_ERR_FAULT;
+	_mali_osk_errcode_t err = _MALI_OSK_ERR_FAULT;
 	MALI_DEBUG_ASSERT_POINTER(dlbu);
 
-	MALI_DEBUG_PRINT(4, ("Mali DLBU: maliggy_dlbu_reset: %s\n", dlbu->hw_core.description));
+	MALI_DEBUG_PRINT(4, ("Mali DLBU: mali_dlbu_reset: %s\n", dlbu->hw_core.description));
 
-	dlbu_registers[0] = maliggy_dlbu_phys_addr | 1; /* bit 0 enables the whole core */
+	dlbu_registers[0] = mali_dlbu_phys_addr | 1; /* bit 0 enables the whole core */
 	dlbu_registers[1] = MALI_DLBU_VIRT_ADDR;
 	dlbu_registers[2] = 0;
 	dlbu_registers[3] = 0;
@@ -157,61 +157,61 @@ _maliggy_osk_errcode_t maliggy_dlbu_reset(struct maliggy_dlbu_core *dlbu)
 	dlbu_registers[6] = dlbu->pp_cores_mask;
 
 	/* write reset values to core registers */
-	maliggy_hw_core_register_write_array_relaxed(&dlbu->hw_core, MALI_DLBU_REGISTER_MASTER_TLLIST_PHYS_ADDR, dlbu_registers, 7);
+	mali_hw_core_register_write_array_relaxed(&dlbu->hw_core, MALI_DLBU_REGISTER_MASTER_TLLIST_PHYS_ADDR, dlbu_registers, 7);
 
 	err = _MALI_OSK_ERR_OK;
 
 	return err;
 }
 
-void maliggy_dlbu_update_mask(struct maliggy_dlbu_core *dlbu)
+void mali_dlbu_update_mask(struct mali_dlbu_core *dlbu)
 {
 	MALI_DEBUG_ASSERT_POINTER(dlbu);
 
-	maliggy_hw_core_register_write(&dlbu->hw_core, MALI_DLBU_REGISTER_PP_ENABLE_MASK, dlbu->pp_cores_mask);
+	mali_hw_core_register_write(&dlbu->hw_core, MALI_DLBU_REGISTER_PP_ENABLE_MASK, dlbu->pp_cores_mask);
 }
 
-void maliggy_dlbu_add_group(struct maliggy_dlbu_core *dlbu, struct maliggy_group *group)
+void mali_dlbu_add_group(struct mali_dlbu_core *dlbu, struct mali_group *group)
 {
-	struct maliggy_pp_core *pp_core;
+	struct mali_pp_core *pp_core;
 	u32 bcast_id;
 
 	MALI_DEBUG_ASSERT_POINTER( dlbu );
 	MALI_DEBUG_ASSERT_POINTER( group );
 
-	pp_core = maliggy_group_get_pp_core(group);
-	bcast_id = maliggy_pp_core_get_bcast_id(pp_core);
+	pp_core = mali_group_get_pp_core(group);
+	bcast_id = mali_pp_core_get_bcast_id(pp_core);
 
 	dlbu->pp_cores_mask |= bcast_id;
 	MALI_DEBUG_PRINT(3, ("Mali DLBU: Adding core[%d] New mask= 0x%02x\n", bcast_id , dlbu->pp_cores_mask));
 }
 
 /* Remove a group from the DLBU */
-void maliggy_dlbu_remove_group(struct maliggy_dlbu_core *dlbu, struct maliggy_group *group)
+void mali_dlbu_remove_group(struct mali_dlbu_core *dlbu, struct mali_group *group)
 {
-	struct maliggy_pp_core *pp_core;
+	struct mali_pp_core *pp_core;
 	u32 bcast_id;
 
 	MALI_DEBUG_ASSERT_POINTER( dlbu );
 	MALI_DEBUG_ASSERT_POINTER( group );
 
-	pp_core = maliggy_group_get_pp_core(group);
-	bcast_id = maliggy_pp_core_get_bcast_id(pp_core);
+	pp_core = mali_group_get_pp_core(group);
+	bcast_id = mali_pp_core_get_bcast_id(pp_core);
 
 	dlbu->pp_cores_mask &= ~bcast_id;
 		MALI_DEBUG_PRINT(3, ("Mali DLBU: Removing core[%d] New mask= 0x%02x\n", bcast_id, dlbu->pp_cores_mask));
 }
 
 /* Configure the DLBU for \a job. This needs to be done before the job is started on the groups in the DLBU. */
-void maliggy_dlbu_config_job(struct maliggy_dlbu_core *dlbu, struct maliggy_pp_job *job)
+void mali_dlbu_config_job(struct mali_dlbu_core *dlbu, struct mali_pp_job *job)
 {
 	u32 *registers;
 	MALI_DEBUG_ASSERT(job);
-	registers = maliggy_pp_job_get_dlbu_registers(job);
+	registers = mali_pp_job_get_dlbu_registers(job);
 	MALI_DEBUG_PRINT(4, ("Mali DLBU: Starting job\n"));
 
 	/* Writing 4 registers:
 	 * DLBU registers except the first two (written once at DLBU initialisation / reset) and the PP_ENABLE_MASK register */
-	maliggy_hw_core_register_write_array_relaxed(&dlbu->hw_core, MALI_DLBU_REGISTER_TLLIST_VBASEADDR, registers, 4);
+	mali_hw_core_register_write_array_relaxed(&dlbu->hw_core, MALI_DLBU_REGISTER_TLLIST_VBASEADDR, registers, 4);
 
 }

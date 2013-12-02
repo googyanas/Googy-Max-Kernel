@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_osk_misc.c
+ * @file mali_osk_misc.c
  * Implementation of the OS abstraction layer for the kernel device driver
  */
 #include <linux/kernel.h>
@@ -19,7 +19,7 @@
 #include <linux/module.h>
 #include "mali_osk.h"
 
-void _maliggy_osk_dbgmsg( const char *fmt, ... )
+void _mali_osk_dbgmsg( const char *fmt, ... )
 {
     va_list args;
     va_start(args, fmt);
@@ -27,7 +27,7 @@ void _maliggy_osk_dbgmsg( const char *fmt, ... )
 	va_end(args);
 }
 
-u32 _maliggy_osk_snprintf( char *buf, u32 size, const char *fmt, ... )
+u32 _mali_osk_snprintf( char *buf, u32 size, const char *fmt, ... )
 {
 	int res;
 	va_list args;
@@ -39,25 +39,25 @@ u32 _maliggy_osk_snprintf( char *buf, u32 size, const char *fmt, ... )
 	return res;
 }
 
-void _maliggy_osk_abort(void)
+void _mali_osk_abort(void)
 {
 	/* make a simple fault by dereferencing a NULL pointer */
 	dump_stack();
 	*(int *)0 = 0;
 }
 
-void _maliggy_osk_break(void)
+void _mali_osk_break(void)
 {
-	_maliggy_osk_abort();
+	_mali_osk_abort();
 }
 
-u32 _maliggy_osk_get_pid(void)
+u32 _mali_osk_get_pid(void)
 {
 	/* Thread group ID is the process ID on Linux */
 	return (u32)current->tgid;
 }
 
-u32 _maliggy_osk_get_tid(void)
+u32 _mali_osk_get_tid(void)
 {
 	/* pid is actually identifying the thread on Linux */
 	return (u32)current->pid;

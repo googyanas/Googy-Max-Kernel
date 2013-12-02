@@ -21,30 +21,30 @@
  *
  * @return On success _MALI_OSK_ERR_OK, othervise some error code describing the error.
  */
-_maliggy_osk_errcode_t maliggy_memory_initialize(void);
+_mali_osk_errcode_t mali_memory_initialize(void);
 
 /** @brief Terminate Mali memory system
  *
  * Clean up and release internal data structures.
  */
-void maliggy_memory_terminate(void);
+void mali_memory_terminate(void);
 
 /** @brief Start new Mali memory session
  *
  * Allocate and prepare session specific memory allocation data data. The
  * session page directory, lock, and descriptor map is set up.
  *
- * @param maliggy_session_data pointer to the session data structure
+ * @param mali_session_data pointer to the session data structure
  */
-_maliggy_osk_errcode_t maliggy_memory_session_begin(struct maliggy_session_data *maliggy_session_data);
+_mali_osk_errcode_t mali_memory_session_begin(struct mali_session_data *mali_session_data);
 
 /** @brief Close a Mali memory session
  *
  * Release session specific memory allocation related data.
  *
- * @param maliggy_session_data pointer to the session data structure
+ * @param mali_session_data pointer to the session data structure
  */
-void maliggy_memory_session_end(struct maliggy_session_data *maliggy_session_data);
+void mali_memory_session_end(struct mali_session_data *mali_session_data);
 
 /** @brief Allocate a page table page
  *
@@ -55,15 +55,15 @@ void maliggy_memory_session_end(struct maliggy_session_data *maliggy_session_dat
  * @param table_page GPU pointer to the allocated page
  * @param mapping CPU pointer to the mapping of the allocated page
  */
-_maliggy_osk_errcode_t maliggy_mmu_get_table_page(u32 *table_page, maliggy_io_address *mapping);
+_mali_osk_errcode_t mali_mmu_get_table_page(u32 *table_page, mali_io_address *mapping);
 
 /** @brief Release a page table page
  *
- * Release a page table page allocated through \a maliggy_mmu_get_table_page
+ * Release a page table page allocated through \a mali_mmu_get_table_page
  *
  * @param pa the GPU address of the page to release
  */
-void maliggy_mmu_release_table_page(u32 pa);
+void mali_mmu_release_table_page(u32 pa);
 
 
 /** @brief Parse resource and prepare the OS memory allocator
@@ -71,7 +71,7 @@ void maliggy_mmu_release_table_page(u32 pa);
  * @param size Maximum size to allocate for Mali GPU.
  * @return _MALI_OSK_ERR_OK on success, otherwise failure.
  */
-_maliggy_osk_errcode_t maliggy_memory_core_resource_os_memory(u32 size);
+_mali_osk_errcode_t mali_memory_core_resource_os_memory(u32 size);
 
 /** @brief Parse resource and prepare the dedicated memory allocator
  *
@@ -79,8 +79,8 @@ _maliggy_osk_errcode_t maliggy_memory_core_resource_os_memory(u32 size);
  * @param size Size of dedicated Mali GPU memory.
  * @return _MALI_OSK_ERR_OK on success, otherwise failure.
  */
-_maliggy_osk_errcode_t maliggy_memory_core_resource_dedicated_memory(u32 start, u32 size);
+_mali_osk_errcode_t mali_memory_core_resource_dedicated_memory(u32 start, u32 size);
 
-maliggy_allocation_engine maliggy_mem_get_memory_engine(void);
+mali_allocation_engine mali_mem_get_memory_engine(void);
 
 #endif /* __MALI_MEMORY_H__ */

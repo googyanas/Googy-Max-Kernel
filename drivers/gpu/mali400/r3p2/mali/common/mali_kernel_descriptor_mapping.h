@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_kernel_descriptor_mapping.h
+ * @file mali_kernel_descriptor_mapping.h
  */
 
 #ifndef __MALI_KERNEL_DESCRIPTOR_MAPPING_H__
@@ -20,23 +20,23 @@
 /**
  * The actual descriptor mapping table, never directly accessed by clients
  */
-typedef struct maliggy_descriptor_table
+typedef struct mali_descriptor_table
 {
 	u32 * usage; /**< Pointer to bitpattern indicating if a descriptor is valid/used or not */
 	void** mappings; /**< Array of the pointers the descriptors map to */
-} maliggy_descriptor_table;
+} mali_descriptor_table;
 
 /**
  * The descriptor mapping object
  * Provides a separate namespace where we can map an integer to a pointer
  */
-typedef struct maliggy_descriptor_mapping
+typedef struct mali_descriptor_mapping
 {
-    _maliggy_osk_lock_t *lock; /**< Lock protecting access to the mapping object */
+    _mali_osk_lock_t *lock; /**< Lock protecting access to the mapping object */
 	int max_nr_mappings_allowed; /**< Max number of mappings to support in this namespace */
 	int current_nr_mappings; /**< Current number of possible mappings */
-	maliggy_descriptor_table * table; /**< Pointer to the current mapping table */
-} maliggy_descriptor_mapping;
+	mali_descriptor_table * table; /**< Pointer to the current mapping table */
+} mali_descriptor_mapping;
 
 /**
  * Create a descriptor mapping object
@@ -45,13 +45,13 @@ typedef struct maliggy_descriptor_mapping
  * @param max_entries Number of entries to max support
  * @return Pointer to a descriptor mapping object, NULL on failure
  */
-maliggy_descriptor_mapping * maliggy_descriptor_mapping_create(int init_entries, int max_entries);
+mali_descriptor_mapping * mali_descriptor_mapping_create(int init_entries, int max_entries);
 
 /**
  * Destroy a descriptor mapping object
  * @param map The map to free
  */
-void maliggy_descriptor_mapping_destroy(maliggy_descriptor_mapping * map);
+void mali_descriptor_mapping_destroy(mali_descriptor_mapping * map);
 
 /**
  * Allocate a new mapping entry (descriptor ID)
@@ -60,7 +60,7 @@ void maliggy_descriptor_mapping_destroy(maliggy_descriptor_mapping * map);
  * @param target The value to map to
  * @return The descriptor allocated, a negative value on error
  */
-_maliggy_osk_errcode_t maliggy_descriptor_mapping_allocate_mapping(maliggy_descriptor_mapping * map, void * target, int *descriptor);
+_mali_osk_errcode_t mali_descriptor_mapping_allocate_mapping(mali_descriptor_mapping * map, void * target, int *descriptor);
 
 /**
  * Get the value mapped to by a descriptor ID
@@ -69,7 +69,7 @@ _maliggy_osk_errcode_t maliggy_descriptor_mapping_allocate_mapping(maliggy_descr
  * @param target Pointer to a pointer which will receive the stored value
  * @return 0 on successful lookup, negative on error
  */
-_maliggy_osk_errcode_t maliggy_descriptor_mapping_get(maliggy_descriptor_mapping * map, int descriptor, void** target);
+_mali_osk_errcode_t mali_descriptor_mapping_get(mali_descriptor_mapping * map, int descriptor, void** target);
 
 /**
  * Set the value mapped to by a descriptor ID
@@ -78,7 +78,7 @@ _maliggy_osk_errcode_t maliggy_descriptor_mapping_get(maliggy_descriptor_mapping
  * @param target Pointer to replace the current value with
  * @return 0 on successful lookup, negative on error
  */
-_maliggy_osk_errcode_t maliggy_descriptor_mapping_set(maliggy_descriptor_mapping * map, int descriptor, void * target);
+_mali_osk_errcode_t mali_descriptor_mapping_set(mali_descriptor_mapping * map, int descriptor, void * target);
 
 /**
  * Call the specified callback function for each descriptor in map.
@@ -86,7 +86,7 @@ _maliggy_osk_errcode_t maliggy_descriptor_mapping_set(maliggy_descriptor_mapping
  * @param map The map to do callbacks for
  * @param callback A callback function which will be calle for each entry in map
  */
-void maliggy_descriptor_mapping_call_for_each(maliggy_descriptor_mapping * map, void (*callback)(int, void*));
+void mali_descriptor_mapping_call_for_each(mali_descriptor_mapping * map, void (*callback)(int, void*));
 
 /**
  * Free the descriptor ID
@@ -96,6 +96,6 @@ void maliggy_descriptor_mapping_call_for_each(maliggy_descriptor_mapping * map, 
  *
  * @return old value of descriptor mapping
  */
-void *maliggy_descriptor_mapping_free(maliggy_descriptor_mapping * map, int descriptor);
+void *mali_descriptor_mapping_free(mali_descriptor_mapping * map, int descriptor);
 
 #endif /* __MALI_KERNEL_DESCRIPTOR_MAPPING_H__ */

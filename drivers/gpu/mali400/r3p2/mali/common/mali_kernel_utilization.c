@@ -14,7 +14,7 @@
 #include "mali_kernel_common.h"
 
 /* Define how often to calculate and report GPU utilization, in milliseconds */
-static _maliggy_osk_lock_t *time_data_lock;
+static _mali_osk_lock_t *time_data_lock;
 
 static u32 num_running_gp_cores;
 static u32 num_running_pp_cores;
@@ -29,18 +29,18 @@ static u64 accumulated_work_time_pp = 0;
 static u64 period_start_time = 0;
 
 #ifndef CONFIG_PM_DEVFREQ	/* MALI_SEC */
-static _maliggy_osk_timer_t *utilization_timer = NULL;
+static _mali_osk_timer_t *utilization_timer = NULL;
 #endif
-static maliggy_bool timer_running = MALI_FALSE;
+static mali_bool timer_running = MALI_FALSE;
 
 static u32 last_utilization_gpu = 0 ;
 static u32 last_utilization_gp = 0 ;
 static u32 last_utilization_pp = 0 ;
 
 #ifndef CONFIG_PM_DEVFREQ	/* MALI_SEC */
-static u32 maliggy_utilization_timeout = 100;
+static u32 mali_utilization_timeout = 100;
 #endif
-void (*maliggy_utilization_callback)(struct maliggy_gpu_utilization_data *data) = NULL;
+void (*mali_utilization_callback)(struct mali_gpu_utilization_data *data) = NULL;
 
 #ifndef CONFIG_PM_DEVFREQ
 static void calculate_gpu_utilization(void* arg)
@@ -61,7 +61,7 @@ void calculate_gpu_utilization(void *arg)
 	u32 utilization_gp;
 	u32 utilization_pp;
 
-	_maliggy_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
 	if (accumulated_work_time_gpu == 0 && work_start_time_gpu == 0)
 	{
@@ -76,18 +76,18 @@ void calculate_gpu_utilization(void *arg)
 		last_utilization_gp = 0;
 		last_utilization_pp = 0;
 
-		_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
-		if (NULL != maliggy_utilization_callback)
+		if (NULL != mali_utilization_callback)
 		{
-			struct maliggy_gpu_utilization_data data = { 0, };
-			maliggy_utilization_callback(&data);
+			struct mali_gpu_utilization_data data = { 0, };
+			mali_utilization_callback(&data);
 		}
 
 		return;
 	}
 
-	time_now = _maliggy_osk_time_get_ns();
+	time_now = _mali_osk_time_get_ns();
 
 	time_period = time_now - period_start_time;
 
@@ -120,7 +120,7 @@ void calculate_gpu_utilization(void *arg)
 	 */
 
 	/* Shift the 64-bit values down so they fit inside a 32-bit integer */
-	leading_zeroes = _maliggy_osk_clz((u32)(time_period >> 32));
+	leading_zeroes = _mali_osk_clz((u32)(time_period >> 32));
 	shift_val = 32 - leading_zeroes;
 	work_normalized_gpu = (u32)(accumulated_work_time_gpu >> shift_val);
 	work_normalized_gp = (u32)(accumulated_work_time_gp >> shift_val);
@@ -163,43 +163,43 @@ void calculate_gpu_utilization(void *arg)
 	accumulated_work_time_pp = 0;
 	period_start_time = time_now;
 
-	_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
 #ifndef CONFIG_PM_DEVFREQ
-	_maliggy_osk_timer_add(utilization_timer, _maliggy_osk_time_mstoticks(maliggy_utilization_timeout));
+	_mali_osk_timer_add(utilization_timer, _mali_osk_time_mstoticks(mali_utilization_timeout));
 #endif
 
-	if (NULL != maliggy_utilization_callback)
+	if (NULL != mali_utilization_callback)
 	{
-		struct maliggy_gpu_utilization_data data = { utilization_gpu, utilization_gp, utilization_pp };
-		maliggy_utilization_callback(&data);
+		struct mali_gpu_utilization_data data = { utilization_gpu, utilization_gp, utilization_pp };
+		mali_utilization_callback(&data);
 	}
 }
 
-_maliggy_osk_errcode_t maliggy_utilization_init(void)
+_mali_osk_errcode_t mali_utilization_init(void)
 {
 #if USING_GPU_UTILIZATION
-	struct _maliggy_osk_device_data data;
-	if (_MALI_OSK_ERR_OK == _maliggy_osk_device_data_get(&data))
+	struct _mali_osk_device_data data;
+	if (_MALI_OSK_ERR_OK == _mali_osk_device_data_get(&data))
 	{
 		/* Use device specific settings (if defined) */
 #ifndef CONFIG_PM_DEVFREQ
 		if (0 != data.utilization_interval)
 		{
-			maliggy_utilization_timeout = data.utilization_interval;
+			mali_utilization_timeout = data.utilization_interval;
 		}
 #endif
 		if (NULL != data.utilization_callback)
 		{
-			maliggy_utilization_callback = data.utilization_callback;
+			mali_utilization_callback = data.utilization_callback;
 		}
 	}
 #endif
 
-	if (NULL != maliggy_utilization_callback)
+	if (NULL != mali_utilization_callback)
 	{
 #ifndef CONFIG_PM_DEVFREQ
-		MALI_DEBUG_PRINT(2, ("Mali GPU Utilization: Utilization handler installed with interval %u\n", maliggy_utilization_timeout));
+		MALI_DEBUG_PRINT(2, ("Mali GPU Utilization: Utilization handler installed with interval %u\n", mali_utilization_timeout));
 #endif
 	}
 	else
@@ -207,7 +207,7 @@ _maliggy_osk_errcode_t maliggy_utilization_init(void)
 		MALI_DEBUG_PRINT(2, ("Mali GPU Utilization: No utilization handler installed\n"));
 	}
 
-	time_data_lock = _maliggy_osk_lock_init(_MALI_OSK_LOCKFLAG_ORDERED | _MALI_OSK_LOCKFLAG_SPINLOCK_IRQ |
+	time_data_lock = _mali_osk_lock_init(_MALI_OSK_LOCKFLAG_ORDERED | _MALI_OSK_LOCKFLAG_SPINLOCK_IRQ |
 	                                     _MALI_OSK_LOCKFLAG_NONINTERRUPTABLE, 0, _MALI_OSK_LOCK_ORDER_UTILIZATION);
 
 	if (NULL == time_data_lock)
@@ -219,58 +219,58 @@ _maliggy_osk_errcode_t maliggy_utilization_init(void)
 	num_running_pp_cores = 0;
 
 #ifndef CONFIG_PM_DEVFREQ
-	utilization_timer = _maliggy_osk_timer_init();
+	utilization_timer = _mali_osk_timer_init();
 	if (NULL == utilization_timer)
 	{
-		_maliggy_osk_lock_term(time_data_lock);
+		_mali_osk_lock_term(time_data_lock);
 		return _MALI_OSK_ERR_FAULT;
 	}
-	_maliggy_osk_timer_setcallback(utilization_timer, calculate_gpu_utilization, NULL);
+	_mali_osk_timer_setcallback(utilization_timer, calculate_gpu_utilization, NULL);
 #endif
 
 	return _MALI_OSK_ERR_OK;
 }
 
 #ifndef CONFIG_PM_DEVFREQ
-void maliggy_utilization_suspend(void)
+void mali_utilization_suspend(void)
 {
-	_maliggy_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
 	if (timer_running == MALI_TRUE)
 	{
 		timer_running = MALI_FALSE;
-		_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
-		_maliggy_osk_timer_del(utilization_timer);
+		_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_timer_del(utilization_timer);
 		return;
 	}
 
-	_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 }
 #endif
 
-void maliggy_utilization_term(void)
+void mali_utilization_term(void)
 {
 #ifndef CONFIG_PM_DEVFREQ
 	if (NULL != utilization_timer)
 	{
-		_maliggy_osk_timer_del(utilization_timer);
+		_mali_osk_timer_del(utilization_timer);
 		timer_running = MALI_FALSE;
-		_maliggy_osk_timer_term(utilization_timer);
+		_mali_osk_timer_term(utilization_timer);
 		utilization_timer = NULL;
 	}
 #endif
 
-	_maliggy_osk_lock_term(time_data_lock);
+	_mali_osk_lock_term(time_data_lock);
 }
 
-void maliggy_utilization_gp_start(void)
+void mali_utilization_gp_start(void)
 {
-	_maliggy_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
 	++num_running_gp_cores;
 	if (1 == num_running_gp_cores)
 	{
-		u64 time_now = _maliggy_osk_time_get_ns();
+		u64 time_now = _mali_osk_time_get_ns();
 
 		/* First GP core started, consider GP busy from now and onwards */
 		work_start_time_gp = time_now;
@@ -290,30 +290,30 @@ void maliggy_utilization_gp_start(void)
 			timer_running = MALI_TRUE;
 			period_start_time = time_now;
 
-			_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+			_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
-			_maliggy_osk_timer_add(utilization_timer, _maliggy_osk_time_mstoticks(maliggy_utilization_timeout));
+			_mali_osk_timer_add(utilization_timer, _mali_osk_time_mstoticks(mali_utilization_timeout));
 		}
 		else
 		{
-			_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+			_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 		}
 	}
 	else
 	{
 		/* Nothing to do */
-		_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 	}
 }
 
-void maliggy_utilization_pp_start(void)
+void mali_utilization_pp_start(void)
 {
-	_maliggy_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
 	++num_running_pp_cores;
 	if (1 == num_running_pp_cores)
 	{
-		u64 time_now = _maliggy_osk_time_get_ns();
+		u64 time_now = _mali_osk_time_get_ns();
 
 		/* First PP core started, consider PP busy from now and onwards */
 		work_start_time_pp = time_now;
@@ -333,31 +333,31 @@ void maliggy_utilization_pp_start(void)
 			timer_running = MALI_TRUE;
 			period_start_time = time_now;
 
-			_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+			_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 #ifndef CONFIG_PM_DEVFREQ
-			_maliggy_osk_timer_add(utilization_timer, _maliggy_osk_time_mstoticks(maliggy_utilization_timeout));
+			_mali_osk_timer_add(utilization_timer, _mali_osk_time_mstoticks(mali_utilization_timeout));
 #endif
 		}
 		else
 		{
-			_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+			_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 		}
 	}
 	else
 	{
 		/* Nothing to do */
-		_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 	}
 }
 
-void maliggy_utilization_gp_end(void)
+void mali_utilization_gp_end(void)
 {
-	_maliggy_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
 	--num_running_gp_cores;
 	if (0 == num_running_gp_cores)
 	{
-		u64 time_now = _maliggy_osk_time_get_ns();
+		u64 time_now = _mali_osk_time_get_ns();
 
 		/* Last GP core ended, consider GP idle from now and onwards */
 		accumulated_work_time_gp += (time_now - work_start_time_gp);
@@ -374,17 +374,17 @@ void maliggy_utilization_gp_end(void)
 		}
 	}
 
-	_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 }
 
-void maliggy_utilization_pp_end(void)
+void mali_utilization_pp_end(void)
 {
-	_maliggy_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 
 	--num_running_pp_cores;
 	if (0 == num_running_pp_cores)
 	{
-		u64 time_now = _maliggy_osk_time_get_ns();
+		u64 time_now = _mali_osk_time_get_ns();
 
 		/* Last PP core ended, consider PP idle from now and onwards */
 		accumulated_work_time_pp += (time_now - work_start_time_pp);
@@ -401,20 +401,20 @@ void maliggy_utilization_pp_end(void)
 		}
 	}
 
-	_maliggy_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(time_data_lock, _MALI_OSK_LOCKMODE_RW);
 }
 
-u32 _maliggy_ukk_utilization_gp_pp(void)
+u32 _mali_ukk_utilization_gp_pp(void)
 {
 	return last_utilization_gpu;
 }
 
-u32 _maliggy_ukk_utilization_gp(void)
+u32 _mali_ukk_utilization_gp(void)
 {
 	return last_utilization_gp;
 }
 
-u32 _maliggy_ukk_utilization_pp(void)
+u32 _mali_ukk_utilization_pp(void)
 {
 	return last_utilization_pp;
 }

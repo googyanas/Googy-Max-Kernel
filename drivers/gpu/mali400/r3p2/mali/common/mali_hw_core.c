@@ -12,15 +12,15 @@
 #include "mali_osk.h"
 #include "mali_kernel_common.h"
 
-_maliggy_osk_errcode_t maliggy_hw_core_create(struct maliggy_hw_core *core, const _maliggy_osk_resource_t *resource, u32 reg_size)
+_mali_osk_errcode_t mali_hw_core_create(struct mali_hw_core *core, const _mali_osk_resource_t *resource, u32 reg_size)
 {
 	core->phys_addr = resource->base;
 	core->description = resource->description;
 	core->size = reg_size;
 
-	if (_MALI_OSK_ERR_OK == _maliggy_osk_mem_reqregion(core->phys_addr, core->size, core->description))
+	if (_MALI_OSK_ERR_OK == _mali_osk_mem_reqregion(core->phys_addr, core->size, core->description))
 	{
-		core->mapped_registers = _maliggy_osk_mem_mapioregion(core->phys_addr, core->size, core->description);
+		core->mapped_registers = _mali_osk_mem_mapioregion(core->phys_addr, core->size, core->description);
 		if (NULL != core->mapped_registers)
 		{
 			return _MALI_OSK_ERR_OK;
@@ -29,7 +29,7 @@ _maliggy_osk_errcode_t maliggy_hw_core_create(struct maliggy_hw_core *core, cons
 		{
 			MALI_PRINT_ERROR(("Failed to map memory region for core %s at phys_addr 0x%08X\n", core->description, core->phys_addr));
 		}
-		_maliggy_osk_mem_unreqregion(core->phys_addr, core->size);
+		_mali_osk_mem_unreqregion(core->phys_addr, core->size);
 	}
 	else
 	{
@@ -39,9 +39,9 @@ _maliggy_osk_errcode_t maliggy_hw_core_create(struct maliggy_hw_core *core, cons
 	return _MALI_OSK_ERR_FAULT;
 }
 
-void maliggy_hw_core_delete(struct maliggy_hw_core *core)
+void mali_hw_core_delete(struct mali_hw_core *core)
 {
-	_maliggy_osk_mem_unmapioregion(core->phys_addr, core->size, core->mapped_registers);
+	_mali_osk_mem_unmapioregion(core->phys_addr, core->size, core->mapped_registers);
 	core->mapped_registers = NULL;
-	_maliggy_osk_mem_unreqregion(core->phys_addr, core->size);
+	_mali_osk_mem_unreqregion(core->phys_addr, core->size);
 }

@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_osk_low_level_mem.c
+ * @file mali_osk_low_level_mem.c
  * Implementation of the OS abstraction layer for the kernel device driver
  */
 
@@ -30,26 +30,26 @@
 #include <linux/rwsem.h>
 
 #include "mali_osk.h"
-#include "mali_ukk.h" /* required to hook in _maliggy_ukk_mem_mmap handling */
+#include "mali_ukk.h" /* required to hook in _mali_ukk_mem_mmap handling */
 #include "mali_kernel_common.h"
 #include "mali_kernel_linux.h"
 
-static void maliggy_kernel_memory_vma_open(struct vm_area_struct * vma);
-static void maliggy_kernel_memory_vma_close(struct vm_area_struct * vma);
+static void mali_kernel_memory_vma_open(struct vm_area_struct * vma);
+static void mali_kernel_memory_vma_close(struct vm_area_struct * vma);
 
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-static int maliggy_kernel_memory_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf);
+static int mali_kernel_memory_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf);
 #else
-static unsigned long maliggy_kernel_memory_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address);
+static unsigned long mali_kernel_memory_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address);
 #endif
 
 
-typedef struct maliggy_vma_usage_tracker
+typedef struct mali_vma_usage_tracker
 {
 	int references;
 	u32 cookie;
-} maliggy_vma_usage_tracker;
+} mali_vma_usage_tracker;
 
 #define INVALID_PAGE 0xffffffff
 
@@ -66,7 +66,7 @@ struct AllocationList
 typedef struct AllocationList AllocationList;
 
 /* Private structure to store details of a mapping region returned
- * from _maliggy_osk_mem_mapregion_init
+ * from _mali_osk_mem_mapregion_init
  */
 struct MappingInfo
 {
@@ -94,25 +94,25 @@ static int pre_allocated_memory_size_current  = 0;
 	static int pre_allocated_memory_size_max      = 16 * 1024 * 1024; /* 6 MiB */
 #endif
 
-static struct vm_operations_struct maliggy_kernel_vm_ops =
+static struct vm_operations_struct mali_kernel_vm_ops =
 {
-	.open = maliggy_kernel_memory_vma_open,
-	.close = maliggy_kernel_memory_vma_close,
+	.open = mali_kernel_memory_vma_open,
+	.close = mali_kernel_memory_vma_close,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-	.fault = maliggy_kernel_memory_cpu_page_fault_handler
+	.fault = mali_kernel_memory_cpu_page_fault_handler
 #else
-	.nopfn = maliggy_kernel_memory_cpu_page_fault_handler
+	.nopfn = mali_kernel_memory_cpu_page_fault_handler
 #endif
 };
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
 	#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
-static int maliggy_mem_shrink(int nr_to_scan, gfp_t gfp_mask)
+static int mali_mem_shrink(int nr_to_scan, gfp_t gfp_mask)
 	#else
-static int maliggy_mem_shrink(struct shrinker *shrinker, int nr_to_scan, gfp_t gfp_mask)
+static int mali_mem_shrink(struct shrinker *shrinker, int nr_to_scan, gfp_t gfp_mask)
 	#endif
 #else
-static int maliggy_mem_shrink(struct shrinker *shrinker, struct shrink_control *sc)
+static int mali_mem_shrink(struct shrinker *shrinker, struct shrink_control *sc)
 #endif
 {
 	unsigned long flags;
@@ -146,7 +146,7 @@ static int maliggy_mem_shrink(struct shrinker *shrinker, struct shrink_control *
 		pre_allocated_memory = item->next;
 
 		_kernel_page_release(item->physaddr);
-		_maliggy_osk_free(item);
+		_mali_osk_free(item);
 
 		pre_allocated_memory_size_current -= PAGE_SIZE;
 		--nr;
@@ -156,21 +156,21 @@ static int maliggy_mem_shrink(struct shrinker *shrinker, struct shrink_control *
 	return pre_allocated_memory_size_current / PAGE_SIZE;
 }
 
-struct shrinker maliggy_mem_shrinker = {
-	.shrink = maliggy_mem_shrink,
+struct shrinker mali_mem_shrinker = {
+	.shrink = mali_mem_shrink,
 	.seeks = DEFAULT_SEEKS,
 };
 
-void maliggy_osk_low_level_mem_init(void)
+void mali_osk_low_level_mem_init(void)
 {
 	pre_allocated_memory = (AllocationList*) NULL ;
 
-	register_shrinker(&maliggy_mem_shrinker);
+	register_shrinker(&mali_mem_shrinker);
 }
 
-void maliggy_osk_low_level_mem_term(void)
+void mali_osk_low_level_mem_term(void)
 {
-	unregister_shrinker(&maliggy_mem_shrinker);
+	unregister_shrinker(&mali_mem_shrinker);
 
 	while ( NULL != pre_allocated_memory )
 	{
@@ -178,7 +178,7 @@ void maliggy_osk_low_level_mem_term(void)
 		item = pre_allocated_memory;
 		pre_allocated_memory = item->next;
 		_kernel_page_release(item->physaddr);
-		_maliggy_osk_free( item );
+		_mali_osk_free( item );
 	}
 	pre_allocated_memory_size_current  = 0;
 }
@@ -231,7 +231,7 @@ static AllocationList * _allocation_list_item_get(void)
 	}
 	spin_unlock_irqrestore(&allocation_list_spinlock,flags);
 
-	item = _maliggy_osk_malloc( sizeof(AllocationList) );
+	item = _mali_osk_malloc( sizeof(AllocationList) );
 	if ( NULL == item)
 	{
 		return NULL;
@@ -241,7 +241,7 @@ static AllocationList * _allocation_list_item_get(void)
 	if ( INVALID_PAGE == item->physaddr )
 	{
 		/* Non-fatal error condition, out of memory. Upper levels will handle this. */
-		_maliggy_osk_free( item );
+		_mali_osk_free( item );
 		return NULL;
 	}
 	return item;
@@ -262,13 +262,13 @@ static void _allocation_list_item_release(AllocationList * item)
 	spin_unlock_irqrestore(&allocation_list_spinlock,flags);
 
 	_kernel_page_release(item->physaddr);
-	_maliggy_osk_free( item );
+	_mali_osk_free( item );
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-static int maliggy_kernel_memory_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf)
+static int mali_kernel_memory_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf)
 #else
-static unsigned long maliggy_kernel_memory_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address)
+static unsigned long mali_kernel_memory_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address)
 #endif
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
@@ -292,25 +292,25 @@ static unsigned long maliggy_kernel_memory_cpu_page_fault_handler(struct vm_area
 #endif
 }
 
-static void maliggy_kernel_memory_vma_open(struct vm_area_struct * vma)
+static void mali_kernel_memory_vma_open(struct vm_area_struct * vma)
 {
-	maliggy_vma_usage_tracker * vma_usage_tracker;
+	mali_vma_usage_tracker * vma_usage_tracker;
 	MALI_DEBUG_PRINT(4, ("Open called on vma %p\n", vma));
 
-	vma_usage_tracker = (maliggy_vma_usage_tracker*)vma->vm_private_data;
+	vma_usage_tracker = (mali_vma_usage_tracker*)vma->vm_private_data;
 	vma_usage_tracker->references++;
 
 	return;
 }
 
-static void maliggy_kernel_memory_vma_close(struct vm_area_struct * vma)
+static void mali_kernel_memory_vma_close(struct vm_area_struct * vma)
 {
-	_maliggy_uk_mem_munmap_s args = {0, };
-	maliggy_memory_allocation * descriptor;
-	maliggy_vma_usage_tracker * vma_usage_tracker;
+	_mali_uk_mem_munmap_s args = {0, };
+	mali_memory_allocation * descriptor;
+	mali_vma_usage_tracker * vma_usage_tracker;
 	MALI_DEBUG_PRINT(3, ("Close called on vma %p\n", vma));
 
-	vma_usage_tracker = (maliggy_vma_usage_tracker*)vma->vm_private_data;
+	vma_usage_tracker = (mali_vma_usage_tracker*)vma->vm_private_data;
 
 	BUG_ON(!vma_usage_tracker);
 	BUG_ON(0 == vma_usage_tracker->references);
@@ -326,39 +326,39 @@ static void maliggy_kernel_memory_vma_close(struct vm_area_struct * vma)
 	/** @note args->context unused, initialized to 0.
 	 * Instead, we use the memory_session from the cookie */
 
-	descriptor = (maliggy_memory_allocation *)vma_usage_tracker->cookie;
+	descriptor = (mali_memory_allocation *)vma_usage_tracker->cookie;
 
 	args.cookie = (u32)descriptor;
 	args.mapping = descriptor->mapping;
 	args.size = descriptor->size;
 
-	_maliggy_ukk_mem_munmap( &args );
+	_mali_ukk_mem_munmap( &args );
 
-	/* vma_usage_tracker is free()d by _maliggy_osk_mem_mapregion_term().
+	/* vma_usage_tracker is free()d by _mali_osk_mem_mapregion_term().
 	 * In the case of the memory engine, it is called as the release function that has been registered with the engine*/
 }
 
-void _maliggy_osk_mem_barrier( void )
+void _mali_osk_mem_barrier( void )
 {
 	mb();
 }
 
-void _maliggy_osk_write_mem_barrier( void )
+void _mali_osk_write_mem_barrier( void )
 {
 	wmb();
 }
 
-maliggy_io_address _maliggy_osk_mem_mapioregion( u32 phys, u32 size, const char *description )
+mali_io_address _mali_osk_mem_mapioregion( u32 phys, u32 size, const char *description )
 {
-	return (maliggy_io_address)ioremap_nocache(phys, size);
+	return (mali_io_address)ioremap_nocache(phys, size);
 }
 
-void _maliggy_osk_mem_unmapioregion( u32 phys, u32 size, maliggy_io_address virt )
+void _mali_osk_mem_unmapioregion( u32 phys, u32 size, mali_io_address virt )
 {
 	iounmap((void*)virt);
 }
 
-maliggy_io_address _maliggy_osk_mem_allocioregion( u32 *phys, u32 size )
+mali_io_address _mali_osk_mem_allocioregion( u32 *phys, u32 size )
 {
 	void * virt;
  	MALI_DEBUG_ASSERT_POINTER( phys );
@@ -380,10 +380,10 @@ maliggy_io_address _maliggy_osk_mem_allocioregion( u32 *phys, u32 size )
 
 	MALI_DEBUG_ASSERT( 0 == (*phys & ~_MALI_OSK_CPU_PAGE_MASK) );
 
- 	return (maliggy_io_address)virt;
+ 	return (mali_io_address)virt;
 }
 
-void _maliggy_osk_mem_freeioregion( u32 phys, u32 size, maliggy_io_address virt )
+void _mali_osk_mem_freeioregion( u32 phys, u32 size, mali_io_address virt )
 {
  	MALI_DEBUG_ASSERT_POINTER( (void*)virt );
  	MALI_DEBUG_ASSERT( 0 != size );
@@ -392,7 +392,7 @@ void _maliggy_osk_mem_freeioregion( u32 phys, u32 size, maliggy_io_address virt 
 	dma_free_writecombine(NULL, size, virt, phys);
 }
 
-_maliggy_osk_errcode_t inline _maliggy_osk_mem_reqregion( u32 phys, u32 size, const char *description )
+_mali_osk_errcode_t inline _mali_osk_mem_reqregion( u32 phys, u32 size, const char *description )
 {
 #if MALI_LICENSE_IS_GPL
 	return _MALI_OSK_ERR_OK; /* GPL driver gets the mem region for the resources registered automatically */
@@ -401,42 +401,42 @@ _maliggy_osk_errcode_t inline _maliggy_osk_mem_reqregion( u32 phys, u32 size, co
 #endif
 }
 
-void inline _maliggy_osk_mem_unreqregion( u32 phys, u32 size )
+void inline _mali_osk_mem_unreqregion( u32 phys, u32 size )
 {
 #if !MALI_LICENSE_IS_GPL
 	release_mem_region(phys, size);
 #endif
 }
 
-void inline _maliggy_osk_mem_iowrite32_relaxed( volatile maliggy_io_address addr, u32 offset, u32 val )
+void inline _mali_osk_mem_iowrite32_relaxed( volatile mali_io_address addr, u32 offset, u32 val )
 {
 	__raw_writel(cpu_to_le32(val),((u8*)addr) + offset);
 }
 
-u32 inline _maliggy_osk_mem_ioread32( volatile maliggy_io_address addr, u32 offset )
+u32 inline _mali_osk_mem_ioread32( volatile mali_io_address addr, u32 offset )
 {
 	return ioread32(((u8*)addr) + offset);
 }
 
-void inline _maliggy_osk_mem_iowrite32( volatile maliggy_io_address addr, u32 offset, u32 val )
+void inline _mali_osk_mem_iowrite32( volatile mali_io_address addr, u32 offset, u32 val )
 {
 	iowrite32(val, ((u8*)addr) + offset);
 }
 
-void _maliggy_osk_cache_flushall( void )
+void _mali_osk_cache_flushall( void )
 {
 	/** @note Cached memory is not currently supported in this implementation */
 }
 
-void _maliggy_osk_cache_ensure_uncached_range_flushed( void *uncached_mapping, u32 offset, u32 size )
+void _mali_osk_cache_ensure_uncached_range_flushed( void *uncached_mapping, u32 offset, u32 size )
 {
-	_maliggy_osk_write_mem_barrier();
+	_mali_osk_write_mem_barrier();
 }
 
-_maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_init( maliggy_memory_allocation * descriptor )
+_mali_osk_errcode_t _mali_osk_mem_mapregion_init( mali_memory_allocation * descriptor )
 {
 	struct vm_area_struct *vma;
-	maliggy_vma_usage_tracker * vma_usage_tracker;
+	mali_vma_usage_tracker * vma_usage_tracker;
 	MappingInfo *mappingInfo;
 
 	if (NULL == descriptor) return _MALI_OSK_ERR_FAULT;
@@ -448,16 +448,16 @@ _maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_init( maliggy_memory_allocatio
 	if (NULL == vma ) return _MALI_OSK_ERR_FAULT;
 
 	/* Re-write the process_addr_mapping_info */
-	mappingInfo = _maliggy_osk_calloc( 1, sizeof(MappingInfo) );
+	mappingInfo = _mali_osk_calloc( 1, sizeof(MappingInfo) );
 
 	if ( NULL == mappingInfo ) return _MALI_OSK_ERR_FAULT;
 
-	vma_usage_tracker = _maliggy_osk_calloc( 1, sizeof(maliggy_vma_usage_tracker) );
+	vma_usage_tracker = _mali_osk_calloc( 1, sizeof(mali_vma_usage_tracker) );
 
 	if (NULL == vma_usage_tracker)
 	{
 		MALI_DEBUG_PRINT(2, ("Failed to allocate memory to track memory usage\n"));
-		_maliggy_osk_free( mappingInfo );
+		_mali_osk_free( mappingInfo );
 		return _MALI_OSK_ERR_FAULT;
 	}
 
@@ -484,7 +484,7 @@ _maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_init( maliggy_memory_allocatio
 #endif
 
 	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
-	vma->vm_ops = &maliggy_kernel_vm_ops; /* Operations used on any memory system */
+	vma->vm_ops = &mali_kernel_vm_ops; /* Operations used on any memory system */
 
 	vma_usage_tracker->references = 1; /* set initial reference count to be 1 as vma_open won't be called for the first mmap call */
 	vma_usage_tracker->cookie = (u32)descriptor; /* cookie for munmap */
@@ -494,10 +494,10 @@ _maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_init( maliggy_memory_allocatio
 	return _MALI_OSK_ERR_OK;
 }
 
-void _maliggy_osk_mem_mapregion_term( maliggy_memory_allocation * descriptor )
+void _mali_osk_mem_mapregion_term( mali_memory_allocation * descriptor )
 {
 	struct vm_area_struct* vma;
-	maliggy_vma_usage_tracker * vma_usage_tracker;
+	mali_vma_usage_tracker * vma_usage_tracker;
 	MappingInfo *mappingInfo;
 
 	if (NULL == descriptor) return;
@@ -521,13 +521,13 @@ void _maliggy_osk_mem_mapregion_term( maliggy_memory_allocation * descriptor )
 	vma_usage_tracker = vma->vm_private_data;
 
 	/* We only get called if mem_mapregion_init succeeded */
-	_maliggy_osk_free(vma_usage_tracker);
+	_mali_osk_free(vma_usage_tracker);
 
-	_maliggy_osk_free( mappingInfo );
+	_mali_osk_free( mappingInfo );
 	return;
 }
 
-_maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_map( maliggy_memory_allocation * descriptor, u32 offset, u32 *phys_addr, u32 size )
+_mali_osk_errcode_t _mali_osk_mem_mapregion_map( mali_memory_allocation * descriptor, u32 offset, u32 *phys_addr, u32 size )
 {
 	struct vm_area_struct *vma;
 	MappingInfo *mappingInfo;
@@ -546,7 +546,7 @@ _maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_map( maliggy_memory_allocation
 
 	if (size > (descriptor->size - offset))
 	{
-		MALI_DEBUG_PRINT(1,("_maliggy_osk_mem_mapregion_map: virtual memory area not large enough to map physical 0x%x size %x into area 0x%x at offset 0x%xr\n",
+		MALI_DEBUG_PRINT(1,("_mali_osk_mem_mapregion_map: virtual memory area not large enough to map physical 0x%x size %x into area 0x%x at offset 0x%xr\n",
 		                    *phys_addr, size, descriptor->mapping, offset));
 		return _MALI_OSK_ERR_FAULT;
 	}
@@ -563,7 +563,7 @@ _maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_map( maliggy_memory_allocation
 
 	if ( MALI_MEMORY_ALLOCATION_OS_ALLOCATED_PHYSADDR_MAGIC == *phys_addr )
 	{
-		_maliggy_osk_errcode_t ret;
+		_mali_osk_errcode_t ret;
 		AllocationList *alloc_item;
 		u32 linux_phys_frame_num;
 
@@ -614,7 +614,7 @@ _maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_map( maliggy_memory_allocation
 
 }
 
-void _maliggy_osk_mem_mapregion_unmap( maliggy_memory_allocation * descriptor, u32 offset, u32 size, _maliggy_osk_mem_mapregion_flags_t flags )
+void _mali_osk_mem_mapregion_unmap( mali_memory_allocation * descriptor, u32 offset, u32 size, _mali_osk_mem_mapregion_flags_t flags )
 {
 	MappingInfo *mappingInfo;
 
@@ -630,7 +630,7 @@ void _maliggy_osk_mem_mapregion_unmap( maliggy_memory_allocation * descriptor, u
 
 	if (size > (descriptor->size - offset))
 	{
-		MALI_DEBUG_PRINT(1,("_maliggy_osk_mem_mapregion_unmap: virtual memory area not large enough to unmap size %x from area 0x%x at offset 0x%x\n",
+		MALI_DEBUG_PRINT(1,("_mali_osk_mem_mapregion_unmap: virtual memory area not large enough to unmap size %x from area 0x%x at offset 0x%x\n",
 							size, descriptor->mapping, offset));
 		return;
 	}
@@ -640,7 +640,7 @@ void _maliggy_osk_mem_mapregion_unmap( maliggy_memory_allocation * descriptor, u
 
 	if ( 0 != (flags & _MALI_OSK_MEM_MAPREGION_FLAG_OS_ALLOCATED_PHYSADDR) )
 	{
-		/* This physical RAM was allocated in _maliggy_osk_mem_mapregion_map and
+		/* This physical RAM was allocated in _mali_osk_mem_mapregion_map and
 		 * so needs to be unmapped
 		 */
 		while (size)
@@ -675,7 +675,7 @@ void _maliggy_osk_mem_mapregion_unmap( maliggy_memory_allocation * descriptor, u
 	return;
 }
 
-u32 _maliggy_osk_mem_write_safe(void *dest, const void *src, u32 size)
+u32 _mali_osk_mem_write_safe(void *dest, const void *src, u32 size)
 {
 #define MALI_MEM_SAFE_COPY_BLOCK_SIZE 4096
 	u32 retval = 0;

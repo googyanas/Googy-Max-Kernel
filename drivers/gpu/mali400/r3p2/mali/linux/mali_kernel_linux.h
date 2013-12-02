@@ -20,15 +20,15 @@ extern "C"
 #include "mali_kernel_license.h"
 #include "mali_osk.h"
 
-extern struct platform_device *maliggy_platform_device;
+extern struct platform_device *mali_platform_device;
 
 #if MALI_LICENSE_IS_GPL
-/* Defined in maliggy_osk_irq.h */
-extern struct workqueue_struct * maliggy_wq;
+/* Defined in mali_osk_irq.h */
+extern struct workqueue_struct * mali_wq;
 #endif
 
-void maliggy_osk_low_level_mem_init(void);
-void maliggy_osk_low_level_mem_term(void);
+void mali_osk_low_level_mem_init(void);
+void mali_osk_low_level_mem_term(void);
 
 #ifdef __cplusplus
 }

@@ -17,23 +17,23 @@
 #include "mali_ukk_wrappers.h"
 
 
-int vsync_event_report_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_vsync_event_report_s __user *uargs)
+int vsync_event_report_wrapper(struct mali_session_data *session_data, _mali_uk_vsync_event_report_s __user *uargs)
 {
-	_maliggy_uk_vsync_event_report_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_vsync_event_report_s kargs;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
-	if (0 != copy_from_user(&kargs, uargs, sizeof(_maliggy_uk_vsync_event_report_s)))
+	if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_vsync_event_report_s)))
 	{
 		return -EFAULT;
 	}
 
 	kargs.ctx = session_data;
-	err = _maliggy_ukk_vsync_event_report(&kargs);
+	err = _mali_ukk_vsync_event_report(&kargs);
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	return 0;

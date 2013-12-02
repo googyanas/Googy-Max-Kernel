@@ -16,30 +16,30 @@
 #include "mali_session.h"
 #include "mali_ukk_wrappers.h"
 
-int gp_start_job_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_gp_start_job_s __user *uargs)
+int gp_start_job_wrapper(struct mali_session_data *session_data, _mali_uk_gp_start_job_s __user *uargs)
 {
-	_maliggy_osk_errcode_t err;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 	MALI_CHECK_NON_NULL(session_data, -EINVAL);
 
-	err = _maliggy_ukk_gp_start_job(session_data, uargs);
-	if (_MALI_OSK_ERR_OK != err) return map_errcode_ggy_ggy(err);
+	err = _mali_ukk_gp_start_job(session_data, uargs);
+	if (_MALI_OSK_ERR_OK != err) return map_errcode(err);
 
 	return 0;
 }
 
-int gp_get_core_version_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_get_gp_core_version_s __user *uargs)
+int gp_get_core_version_wrapper(struct mali_session_data *session_data, _mali_uk_get_gp_core_version_s __user *uargs)
 {
-    _maliggy_uk_get_gp_core_version_s kargs;
-    _maliggy_osk_errcode_t err;
+    _mali_uk_get_gp_core_version_s kargs;
+    _mali_osk_errcode_t err;
 
     MALI_CHECK_NON_NULL(uargs, -EINVAL);
     MALI_CHECK_NON_NULL(session_data, -EINVAL);
 
     kargs.ctx = session_data;
-    err =  _maliggy_ukk_get_gp_core_version(&kargs);
-    if (_MALI_OSK_ERR_OK != err) return map_errcode_ggy_ggy(err);
+    err =  _mali_ukk_get_gp_core_version(&kargs);
+    if (_MALI_OSK_ERR_OK != err) return map_errcode(err);
 
 	/* no known transactions to roll-back */
 
@@ -48,19 +48,19 @@ int gp_get_core_version_wrapper_ggy_ggy(struct maliggy_session_data *session_dat
     return 0;
 }
 
-int gp_suspend_response_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_gp_suspend_response_s __user *uargs)
+int gp_suspend_response_wrapper(struct mali_session_data *session_data, _mali_uk_gp_suspend_response_s __user *uargs)
 {
-    _maliggy_uk_gp_suspend_response_s kargs;
-    _maliggy_osk_errcode_t err;
+    _mali_uk_gp_suspend_response_s kargs;
+    _mali_osk_errcode_t err;
 
     MALI_CHECK_NON_NULL(uargs, -EINVAL);
     MALI_CHECK_NON_NULL(session_data, -EINVAL);
 
-    if (0 != copy_from_user(&kargs, uargs, sizeof(_maliggy_uk_gp_suspend_response_s))) return -EFAULT;
+    if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_gp_suspend_response_s))) return -EFAULT;
 
     kargs.ctx = session_data;
-    err = _maliggy_ukk_gp_suspend_response(&kargs);
-    if (_MALI_OSK_ERR_OK != err) return map_errcode_ggy_ggy(err);
+    err = _mali_ukk_gp_suspend_response(&kargs);
+    if (_MALI_OSK_ERR_OK != err) return map_errcode(err);
 
     if (0 != put_user(kargs.cookie, &uargs->cookie)) return -EFAULT;
 
@@ -68,17 +68,17 @@ int gp_suspend_response_wrapper_ggy_ggy(struct maliggy_session_data *session_dat
     return 0;
 }
 
-int gp_get_number_of_cores_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_get_gp_number_of_cores_s __user *uargs)
+int gp_get_number_of_cores_wrapper(struct mali_session_data *session_data, _mali_uk_get_gp_number_of_cores_s __user *uargs)
 {
-    _maliggy_uk_get_gp_number_of_cores_s kargs;
-    _maliggy_osk_errcode_t err;
+    _mali_uk_get_gp_number_of_cores_s kargs;
+    _mali_osk_errcode_t err;
 
     MALI_CHECK_NON_NULL(uargs, -EINVAL);
     MALI_CHECK_NON_NULL(session_data, -EINVAL);
 
     kargs.ctx = session_data;
-    err = _maliggy_ukk_get_gp_number_of_cores(&kargs);
-    if (_MALI_OSK_ERR_OK != err) return map_errcode_ggy_ggy(err);
+    err = _mali_ukk_get_gp_number_of_cores(&kargs);
+    if (_MALI_OSK_ERR_OK != err) return map_errcode(err);
 
 	/* no known transactions to roll-back */
 

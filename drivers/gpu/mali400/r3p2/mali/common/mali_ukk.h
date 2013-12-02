@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_ukk.h
+ * @file mali_ukk.h
  * Defines the kernel-side interface of the user-kernel interface
  */
 
@@ -33,69 +33,69 @@ extern "C"
 /**
  * @addtogroup u_k_api UDD User/Kernel Interface (U/K) APIs
  *
- * - The _maliggy_uk functions are an abstraction of the interface to the device
+ * - The _mali_uk functions are an abstraction of the interface to the device
  * driver. On certain OSs, this would be implemented via the IOCTL interface.
  * On other OSs, it could be via extension of some Device Driver Class, or
  * direct function call for Bare metal/RTOSs.
  * - It is important to note that:
- *   -  The Device Driver has implemented the _maliggy_ukk set of functions
- *   -  The Base Driver calls the corresponding set of _maliggy_uku functions.
+ *   -  The Device Driver has implemented the _mali_ukk set of functions
+ *   -  The Base Driver calls the corresponding set of _mali_uku functions.
  * - What requires porting is solely the calling mechanism from User-side to
  * Kernel-side, and propagating back the results.
  * - Each U/K function is associated with a (group, number) pair from
- * \ref _maliggy_uk_functions to make it possible for a common function in the
+ * \ref _mali_uk_functions to make it possible for a common function in the
  * Base Driver and Device Driver to route User/Kernel calls from/to the
- * correct _maliggy_uk function. For example, in an IOCTL system, the IOCTL number
- * would be formed based on the group and number assigned to the _maliggy_uk
- * function, as listed in \ref _maliggy_uk_functions. On the user-side, each
- * _maliggy_uku function would just make an IOCTL with the IOCTL-code being an
+ * correct _mali_uk function. For example, in an IOCTL system, the IOCTL number
+ * would be formed based on the group and number assigned to the _mali_uk
+ * function, as listed in \ref _mali_uk_functions. On the user-side, each
+ * _mali_uku function would just make an IOCTL with the IOCTL-code being an
  * encoded form of the (group, number) pair. On the kernel-side, the Device
  * Driver's IOCTL handler decodes the IOCTL-code back into a (group, number)
- * pair, and uses this to determine which corresponding _maliggy_ukk should be
+ * pair, and uses this to determine which corresponding _mali_ukk should be
  * called.
- *   - Refer to \ref _maliggy_uk_functions for more information about this
+ *   - Refer to \ref _mali_uk_functions for more information about this
  * (group, number) pairing.
  * - In a system where there is no distinction between user and kernel-side,
  * the U/K interface may be implemented as:@code
- * MALI_STATIC_INLINE _maliggy_osk_errcode_t _maliggy_uku_examplefunction( _maliggy_uk_examplefunction_s *args )
+ * MALI_STATIC_INLINE _mali_osk_errcode_t _mali_uku_examplefunction( _mali_uk_examplefunction_s *args )
  * {
- *     return maliggy_ukk_examplefunction( args );
+ *     return mali_ukk_examplefunction( args );
  * }
  * @endcode
  * - Therefore, all U/K calls behave \em as \em though they were direct
  * function calls (but the \b implementation \em need \em not be a direct
  * function calls)
  *
- * @note Naming the _maliggy_uk functions the same on both User and Kernel sides
+ * @note Naming the _mali_uk functions the same on both User and Kernel sides
  * on non-RTOS systems causes debugging issues when setting breakpoints. In
  * this case, it is not clear which function the breakpoint is put on.
- * Therefore the _maliggy_uk functions in user space are prefixed with \c _maliggy_uku
- * and in kernel space with \c _maliggy_ukk. The naming for the argument
+ * Therefore the _mali_uk functions in user space are prefixed with \c _mali_uku
+ * and in kernel space with \c _mali_ukk. The naming for the argument
  * structures is unaffected.
  *
- * - The _maliggy_uk functions are synchronous.
- * - Arguments to the _maliggy_uk functions are passed in a structure. The only
- * parameter passed to the _maliggy_uk functions is a pointer to this structure.
+ * - The _mali_uk functions are synchronous.
+ * - Arguments to the _mali_uk functions are passed in a structure. The only
+ * parameter passed to the _mali_uk functions is a pointer to this structure.
  * This first member of this structure, ctx, is a pointer to a context returned
- * by _maliggy_uku_open(). For example:@code
+ * by _mali_uku_open(). For example:@code
  * typedef struct
  * {
  *     void *ctx;
  *     u32 number_of_cores;
- * } _maliggy_uk_get_gp_number_of_cores_s;
+ * } _mali_uk_get_gp_number_of_cores_s;
  * @endcode
  *
- * - Each _maliggy_uk function has its own argument structure named after the
+ * - Each _mali_uk function has its own argument structure named after the
  *  function. The argument is distinguished by the _s suffix.
  * - The argument types are defined by the base driver and user-kernel
  *  interface.
- * - All _maliggy_uk functions return a standard \ref _maliggy_osk_errcode_t.
+ * - All _mali_uk functions return a standard \ref _mali_osk_errcode_t.
  * - Only arguments of type input or input/output need be initialized before
- * calling a _maliggy_uk function.
+ * calling a _mali_uk function.
  * - Arguments of type output and input/output are only valid when the
- * _maliggy_uk function returns \ref _MALI_OSK_ERR_OK.
+ * _mali_uk function returns \ref _MALI_OSK_ERR_OK.
  * - The \c ctx member is always invalid after it has been used by a
- * _maliggy_uk function, except for the context management functions
+ * _mali_uk function, except for the context management functions
  *
  *
  * \b Interface \b restrictions
@@ -105,7 +105,7 @@ extern "C"
  * illegal in the User-kernel implementation:
  * - Calling functions necessary for operation on all systems,  which would
  * not otherwise get called on RTOS systems.
- *     - For example, a  U/K interface that calls multiple _maliggy_ukk functions
+ *     - For example, a  U/K interface that calls multiple _mali_ukk functions
  * during one particular U/K call. This could not be achieved by the same code
  * which uses direct function calls for the U/K interface.
  * -  Writing in values to the args members, when otherwise these members would
@@ -125,25 +125,25 @@ extern "C"
  * implementation.
  *
  * A number of allowable examples exist where U/K interfaces do 'real' work:
- * - The 'pointer switching' technique for \ref _maliggy_ukk_get_system_info
+ * - The 'pointer switching' technique for \ref _mali_ukk_get_system_info
  *     - In this case, without the pointer switching on direct function call
  * U/K interface, the Device Driver code still sees the same thing: a pointer
  * to which it can write memory. This is because such a system has no
  * distinction between a user and kernel pointer.
  * - Writing an OS-specific value into the ukk_private member for
- * _maliggy_ukk_mem_mmap().
+ * _mali_ukk_mem_mmap().
  *     - In this case, this value is passed around by Device Driver code, but
  * its actual value is never checked. Device Driver code simply passes it from
  * the U/K layer to the OSK layer, where it can be acted upon. In this case,
- * \em some OS implementations of the U/K (_maliggy_ukk_mem_mmap()) and OSK
- * (_maliggy_osk_mem_mapregion_init()) functions will collaborate on the
+ * \em some OS implementations of the U/K (_mali_ukk_mem_mmap()) and OSK
+ * (_mali_osk_mem_mapregion_init()) functions will collaborate on the
  *  meaning of ukk_private member. On other OSs, it may be unused by both
  * U/K and OSK layers
  *     - Therefore, on error inside the U/K interface implementation itself,
- * it will be as though the _maliggy_ukk function itself had failed, and cleaned
+ * it will be as though the _mali_ukk function itself had failed, and cleaned
  * up after itself.
  *     - Compare this to a direct function call U/K implementation, where all
- * error cleanup is handled by the _maliggy_ukk function itself. The direct
+ * error cleanup is handled by the _mali_ukk function itself. The direct
  * function call U/K interface implementation is automatically atomic.
  *
  * The last example highlights a consequence of all U/K interface
@@ -157,7 +157,7 @@ extern "C"
  */
 
 
-/** @defgroup _maliggy_uk_context U/K Context management
+/** @defgroup _mali_uk_context U/K Context management
  *
  * These functions allow for initialisation of the user-kernel interface once per process.
  *
@@ -167,12 +167,12 @@ extern "C"
  * On IOCTL systems, this is likely to be a file descriptor as a result of opening the kernel device driver.
  *
  * On a bare-metal/RTOS system with no distinction between kernel and
- * user-space, the U/K interface simply calls the _maliggy_ukk variant of the
+ * user-space, the U/K interface simply calls the _mali_ukk variant of the
  * function by direct function call. In this case, the context returned is the
- * maliggy_session_data from _maliggy_ukk_open().
+ * mali_session_data from _mali_ukk_open().
  *
  * The kernel side implementations of the U/K interface expect the first member of the argument structure to
- * be the context created by _maliggy_uku_open(). On some OS implementations, the meaning of this context
+ * be the context created by _mali_uku_open(). On some OS implementations, the meaning of this context
  * will be different between user-side and kernel-side. In which case, the kernel-side will need to replace this context
  * with the kernel-side equivalent, because user-side will not have access to kernel-side data. The context parameter
  * in the argument structure therefore has to be of type input/output.
@@ -191,9 +191,9 @@ extern "C"
  * This is used to obtain a per-process context handle for all future U/K calls.
  *
  * @param context pointer to storage to return a (void*)context handle.
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_open( void **context );
+_mali_osk_errcode_t _mali_ukk_open( void **context );
 
 /** @brief End a Mali Device Driver session
  *
@@ -202,14 +202,14 @@ _maliggy_osk_errcode_t _maliggy_ukk_open( void **context );
  * The context handle must not be used after it has been closed.
  *
  * @param context pointer to a stored (void*)context handle.
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_close( void **context );
+_mali_osk_errcode_t _mali_ukk_close( void **context );
 
-/** @} */ /* end group _maliggy_uk_context */
+/** @} */ /* end group _mali_uk_context */
 
 
-/** @addtogroup _maliggy_uk_core U/K Core
+/** @addtogroup _mali_uk_core U/K Core
  *
  * The core functions provide the following functionality:
  * - verify that the user and kernel API are compatible
@@ -222,41 +222,41 @@ _maliggy_osk_errcode_t _maliggy_ukk_close( void **context );
  *
  * Sleeps until notified or a timeout occurs. Returns information about the notification.
  *
- * @param args see _maliggy_uk_wait_for_notification_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_wait_for_notification_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_wait_for_notification( _maliggy_uk_wait_for_notification_s *args );
+_mali_osk_errcode_t _mali_ukk_wait_for_notification( _mali_uk_wait_for_notification_s *args );
 
 /** @brief Post a notification to the notification queue of this application.
  *
- * @param args see _maliggy_uk_post_notification_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_post_notification_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_post_notification( _maliggy_uk_post_notification_s *args );
+_mali_osk_errcode_t _mali_ukk_post_notification( _mali_uk_post_notification_s *args );
 
 /** @brief Verifies if the user and kernel side of this API are compatible.
  *
- * @param args see _maliggy_uk_get_api_version_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_get_api_version_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_get_api_version( _maliggy_uk_get_api_version_s *args );
+_mali_osk_errcode_t _mali_ukk_get_api_version( _mali_uk_get_api_version_s *args );
 
 /** @brief Get the user space settings applicable for calling process.
  *
- * @param args see _maliggy_uk_get_user_settings_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_get_user_settings_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_get_user_settings(_maliggy_uk_get_user_settings_s *args);
+_mali_osk_errcode_t _mali_ukk_get_user_settings(_mali_uk_get_user_settings_s *args);
 
 /** @brief Get a user space setting applicable for calling process.
  *
- * @param args see _maliggy_uk_get_user_setting_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_get_user_setting_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_get_user_setting(_maliggy_uk_get_user_setting_s *args);
+_mali_osk_errcode_t _mali_ukk_get_user_setting(_mali_uk_get_user_setting_s *args);
 
-/** @} */ /* end group _maliggy_uk_core */
+/** @} */ /* end group _mali_uk_core */
 
 
-/** @addtogroup _maliggy_uk_memory U/K Memory
+/** @addtogroup _mali_uk_memory U/K Memory
  *
  * The memory functions provide functionality with and without a Mali-MMU present.
  *
@@ -275,32 +275,32 @@ _maliggy_osk_errcode_t _maliggy_ukk_get_user_setting(_maliggy_uk_get_user_settin
  * @brief Initialize the Mali-MMU Memory system
  *
  * For Mali-MMU builds of the drivers, this function must be called before any
- * other functions in the \ref _maliggy_uk_memory group are called.
+ * other functions in the \ref _mali_uk_memory group are called.
  *
  * @note This function is for Mali-MMU builds \b only. It should not be called
  * when the drivers are built without Mali-MMU support.
  *
- * @param args see \ref _maliggy_uk_init_mem_s in maliggy_utgard_uk_types.h
+ * @param args see \ref _mali_uk_init_mem_s in mali_utgard_uk_types.h
  * @return _MALI_OSK_ERR_OK on success, otherwise a suitable
- * _maliggy_osk_errcode_t on failure.
+ * _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_init_mem( _maliggy_uk_init_mem_s *args );
+_mali_osk_errcode_t _mali_ukk_init_mem( _mali_uk_init_mem_s *args );
 
 /**
  * @brief Terminate the MMU Memory system
  *
  * For Mali-MMU builds of the drivers, this function must be called when
- * functions in the \ref _maliggy_uk_memory group will no longer be called. This
+ * functions in the \ref _mali_uk_memory group will no longer be called. This
  * function must be called before the application terminates.
  *
  * @note This function is for Mali-MMU builds \b only. It should not be called
  * when the drivers are built without Mali-MMU support.
  *
- * @param args see \ref _maliggy_uk_term_mem_s in maliggy_utgard_uk_types.h
+ * @param args see \ref _mali_uk_term_mem_s in mali_utgard_uk_types.h
  * @return _MALI_OSK_ERR_OK on success, otherwise a suitable
- * _maliggy_osk_errcode_t on failure.
+ * _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_term_mem( _maliggy_uk_term_mem_s *args );
+_mali_osk_errcode_t _mali_ukk_term_mem( _mali_uk_term_mem_s *args );
 
 /** @brief Map Mali Memory into the current user process
  *
@@ -309,21 +309,21 @@ _maliggy_osk_errcode_t _maliggy_ukk_term_mem( _maliggy_uk_term_mem_s *args );
  * This function is to be used for Mali-MMU mode. The function is available in both Mali-MMU and Mali-nonMMU modes,
  * but should not be called by a user process in Mali-nonMMU mode.
  *
- * The implementation and operation of _maliggy_ukk_mem_mmap() is dependant on whether the driver is built for Mali-MMU
+ * The implementation and operation of _mali_ukk_mem_mmap() is dependant on whether the driver is built for Mali-MMU
  * or Mali-nonMMU:
- * - In the nonMMU case, _maliggy_ukk_mem_mmap() requires a physical address to be specified. For this reason, an OS U/K
+ * - In the nonMMU case, _mali_ukk_mem_mmap() requires a physical address to be specified. For this reason, an OS U/K
  * implementation should not allow this to be called from user-space. In any case, nonMMU implementations are
  * inherently insecure, and so the overall impact is minimal. Mali-MMU mode should be used if security is desired.
- * - In the MMU case, _maliggy_ukk_mem_mmap() the _maliggy_uk_mem_mmap_s::phys_addr
+ * - In the MMU case, _mali_ukk_mem_mmap() the _mali_uk_mem_mmap_s::phys_addr
  * member is used for the \em Mali-virtual address desired for the mapping. The
- * implementation of _maliggy_ukk_mem_mmap() will allocate both the CPU-virtual
+ * implementation of _mali_ukk_mem_mmap() will allocate both the CPU-virtual
  * and CPU-physical addresses, and can cope with mapping a contiguous virtual
  * address range to a sequence of non-contiguous physical pages. In this case,
  * the CPU-physical addresses are not communicated back to the user-side, as
  * they are unnecsessary; the \em Mali-virtual address range must be used for
  * programming Mali structures.
  *
- * In the second (MMU) case, _maliggy_ukk_mem_mmap() handles management of
+ * In the second (MMU) case, _mali_ukk_mem_mmap() handles management of
  * CPU-virtual and CPU-physical ranges, but the \em caller must manage the
  * \em Mali-virtual address range from the user-side.
  *
@@ -331,68 +331,68 @@ _maliggy_osk_errcode_t _maliggy_ukk_term_mem( _maliggy_uk_term_mem_s *args );
  * It is not possible for a process to accidentally corrupt another process'
  * \em Mali-virtual address space.
  *
- * @param args see _maliggy_uk_mem_mmap_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_mem_mmap_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_mem_mmap( _maliggy_uk_mem_mmap_s *args );
+_mali_osk_errcode_t _mali_ukk_mem_mmap( _mali_uk_mem_mmap_s *args );
 
 /** @brief Unmap Mali Memory from the current user process
  *
  * Unmaps Mali memory from the current user process in a generic way. This only operates on Mali memory supplied
- * from _maliggy_ukk_mem_mmap().
+ * from _mali_ukk_mem_mmap().
  *
- * @param args see _maliggy_uk_mem_munmap_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_mem_munmap_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_mem_munmap( _maliggy_uk_mem_munmap_s *args );
+_mali_osk_errcode_t _mali_ukk_mem_munmap( _mali_uk_mem_munmap_s *args );
 
 /** @brief Determine the buffer size necessary for an MMU page table dump.
- * @param args see _maliggy_uk_query_mmu_page_table_dumpggy_size_s in maliggy_utgard_uk_types.h
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_query_mmu_page_table_dump_size_s in mali_utgard_uk_types.h
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_query_mmu_page_table_dumpggy_size( _maliggy_uk_query_mmu_page_table_dumpggy_size_s *args );
+_mali_osk_errcode_t _mali_ukk_query_mmu_page_table_dump_size( _mali_uk_query_mmu_page_table_dump_size_s *args );
 /** @brief Dump MMU Page tables.
- * @param args see _maliggy_uk_dumpggy_mmu_page_table_s in maliggy_utgard_uk_types.h
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_dump_mmu_page_table_s in mali_utgard_uk_types.h
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_dumpggy_mmu_page_table( _maliggy_uk_dumpggy_mmu_page_table_s * args );
+_mali_osk_errcode_t _mali_ukk_dump_mmu_page_table( _mali_uk_dump_mmu_page_table_s * args );
 
 /** @brief Write user data to specified Mali memory without causing segfaults.
- * @param args see _maliggy_uk_mem_write_safe_s in maliggy_utgard_uk_types.h
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_mem_write_safe_s in mali_utgard_uk_types.h
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_mem_write_safe( _maliggy_uk_mem_write_safe_s *args );
+_mali_osk_errcode_t _mali_ukk_mem_write_safe( _mali_uk_mem_write_safe_s *args );
 
 /** @brief Map a physically contiguous range of memory into Mali
- * @param args see _maliggy_uk_map_external_mem_s in maliggy_utgard_uk_types.h
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_map_external_mem_s in mali_utgard_uk_types.h
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_map_external_mem( _maliggy_uk_map_external_mem_s *args );
+_mali_osk_errcode_t _mali_ukk_map_external_mem( _mali_uk_map_external_mem_s *args );
 
 /** @brief Unmap a physically contiguous range of memory from Mali
- * @param args see _maliggy_uk_unmap_external_mem_s in maliggy_utgard_uk_types.h
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_unmap_external_mem_s in mali_utgard_uk_types.h
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_unmap_external_mem( _maliggy_uk_unmap_external_mem_s *args );
+_mali_osk_errcode_t _mali_ukk_unmap_external_mem( _mali_uk_unmap_external_mem_s *args );
 
 #if defined(CONFIG_MALI400_UMP)
 /** @brief Map UMP memory into Mali
- * @param args see _maliggy_uk_attach_umpggy_mem_s in maliggy_utgard_uk_types.h
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_attach_ump_mem_s in mali_utgard_uk_types.h
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_attach_umpggy_mem( _maliggy_uk_attach_umpggy_mem_s *args );
+_mali_osk_errcode_t _mali_ukk_attach_ump_mem( _mali_uk_attach_ump_mem_s *args );
 /** @brief Unmap UMP memory from Mali
- * @param args see _maliggy_uk_release_umpggy_mem_s in maliggy_utgard_uk_types.h
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_release_ump_mem_s in mali_utgard_uk_types.h
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_release_umpggy_mem( _maliggy_uk_release_umpggy_mem_s *args );
+_mali_osk_errcode_t _mali_ukk_release_ump_mem( _mali_uk_release_ump_mem_s *args );
 #endif /* CONFIG_MALI400_UMP */
 
 /** @brief Determine virtual-to-physical mapping of a contiguous memory range
  * (optional)
  *
  * This allows the user-side to do a virtual-to-physical address translation.
- * In conjunction with _maliggy_uku_map_external_mem, this can be used to do
+ * In conjunction with _mali_uku_map_external_mem, this can be used to do
  * direct rendering.
  *
  * This function will only succeed on a virtual range that is mapped into the
@@ -426,15 +426,15 @@ _maliggy_osk_errcode_t _maliggy_ukk_release_umpggy_mem( _maliggy_uk_release_umpg
  * @note if implemented, this function is entirely platform-dependant, and does
  * not exist in common code.
  *
- * @param args see _maliggy_uk_va_to_maliggy_pa_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_va_to_mali_pa_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_va_to_maliggy_pa( _maliggy_uk_va_to_maliggy_pa_s * args );
+_mali_osk_errcode_t _mali_ukk_va_to_mali_pa( _mali_uk_va_to_mali_pa_s * args );
 
-/** @} */ /* end group _maliggy_uk_memory */
+/** @} */ /* end group _mali_uk_memory */
 
 
-/** @addtogroup _maliggy_uk_pp U/K Fragment Processor
+/** @addtogroup _mali_uk_pp U/K Fragment Processor
  *
  * The Fragment Processor (aka PP (Pixel Processor)) functions provide the following functionality:
  * - retrieving version of the fragment processors
@@ -453,42 +453,42 @@ _maliggy_osk_errcode_t _maliggy_ukk_va_to_maliggy_pa( _maliggy_uk_va_to_maliggy_
  * existing one returned, otherwise the new job is started and the status field args->status is set to
  * _MALI_UK_START_JOB_STARTED.
  *
- * Job completion can be awaited with _maliggy_ukk_wait_for_notification().
+ * Job completion can be awaited with _mali_ukk_wait_for_notification().
  *
- * @oaram ctx user-kernel context (maliggy_session)
- * @param uargs see _maliggy_uk_pp_start_job_s in "mali_utgard_uk_types.h". Use _maliggy_osk_copy_from_user to retrieve data!
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @oaram ctx user-kernel context (mali_session)
+ * @param uargs see _mali_uk_pp_start_job_s in "mali_utgard_uk_types.h". Use _mali_osk_copy_from_user to retrieve data!
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_pp_start_job( void *ctx, _maliggy_uk_pp_start_job_s *uargs, int *fence );
+_mali_osk_errcode_t _mali_ukk_pp_start_job( void *ctx, _mali_uk_pp_start_job_s *uargs, int *fence );
 
 /** @brief Returns the number of Fragment Processors in the system
  *
- * @param args see _maliggy_uk_get_pp_number_of_cores_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_get_pp_number_of_cores_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_get_pp_number_of_cores( _maliggy_uk_get_pp_number_of_cores_s *args );
+_mali_osk_errcode_t _mali_ukk_get_pp_number_of_cores( _mali_uk_get_pp_number_of_cores_s *args );
 
 /** @brief Returns the version that all Fragment Processor cores are compatible with.
  *
- * This function may only be called when _maliggy_ukk_get_pp_number_of_cores() indicated at least one Fragment
+ * This function may only be called when _mali_ukk_get_pp_number_of_cores() indicated at least one Fragment
  * Processor core is available.
  *
- * @param args see _maliggy_uk_get_pp_core_version_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_get_pp_core_version_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_get_pp_core_version( _maliggy_uk_get_pp_core_version_s *args );
+_mali_osk_errcode_t _mali_ukk_get_pp_core_version( _mali_uk_get_pp_core_version_s *args );
 
 /** @brief Disable Write-back unit(s) on specified job
  *
- * @param args see _maliggy_uk_get_pp_core_version_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_get_pp_core_version_s in "mali_utgard_uk_types.h"
  */
-void _maliggy_ukk_pp_job_disable_wb(_maliggy_uk_pp_disable_wb_s *args);
+void _mali_ukk_pp_job_disable_wb(_mali_uk_pp_disable_wb_s *args);
 
 
-/** @} */ /* end group _maliggy_uk_pp */
+/** @} */ /* end group _mali_uk_pp */
 
 
-/** @addtogroup _maliggy_uk_gp U/K Vertex Processor
+/** @addtogroup _mali_uk_gp U/K Vertex Processor
  *
  * The Vertex Processor (aka GP (Geometry Processor)) functions provide the following functionality:
  * - retrieving version of the Vertex Processors
@@ -507,81 +507,81 @@ void _maliggy_ukk_pp_job_disable_wb(_maliggy_uk_pp_disable_wb_s *args);
  * existing one returned, otherwise the new job is started and the status field args->status is set to
  * _MALI_UK_START_JOB_STARTED.
  *
- * Job completion can be awaited with _maliggy_ukk_wait_for_notification().
+ * Job completion can be awaited with _mali_ukk_wait_for_notification().
  *
- * @oaram ctx user-kernel context (maliggy_session)
- * @param uargs see _maliggy_uk_gp_start_job_s in "mali_utgard_uk_types.h". Use _maliggy_osk_copy_from_user to retrieve data!
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @oaram ctx user-kernel context (mali_session)
+ * @param uargs see _mali_uk_gp_start_job_s in "mali_utgard_uk_types.h". Use _mali_osk_copy_from_user to retrieve data!
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_gp_start_job( void *ctx, _maliggy_uk_gp_start_job_s *uargs );
+_mali_osk_errcode_t _mali_ukk_gp_start_job( void *ctx, _mali_uk_gp_start_job_s *uargs );
 
 /** @brief Returns the number of Vertex Processors in the system.
  *
- * @param args see _maliggy_uk_get_gp_number_of_cores_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_get_gp_number_of_cores_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_get_gp_number_of_cores( _maliggy_uk_get_gp_number_of_cores_s *args );
+_mali_osk_errcode_t _mali_ukk_get_gp_number_of_cores( _mali_uk_get_gp_number_of_cores_s *args );
 
 /** @brief Returns the version that all Vertex Processor cores are compatible with.
  *
- * This function may only be called when _maliggy_uk_get_gp_number_of_cores() indicated at least one Vertex
+ * This function may only be called when _mali_uk_get_gp_number_of_cores() indicated at least one Vertex
  * Processor core is available.
  *
- * @param args see _maliggy_uk_get_gp_core_version_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_get_gp_core_version_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_get_gp_core_version( _maliggy_uk_get_gp_core_version_s *args );
+_mali_osk_errcode_t _mali_ukk_get_gp_core_version( _mali_uk_get_gp_core_version_s *args );
 
 /** @brief Resume or abort suspended Vertex Processor jobs.
  *
  * After receiving notification that a Vertex Processor job was suspended from
- * _maliggy_ukk_wait_for_notification() you can use this function to resume or abort the job.
+ * _mali_ukk_wait_for_notification() you can use this function to resume or abort the job.
  *
- * @param args see _maliggy_uk_gp_suspend_response_s in "mali_utgard_uk_types.h"
- * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _maliggy_osk_errcode_t on failure.
+ * @param args see _mali_uk_gp_suspend_response_s in "mali_utgard_uk_types.h"
+ * @return _MALI_OSK_ERR_OK on success, otherwise a suitable _mali_osk_errcode_t on failure.
  */
-_maliggy_osk_errcode_t _maliggy_ukk_gp_suspend_response( _maliggy_uk_gp_suspend_response_s *args );
+_mali_osk_errcode_t _mali_ukk_gp_suspend_response( _mali_uk_gp_suspend_response_s *args );
 
-/** @} */ /* end group _maliggy_uk_gp */
+/** @} */ /* end group _mali_uk_gp */
 
 #if defined(CONFIG_MALI400_PROFILING)
-/** @addtogroup _maliggy_uk_profiling U/K Timeline profiling module
+/** @addtogroup _mali_uk_profiling U/K Timeline profiling module
  * @{ */
 
 /** @brief Start recording profiling events.
  *
- * @param args see _maliggy_uk_profiling_start_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_profiling_start_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_profiling_start(_maliggy_uk_profiling_start_s *args);
+_mali_osk_errcode_t _mali_ukk_profiling_start(_mali_uk_profiling_start_s *args);
 
 /** @brief Add event to profiling buffer.
  *
- * @param args see _maliggy_uk_profiling_add_event_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_profiling_add_event_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_profiling_add_event(_maliggy_uk_profiling_add_event_s *args);
+_mali_osk_errcode_t _mali_ukk_profiling_add_event(_mali_uk_profiling_add_event_s *args);
 
 /** @brief Stop recording profiling events.
  *
- * @param args see _maliggy_uk_profiling_stop_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_profiling_stop_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_profiling_stop(_maliggy_uk_profiling_stop_s *args);
+_mali_osk_errcode_t _mali_ukk_profiling_stop(_mali_uk_profiling_stop_s *args);
 
 /** @brief Retrieve a recorded profiling event.
  *
- * @param args see _maliggy_uk_profiling_get_event_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_profiling_get_event_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_profiling_get_event(_maliggy_uk_profiling_get_event_s *args);
+_mali_osk_errcode_t _mali_ukk_profiling_get_event(_mali_uk_profiling_get_event_s *args);
 
 /** @brief Clear recorded profiling events.
  *
- * @param args see _maliggy_uk_profiling_clear_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_profiling_clear_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_profiling_clear(_maliggy_uk_profiling_clear_s *args);
+_mali_osk_errcode_t _mali_ukk_profiling_clear(_mali_uk_profiling_clear_s *args);
 
-/** @} */ /* end group _maliggy_uk_profiling */
+/** @} */ /* end group _mali_uk_profiling */
 #endif
 
-/** @addtogroup _maliggy_uk_vsync U/K VSYNC reporting module
+/** @addtogroup _mali_uk_vsync U/K VSYNC reporting module
  * @{ */
 
 /** @brief Report events related to vsync.
@@ -590,34 +590,34 @@ _maliggy_osk_errcode_t _maliggy_ukk_profiling_clear(_maliggy_uk_profiling_clear_
  * waiting is finished. This information can then be used in kernel space to
  * complement the GPU utilization metric.
  *
- * @param args see _maliggy_uk_vsync_event_report_s in "mali_utgard_uk_types.h"
+ * @param args see _mali_uk_vsync_event_report_s in "mali_utgard_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_vsync_event_report(_maliggy_uk_vsync_event_report_s *args);
+_mali_osk_errcode_t _mali_ukk_vsync_event_report(_mali_uk_vsync_event_report_s *args);
 
-/** @} */ /* end group _maliggy_uk_vsync */
+/** @} */ /* end group _mali_uk_vsync */
 
-/** @addtogroup _maliggy_sw_counters_report U/K Software counter reporting
+/** @addtogroup _mali_sw_counters_report U/K Software counter reporting
  * @{ */
 
 /** @brief Report software counters.
  *
- * @param args see _maliggy_uk_sw_counters_report_s in "mali_uk_types.h"
+ * @param args see _mali_uk_sw_counters_report_s in "mali_uk_types.h"
  */
-_maliggy_osk_errcode_t _maliggy_ukk_sw_counters_report(_maliggy_uk_sw_counters_report_s *args);
+_mali_osk_errcode_t _mali_ukk_sw_counters_report(_mali_uk_sw_counters_report_s *args);
 
-/** @} */ /* end group _maliggy_sw_counters_report */
+/** @} */ /* end group _mali_sw_counters_report */
 
 /** @} */ /* end group u_k_api */
 
 /** @} */ /* end group uddapi */
 
-u32 _maliggy_ukk_report_memory_usage(void);
+u32 _mali_ukk_report_memory_usage(void);
 
-u32 _maliggy_ukk_utilization_gp_pp(void);
+u32 _mali_ukk_utilization_gp_pp(void);
 
-u32 _maliggy_ukk_utilization_gp(void);
+u32 _mali_ukk_utilization_gp(void);
 
-u32 _maliggy_ukk_utilization_pp(void);
+u32 _mali_ukk_utilization_pp(void);
 
 #ifdef __cplusplus
 }

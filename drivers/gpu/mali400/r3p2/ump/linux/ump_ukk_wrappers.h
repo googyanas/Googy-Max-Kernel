@@ -9,7 +9,7 @@
  */
 
 /**
- * @file umpggy_ukk_wrappers.h
+ * @file ump_ukk_wrappers.h
  * Defines the wrapper functions which turn Linux IOCTL calls into _ukk_ calls
  */
 
@@ -26,14 +26,14 @@ extern "C"
 
 
 
-int umpggy_get_api_version_wrapper_ggy_ggy(u32 __user * argument, struct umpggy_session_data * session_data);
-int umpggy_release_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
-int umpggy_size_get_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
-int umpggy_msync_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
-int umpggy_cache_operations_control_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
-int umpggy_switch_hw_usage_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
-int umpggy_lock_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
-int umpggy_unlock_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
+int ump_get_api_version_wrapper(u32 __user * argument, struct ump_session_data * session_data);
+int ump_release_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
+int ump_size_get_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
+int ump_msync_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
+int ump_cache_operations_control_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
+int ump_switch_hw_usage_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
+int ump_lock_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
+int ump_unlock_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
 
 
 

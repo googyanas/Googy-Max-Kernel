@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_device_pause_resume.c
+ * @file mali_device_pause_resume.c
  * Implementation of the Mali pause/resume functionality
  */
 
@@ -18,18 +18,18 @@
 #include "mali_gp_scheduler.h"
 #include "mali_pp_scheduler.h"
 
-void maliggy_dev_pause(void)
+void mali_dev_pause(void)
 {
-	maliggy_gp_scheduler_suspend();
-	maliggy_pp_scheduler_suspend();
+	mali_gp_scheduler_suspend();
+	mali_pp_scheduler_suspend();
 }
 
-EXPORT_SYMBOL(maliggy_dev_pause);
+EXPORT_SYMBOL(mali_dev_pause);
 
-void maliggy_dev_resume(void)
+void mali_dev_resume(void)
 {
-	maliggy_gp_scheduler_resume();
-	maliggy_pp_scheduler_resume();
+	mali_gp_scheduler_resume();
+	mali_pp_scheduler_resume();
 }
 
-EXPORT_SYMBOL(maliggy_dev_resume);
+EXPORT_SYMBOL(mali_dev_resume);

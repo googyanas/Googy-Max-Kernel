@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_osk_wq.c
+ * @file mali_osk_wq.c
  * Implementation of the OS abstraction layer for the kernel device driver
  */
 
@@ -22,30 +22,30 @@
 #include "mali_kernel_license.h"
 #include "mali_kernel_linux.h"
 
-typedef struct _maliggy_osk_wq_work_t_struct
+typedef struct _mali_osk_wq_work_t_struct
 {
-	_maliggy_osk_wq_work_handler_t handler;
+	_mali_osk_wq_work_handler_t handler;
 	void *data;
 	struct work_struct work_handle;
-} maliggy_osk_wq_work_object_t;
+} mali_osk_wq_work_object_t;
 
 #if MALI_LICENSE_IS_GPL
-struct workqueue_struct *maliggy_wq = NULL;
+struct workqueue_struct *mali_wq = NULL;
 #endif
 
-static void _maliggy_osk_wq_work_func ( struct work_struct *work );
+static void _mali_osk_wq_work_func ( struct work_struct *work );
 
-_maliggy_osk_errcode_t _maliggy_osk_wq_init(void)
+_mali_osk_errcode_t _mali_osk_wq_init(void)
 {
 #if MALI_LICENSE_IS_GPL
-	MALI_DEBUG_ASSERT(NULL == maliggy_wq);
+	MALI_DEBUG_ASSERT(NULL == mali_wq);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
-	maliggy_wq = alloc_workqueue("mali", WQ_UNBOUND, 0);
+	mali_wq = alloc_workqueue("mali", WQ_UNBOUND, 0);
 #else
-	maliggy_wq = create_workqueue("mali");
+	mali_wq = create_workqueue("mali");
 #endif
-	if(NULL == maliggy_wq)
+	if(NULL == mali_wq)
 	{
 		MALI_PRINT_ERROR(("Unable to create Mali workqueue\n"));
 		return _MALI_OSK_ERR_FAULT;
@@ -55,70 +55,70 @@ _maliggy_osk_errcode_t _maliggy_osk_wq_init(void)
 	return _MALI_OSK_ERR_OK;
 }
 
-void _maliggy_osk_wq_flush(void)
+void _mali_osk_wq_flush(void)
 {
 #if MALI_LICENSE_IS_GPL
-       flush_workqueue(maliggy_wq);
+       flush_workqueue(mali_wq);
 #else
        flush_scheduled_work();
 #endif
 }
 
-void _maliggy_osk_wq_term(void)
+void _mali_osk_wq_term(void)
 {
 #if MALI_LICENSE_IS_GPL
-	MALI_DEBUG_ASSERT(NULL != maliggy_wq);
+	MALI_DEBUG_ASSERT(NULL != mali_wq);
 
-	flush_workqueue(maliggy_wq);
-	destroy_workqueue(maliggy_wq);
-	maliggy_wq = NULL;
+	flush_workqueue(mali_wq);
+	destroy_workqueue(mali_wq);
+	mali_wq = NULL;
 #else
 	flush_scheduled_work();
 #endif
 }
 
-_maliggy_osk_wq_work_t *_maliggy_osk_wq_create_work( _maliggy_osk_wq_work_handler_t handler, void *data )
+_mali_osk_wq_work_t *_mali_osk_wq_create_work( _mali_osk_wq_work_handler_t handler, void *data )
 {
-	maliggy_osk_wq_work_object_t *work = kmalloc(sizeof(maliggy_osk_wq_work_object_t), GFP_KERNEL);
+	mali_osk_wq_work_object_t *work = kmalloc(sizeof(mali_osk_wq_work_object_t), GFP_KERNEL);
 
 	if (NULL == work) return NULL;
 
 	work->handler = handler;
 	work->data = data;
 
-	INIT_WORK( &work->work_handle, _maliggy_osk_wq_work_func );
+	INIT_WORK( &work->work_handle, _mali_osk_wq_work_func );
 
 	return work;
 }
 
-void _maliggy_osk_wq_delete_work( _maliggy_osk_wq_work_t *work )
+void _mali_osk_wq_delete_work( _mali_osk_wq_work_t *work )
 {
-	maliggy_osk_wq_work_object_t *work_object = (maliggy_osk_wq_work_object_t *)work;
-	_maliggy_osk_wq_flush();
+	mali_osk_wq_work_object_t *work_object = (mali_osk_wq_work_object_t *)work;
+	_mali_osk_wq_flush();
 	kfree(work_object);
 }
 
-void _maliggy_osk_wq_delete_work_nonflush( _maliggy_osk_wq_work_t *work )
+void _mali_osk_wq_delete_work_nonflush( _mali_osk_wq_work_t *work )
 {
-	maliggy_osk_wq_work_object_t *work_object = (maliggy_osk_wq_work_object_t *)work;
+	mali_osk_wq_work_object_t *work_object = (mali_osk_wq_work_object_t *)work;
 	kfree(work_object);
 }
 
-void _maliggy_osk_wq_schedule_work( _maliggy_osk_wq_work_t *work )
+void _mali_osk_wq_schedule_work( _mali_osk_wq_work_t *work )
 {
-	maliggy_osk_wq_work_object_t *work_object = (maliggy_osk_wq_work_object_t *)work;
+	mali_osk_wq_work_object_t *work_object = (mali_osk_wq_work_object_t *)work;
 #if MALI_LICENSE_IS_GPL
-	queue_work(maliggy_wq, &work_object->work_handle);
+	queue_work(mali_wq, &work_object->work_handle);
 #else
 	schedule_work(&work_object->work_handle);
 #endif
 }
 
-static void _maliggy_osk_wq_work_func ( struct work_struct *work )
+static void _mali_osk_wq_work_func ( struct work_struct *work )
 {
-	maliggy_osk_wq_work_object_t *work_object;
+	mali_osk_wq_work_object_t *work_object;
 
-	work_object = _MALI_OSK_CONTAINER_OF(work, maliggy_osk_wq_work_object_t, work_handle);
+	work_object = _MALI_OSK_CONTAINER_OF(work, mali_osk_wq_work_object_t, work_handle);
 	work_object->handler(work_object->data);
 }
 

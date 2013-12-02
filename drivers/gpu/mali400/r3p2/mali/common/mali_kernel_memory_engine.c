@@ -15,19 +15,19 @@
 
 typedef struct memory_engine
 {
-	maliggy_kernel_mem_address_manager * maliggy_address;
-	maliggy_kernel_mem_address_manager * process_address;
+	mali_kernel_mem_address_manager * mali_address;
+	mali_kernel_mem_address_manager * process_address;
 } memory_engine;
 
-maliggy_allocation_engine maliggy_allocation_engine_create(maliggy_kernel_mem_address_manager * maliggy_address_manager, maliggy_kernel_mem_address_manager * process_address_manager)
+mali_allocation_engine mali_allocation_engine_create(mali_kernel_mem_address_manager * mali_address_manager, mali_kernel_mem_address_manager * process_address_manager)
 {
 	memory_engine * engine;
 
 	/* Mali Address Manager need not support unmap_physical */
-	MALI_DEBUG_ASSERT_POINTER(maliggy_address_manager);
-	MALI_DEBUG_ASSERT_POINTER(maliggy_address_manager->allocate);
-	MALI_DEBUG_ASSERT_POINTER(maliggy_address_manager->release);
-	MALI_DEBUG_ASSERT_POINTER(maliggy_address_manager->map_physical);
+	MALI_DEBUG_ASSERT_POINTER(mali_address_manager);
+	MALI_DEBUG_ASSERT_POINTER(mali_address_manager->allocate);
+	MALI_DEBUG_ASSERT_POINTER(mali_address_manager->release);
+	MALI_DEBUG_ASSERT_POINTER(mali_address_manager->map_physical);
 
 	/* Process Address Manager must support unmap_physical for OS allocation
 	 * error path handling */
@@ -38,22 +38,22 @@ maliggy_allocation_engine maliggy_allocation_engine_create(maliggy_kernel_mem_ad
 	MALI_DEBUG_ASSERT_POINTER(process_address_manager->unmap_physical);
 
 
-	engine = (memory_engine*)_maliggy_osk_malloc(sizeof(memory_engine));
+	engine = (memory_engine*)_mali_osk_malloc(sizeof(memory_engine));
 	if (NULL == engine) return NULL;
 
-	engine->maliggy_address = maliggy_address_manager;
+	engine->mali_address = mali_address_manager;
 	engine->process_address = process_address_manager;
 
-	return (maliggy_allocation_engine)engine;
+	return (mali_allocation_engine)engine;
 }
 
-void maliggy_allocation_engine_destroy(maliggy_allocation_engine engine)
+void mali_allocation_engine_destroy(mali_allocation_engine engine)
 {
 	MALI_DEBUG_ASSERT_POINTER(engine);
-	_maliggy_osk_free(engine);
+	_mali_osk_free(engine);
 }
 
-_maliggy_osk_errcode_t maliggy_allocation_engine_allocate_memory(maliggy_allocation_engine mem_engine, maliggy_memory_allocation * descriptor, maliggy_physical_memory_allocator * physical_allocators, _maliggy_osk_list_t *tracking_list )
+_mali_osk_errcode_t mali_allocation_engine_allocate_memory(mali_allocation_engine mem_engine, mali_memory_allocation * descriptor, mali_physical_memory_allocator * physical_allocators, _mali_osk_list_t *tracking_list )
 {
 	memory_engine * engine = (memory_engine*)mem_engine;
 
@@ -65,9 +65,9 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_allocate_memory(maliggy_allocat
 	 * delete it from a list in the release function. */
 	MALI_DEBUG_ASSERT( NULL != descriptor->list.next && NULL != descriptor->list.prev );
 
-	if (_MALI_OSK_ERR_OK == engine->maliggy_address->allocate(descriptor))
+	if (_MALI_OSK_ERR_OK == engine->mali_address->allocate(descriptor))
 	{
-		_maliggy_osk_errcode_t res = _MALI_OSK_ERR_OK;
+		_mali_osk_errcode_t res = _MALI_OSK_ERR_OK;
 		if ( descriptor->flags & MALI_MEMORY_ALLOCATION_FLAG_MAP_INTO_USERSPACE )
 		{
 			res = engine->process_address->allocate(descriptor);
@@ -75,8 +75,8 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_allocate_memory(maliggy_allocat
 		if ( _MALI_OSK_ERR_OK == res )
 		{
 			/* address space setup OK, commit physical memory to the allocation */
-			maliggy_physical_memory_allocator * active_allocator = physical_allocators;
-			struct maliggy_physical_memory_allocation * active_allocation_tracker = &descriptor->physical_allocation;
+			mali_physical_memory_allocator * active_allocator = physical_allocators;
+			struct mali_physical_memory_allocation * active_allocation_tracker = &descriptor->physical_allocation;
 			u32 offset = 0;
 
 			while ( NULL != active_allocator )
@@ -88,8 +88,8 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_allocate_memory(maliggy_allocat
 						{
 							/* Insert into the memory session list */
 							/* ASSERT that it is not already part of a list */
-							MALI_DEBUG_ASSERT( _maliggy_osk_list_empty( &descriptor->list ) );
-							_maliggy_osk_list_add( &descriptor->list, tracking_list );
+							MALI_DEBUG_ASSERT( _mali_osk_list_empty( &descriptor->list ) );
+							_mali_osk_list_add( &descriptor->list, tracking_list );
 						}
 
 						MALI_SUCCESS; /* all done */
@@ -104,7 +104,7 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_allocate_memory(maliggy_allocat
 						if (NULL != active_allocator->next)
 						{
 							/* need a new allocation tracker */
-							active_allocation_tracker->next = _maliggy_osk_calloc(1, sizeof(maliggy_physical_memory_allocation));
+							active_allocation_tracker->next = _mali_osk_calloc(1, sizeof(mali_physical_memory_allocation));
 							if (NULL != active_allocation_tracker->next)
 							{
 								active_allocation_tracker = active_allocation_tracker->next;
@@ -142,7 +142,7 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_allocate_memory(maliggy_allocat
 			{
 				void * buf = active_allocation_tracker;
 				active_allocation_tracker = active_allocation_tracker->next;
-				_maliggy_osk_free(buf);
+				_mali_osk_free(buf);
 			}
 
 			/* release the address spaces */
@@ -152,39 +152,39 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_allocate_memory(maliggy_allocat
 				engine->process_address->release(descriptor);
 			}
 		}
-		engine->maliggy_address->release(descriptor);
+		engine->mali_address->release(descriptor);
 	}
 
 	MALI_ERROR(_MALI_OSK_ERR_FAULT);
 }
 
-void maliggy_allocation_engine_release_memory(maliggy_allocation_engine mem_engine, maliggy_memory_allocation * descriptor)
+void mali_allocation_engine_release_memory(mali_allocation_engine mem_engine, mali_memory_allocation * descriptor)
 {
-	maliggy_allocation_engine_release_pt1_maliggy_pagetables_unmap(mem_engine, descriptor);
-	maliggy_allocation_engine_release_pt2_physical_memory_free(mem_engine, descriptor);
+	mali_allocation_engine_release_pt1_mali_pagetables_unmap(mem_engine, descriptor);
+	mali_allocation_engine_release_pt2_physical_memory_free(mem_engine, descriptor);
 }
 
-void maliggy_allocation_engine_release_pt1_maliggy_pagetables_unmap(maliggy_allocation_engine mem_engine, maliggy_memory_allocation * descriptor)
+void mali_allocation_engine_release_pt1_mali_pagetables_unmap(mali_allocation_engine mem_engine, mali_memory_allocation * descriptor)
 {
 	memory_engine * engine = (memory_engine*)mem_engine;
 
 	MALI_DEBUG_ASSERT_POINTER(engine);
 	MALI_DEBUG_ASSERT_POINTER(descriptor);
 
-	/* Calling: maliggy_address_manager_release()  */
+	/* Calling: mali_address_manager_release()  */
 	/* This function is allowed to be called several times, and it only does the release on the first call. */
-	engine->maliggy_address->release(descriptor);
+	engine->mali_address->release(descriptor);
 }
 
-void maliggy_allocation_engine_release_pt2_physical_memory_free(maliggy_allocation_engine mem_engine, maliggy_memory_allocation * descriptor)
+void mali_allocation_engine_release_pt2_physical_memory_free(mali_allocation_engine mem_engine, mali_memory_allocation * descriptor)
 {
 	memory_engine * engine = (memory_engine*)mem_engine;
-	maliggy_physical_memory_allocation * active_allocation_tracker;
+	mali_physical_memory_allocation * active_allocation_tracker;
 
 	/* Remove this from a tracking list in session_data->memory_head */
-	if ( ! _maliggy_osk_list_empty( &descriptor->list ) )
+	if ( ! _mali_osk_list_empty( &descriptor->list ) )
 	{
-		_maliggy_osk_list_del( &descriptor->list );
+		_mali_osk_list_del( &descriptor->list );
 		/* Clear the list for debug mode, catch use-after-free */
 		MALI_DEBUG_CODE( descriptor->list.next = descriptor->list.prev = NULL; )
 	}
@@ -202,7 +202,7 @@ void maliggy_allocation_engine_release_pt2_physical_memory_free(maliggy_allocati
 	{
 		void * buf = active_allocation_tracker;
 		active_allocation_tracker = active_allocation_tracker->next;
-		_maliggy_osk_free(buf);
+		_mali_osk_free(buf);
 	}
 
 	if ( descriptor->flags & MALI_MEMORY_ALLOCATION_FLAG_MAP_INTO_USERSPACE )
@@ -211,19 +211,19 @@ void maliggy_allocation_engine_release_pt2_physical_memory_free(maliggy_allocati
 	}
 }
 
-_maliggy_osk_errcode_t maliggy_allocation_engine_map_physical(maliggy_allocation_engine mem_engine, maliggy_memory_allocation * descriptor, u32 offset, u32 phys, u32 cpu_usage_adjust, u32 size)
+_mali_osk_errcode_t mali_allocation_engine_map_physical(mali_allocation_engine mem_engine, mali_memory_allocation * descriptor, u32 offset, u32 phys, u32 cpu_usage_adjust, u32 size)
 {
-	_maliggy_osk_errcode_t err;
+	_mali_osk_errcode_t err;
 	memory_engine * engine = (memory_engine*)mem_engine;
-	_maliggy_osk_mem_mapregion_flags_t unmap_flags = (_maliggy_osk_mem_mapregion_flags_t)0;
+	_mali_osk_mem_mapregion_flags_t unmap_flags = (_mali_osk_mem_mapregion_flags_t)0;
 
 	MALI_DEBUG_ASSERT_POINTER(engine);
 	MALI_DEBUG_ASSERT_POINTER(descriptor);
 
 	MALI_DEBUG_PRINT(7, ("Mapping phys 0x%08X length 0x%08X at offset 0x%08X\n", phys, size, offset));
 
-	MALI_DEBUG_ASSERT_POINTER(engine->maliggy_address);
-	MALI_DEBUG_ASSERT_POINTER(engine->maliggy_address->map_physical);
+	MALI_DEBUG_ASSERT_POINTER(engine->mali_address);
+	MALI_DEBUG_ASSERT_POINTER(engine->mali_address->map_physical);
 
 	/* Handle process address manager first, because we may need them to
 	 * allocate the physical page */
@@ -262,7 +262,7 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_map_physical(maliggy_allocation
 	 * it to allocate another one for us */
 	MALI_DEBUG_ASSERT( MALI_MEMORY_ALLOCATION_OS_ALLOCATED_PHYSADDR_MAGIC != phys );
 
-	err = engine->maliggy_address->map_physical(descriptor, offset, &phys, size);
+	err = engine->mali_address->map_physical(descriptor, offset, &phys, size);
 
 	if ( _MALI_OSK_ERR_OK != err )
 	{
@@ -278,7 +278,7 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_map_physical(maliggy_allocation
 	MALI_SUCCESS;
 }
 
-void maliggy_allocation_engine_unmap_physical(maliggy_allocation_engine mem_engine, maliggy_memory_allocation * descriptor, u32 offset, u32 size, _maliggy_osk_mem_mapregion_flags_t unmap_flags )
+void mali_allocation_engine_unmap_physical(mali_allocation_engine mem_engine, mali_memory_allocation * descriptor, u32 offset, u32 size, _mali_osk_mem_mapregion_flags_t unmap_flags )
 {
 	memory_engine * engine = (memory_engine*)mem_engine;
 
@@ -287,7 +287,7 @@ void maliggy_allocation_engine_unmap_physical(maliggy_allocation_engine mem_engi
 
 	MALI_DEBUG_PRINT(7, ("UnMapping length 0x%08X at offset 0x%08X\n", size, offset));
 
-	MALI_DEBUG_ASSERT_POINTER(engine->maliggy_address);
+	MALI_DEBUG_ASSERT_POINTER(engine->mali_address);
 	MALI_DEBUG_ASSERT_POINTER(engine->process_address);
 
 	if ( descriptor->flags & MALI_MEMORY_ALLOCATION_FLAG_MAP_INTO_USERSPACE )
@@ -296,17 +296,17 @@ void maliggy_allocation_engine_unmap_physical(maliggy_allocation_engine mem_engi
 		engine->process_address->unmap_physical( descriptor, offset, size, unmap_flags );
 	}
 
-	/* Optional for maliggy_address manager to have an unmap function*/
-	if ( NULL != engine->maliggy_address->unmap_physical )
+	/* Optional for mali_address manager to have an unmap function*/
+	if ( NULL != engine->mali_address->unmap_physical )
 	{
-		engine->maliggy_address->unmap_physical( descriptor, offset, size, unmap_flags );
+		engine->mali_address->unmap_physical( descriptor, offset, size, unmap_flags );
 	}
 }
 
 
-_maliggy_osk_errcode_t maliggy_allocation_engine_allocate_page_tables(maliggy_allocation_engine engine, maliggy_page_table_block * descriptor, maliggy_physical_memory_allocator * physical_provider)
+_mali_osk_errcode_t mali_allocation_engine_allocate_page_tables(mali_allocation_engine engine, mali_page_table_block * descriptor, mali_physical_memory_allocator * physical_provider)
 {
-	maliggy_physical_memory_allocator * active_allocator = physical_provider;
+	mali_physical_memory_allocator * active_allocator = physical_provider;
 
 	MALI_DEBUG_ASSERT_POINTER(descriptor);
 	MALI_DEBUG_ASSERT_POINTER(physical_provider);
@@ -338,9 +338,9 @@ _maliggy_osk_errcode_t maliggy_allocation_engine_allocate_page_tables(maliggy_al
 }
 
 
-void maliggy_allocation_engine_report_allocators( maliggy_physical_memory_allocator * physical_provider )
+void mali_allocation_engine_report_allocators( mali_physical_memory_allocator * physical_provider )
 {
-	maliggy_physical_memory_allocator * active_allocator = physical_provider;
+	mali_physical_memory_allocator * active_allocator = physical_provider;
 	MALI_DEBUG_ASSERT_POINTER(physical_provider);
 
 	MALI_DEBUG_PRINT( 1, ("Mali memory allocators will be used in this order of preference (lowest numbered first) :\n"));
@@ -359,7 +359,7 @@ void maliggy_allocation_engine_report_allocators( maliggy_physical_memory_alloca
 
 }
 
-u32 maliggy_allocation_engine_memory_usage(maliggy_physical_memory_allocator *allocator)
+u32 mali_allocation_engine_memory_usage(mali_physical_memory_allocator *allocator)
 {
 	u32 sum = 0;
 	while(NULL != allocator)

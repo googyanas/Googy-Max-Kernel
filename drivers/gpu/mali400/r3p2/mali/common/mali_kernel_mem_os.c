@@ -16,13 +16,13 @@ typedef struct os_allocation
 {
 	u32 num_pages;
 	u32 offset_start;
-	maliggy_allocation_engine * engine;
-	maliggy_memory_allocation * descriptor;
+	mali_allocation_engine * engine;
+	mali_memory_allocation * descriptor;
 } os_allocation;
 
 typedef struct os_allocator
 {
-	_maliggy_osk_lock_t *mutex;
+	_mali_osk_lock_t *mutex;
 
 	/**
 	 * Maximum number of pages to allocate from the OS
@@ -38,33 +38,33 @@ typedef struct os_allocator
 	u32 cpu_usage_adjust;
 } os_allocator;
 
-static maliggy_physical_memory_allocation_result os_allocator_allocate(void* ctx, maliggy_allocation_engine * engine,  maliggy_memory_allocation * descriptor, u32* offset, maliggy_physical_memory_allocation * alloc_info);
-static maliggy_physical_memory_allocation_result os_allocator_allocate_page_table_block(void * ctx, maliggy_page_table_block * block);
+static mali_physical_memory_allocation_result os_allocator_allocate(void* ctx, mali_allocation_engine * engine,  mali_memory_allocation * descriptor, u32* offset, mali_physical_memory_allocation * alloc_info);
+static mali_physical_memory_allocation_result os_allocator_allocate_page_table_block(void * ctx, mali_page_table_block * block);
 static void os_allocator_release(void * ctx, void * handle);
-static void os_allocator_page_table_block_release( maliggy_page_table_block *page_table_block );
-static void os_allocator_destroy(maliggy_physical_memory_allocator * allocator);
-static u32 os_allocator_stat(maliggy_physical_memory_allocator * allocator);
+static void os_allocator_page_table_block_release( mali_page_table_block *page_table_block );
+static void os_allocator_destroy(mali_physical_memory_allocator * allocator);
+static u32 os_allocator_stat(mali_physical_memory_allocator * allocator);
 
-maliggy_physical_memory_allocator * maliggy_os_allocator_create(u32 max_allocation, u32 cpu_usage_adjust, const char *name)
+mali_physical_memory_allocator * mali_os_allocator_create(u32 max_allocation, u32 cpu_usage_adjust, const char *name)
 {
-	maliggy_physical_memory_allocator * allocator;
+	mali_physical_memory_allocator * allocator;
 	os_allocator * info;
 
 	max_allocation = (max_allocation + _MALI_OSK_CPU_PAGE_SIZE-1) & ~(_MALI_OSK_CPU_PAGE_SIZE-1);
 
 	MALI_DEBUG_PRINT(2, ("Mali OS memory allocator created with max allocation size of 0x%X bytes, cpu_usage_adjust 0x%08X\n", max_allocation, cpu_usage_adjust));
 
-	allocator = _maliggy_osk_malloc(sizeof(maliggy_physical_memory_allocator));
+	allocator = _mali_osk_malloc(sizeof(mali_physical_memory_allocator));
 	if (NULL != allocator)
 	{
-		info = _maliggy_osk_malloc(sizeof(os_allocator));
+		info = _mali_osk_malloc(sizeof(os_allocator));
 		if (NULL != info)
 		{
 			info->num_pages_max = max_allocation / _MALI_OSK_CPU_PAGE_SIZE;
 			info->num_pages_allocated = 0;
 			info->cpu_usage_adjust = cpu_usage_adjust;
 
-			info->mutex = _maliggy_osk_lock_init( _MALI_OSK_LOCKFLAG_NONINTERRUPTABLE | _MALI_OSK_LOCKFLAG_ORDERED, 0, _MALI_OSK_LOCK_ORDER_MEM_INFO);
+			info->mutex = _mali_osk_lock_init( _MALI_OSK_LOCKFLAG_NONINTERRUPTABLE | _MALI_OSK_LOCKFLAG_ORDERED, 0, _MALI_OSK_LOCK_ORDER_MEM_INFO);
             if (NULL != info->mutex)
             {
 			    allocator->allocate = os_allocator_allocate;
@@ -76,40 +76,40 @@ maliggy_physical_memory_allocator * maliggy_os_allocator_create(u32 max_allocati
 
 			    return allocator;
             }
-            _maliggy_osk_free(info);
+            _mali_osk_free(info);
 		}
-		_maliggy_osk_free(allocator);
+		_mali_osk_free(allocator);
 	}
 
 	return NULL;
 }
 
-static u32 os_allocator_stat(maliggy_physical_memory_allocator * allocator)
+static u32 os_allocator_stat(mali_physical_memory_allocator * allocator)
 {
 	os_allocator * info;
 	info = (os_allocator*)allocator->ctx;
 	return info->num_pages_allocated * _MALI_OSK_MALI_PAGE_SIZE;
 }
 
-static void os_allocator_destroy(maliggy_physical_memory_allocator * allocator)
+static void os_allocator_destroy(mali_physical_memory_allocator * allocator)
 {
 	os_allocator * info;
         MALI_DEBUG_ASSERT_POINTER(allocator);
 	MALI_DEBUG_ASSERT_POINTER(allocator->ctx);
 	info = (os_allocator*)allocator->ctx;
-	_maliggy_osk_lock_term(info->mutex);
-	_maliggy_osk_free(info);
-	_maliggy_osk_free(allocator);
+	_mali_osk_lock_term(info->mutex);
+	_mali_osk_free(info);
+	_mali_osk_free(allocator);
 }
 
-static maliggy_physical_memory_allocation_result os_allocator_allocate(void* ctx, maliggy_allocation_engine * engine,  maliggy_memory_allocation * descriptor, u32* offset, maliggy_physical_memory_allocation * alloc_info)
+static mali_physical_memory_allocation_result os_allocator_allocate(void* ctx, mali_allocation_engine * engine,  mali_memory_allocation * descriptor, u32* offset, mali_physical_memory_allocation * alloc_info)
 {
-	maliggy_physical_memory_allocation_result result = MALI_MEM_ALLOC_NONE;
+	mali_physical_memory_allocation_result result = MALI_MEM_ALLOC_NONE;
 	u32 left;
 	os_allocator * info;
 	os_allocation * allocation;
 	int pages_allocated = 0;
-	_maliggy_osk_errcode_t err = _MALI_OSK_ERR_OK;
+	_mali_osk_errcode_t err = _MALI_OSK_ERR_OK;
 
 	MALI_DEBUG_ASSERT_POINTER(ctx);
 	MALI_DEBUG_ASSERT_POINTER(engine);
@@ -120,10 +120,10 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate(void* ctx
 	info = (os_allocator*)ctx;
 	left = descriptor->size - *offset;
 
-	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
+	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
 
 	/** @note this code may not work on Linux, or may require a more complex Linux implementation */
-	allocation = _maliggy_osk_malloc(sizeof(os_allocation));
+	allocation = _mali_osk_malloc(sizeof(os_allocation));
 	if (NULL != allocation)
 	{
 		/* MALI_SEC */
@@ -134,7 +134,7 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate(void* ctx
 		/* MALI_SEC */
 		while (left > 0)
 		{
-			err = maliggy_allocation_engine_map_physical(engine, descriptor, *offset, MALI_MEMORY_ALLOCATION_OS_ALLOCATED_PHYSADDR_MAGIC, info->cpu_usage_adjust, _MALI_OSK_CPU_PAGE_SIZE);
+			err = mali_allocation_engine_map_physical(engine, descriptor, *offset, MALI_MEMORY_ALLOCATION_OS_ALLOCATED_PHYSADDR_MAGIC, info->cpu_usage_adjust, _MALI_OSK_CPU_PAGE_SIZE);
 			if ( _MALI_OSK_ERR_OK != err)
 			{
 				if (  _MALI_OSK_ERR_NOMEM == err)
@@ -148,7 +148,7 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate(void* ctx
 				/* Fatal error, cleanup any previous pages allocated. */
 				if ( pages_allocated > 0 )
 				{
-					maliggy_allocation_engine_unmap_physical( engine, descriptor, allocation->offset_start, _MALI_OSK_CPU_PAGE_SIZE*pages_allocated, _MALI_OSK_MEM_MAPREGION_FLAG_OS_ALLOCATED_PHYSADDR );
+					mali_allocation_engine_unmap_physical( engine, descriptor, allocation->offset_start, _MALI_OSK_CPU_PAGE_SIZE*pages_allocated, _MALI_OSK_MEM_MAPREGION_FLAG_OS_ALLOCATED_PHYSADDR );
 					/* (*offset) doesn't need to be restored; it will not be used by the caller on failure */
 				}
 
@@ -181,7 +181,7 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate(void* ctx
              * They zero the memory through a cached mapping, then flush the inner caches but not the outer caches.
              * This is required for MALI to have the correct view of the memory.
              */
-            _maliggy_osk_cache_ensure_uncached_range_flushed( (void *)descriptor, allocation->offset_start, pages_allocated *_MALI_OSK_CPU_PAGE_SIZE );
+            _mali_osk_cache_ensure_uncached_range_flushed( (void *)descriptor, allocation->offset_start, pages_allocated *_MALI_OSK_CPU_PAGE_SIZE );
 			allocation->num_pages = pages_allocated;
 			allocation->engine = engine;         /* Necessary to make the engine's unmap call */
 			allocation->descriptor = descriptor; /* Necessary to make the engine's unmap call */
@@ -196,11 +196,11 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate(void* ctx
 		else
 		{
 			MALI_DEBUG_PRINT(6, ("Releasing pages array due to no pages allocated\n"));
-			_maliggy_osk_free( allocation );
+			_mali_osk_free( allocation );
 		}
 	}
 
-	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 
 	return result;
 }
@@ -209,8 +209,8 @@ static void os_allocator_release(void * ctx, void * handle)
 {
 	os_allocator * info;
 	os_allocation * allocation;
-	maliggy_allocation_engine * engine;
-	maliggy_memory_allocation * descriptor;
+	mali_allocation_engine * engine;
+	mali_memory_allocation * descriptor;
 
 	MALI_DEBUG_ASSERT_POINTER(ctx);
 	MALI_DEBUG_ASSERT_POINTER(handle);
@@ -223,7 +223,7 @@ static void os_allocator_release(void * ctx, void * handle)
 	MALI_DEBUG_ASSERT_POINTER( engine );
 	MALI_DEBUG_ASSERT_POINTER( descriptor );
 
-	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
+	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
 	{
 		MALI_DEBUG_PRINT(1, ("allocator release: Failed to get mutex\n"));
 		return;
@@ -234,14 +234,14 @@ static void os_allocator_release(void * ctx, void * handle)
 	MALI_DEBUG_ASSERT( allocation->num_pages <= info->num_pages_allocated);
 	info->num_pages_allocated -= allocation->num_pages;
 
-	maliggy_allocation_engine_unmap_physical( engine, descriptor, allocation->offset_start, _MALI_OSK_CPU_PAGE_SIZE*allocation->num_pages, _MALI_OSK_MEM_MAPREGION_FLAG_OS_ALLOCATED_PHYSADDR );
+	mali_allocation_engine_unmap_physical( engine, descriptor, allocation->offset_start, _MALI_OSK_CPU_PAGE_SIZE*allocation->num_pages, _MALI_OSK_MEM_MAPREGION_FLAG_OS_ALLOCATED_PHYSADDR );
 
-	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 
-	_maliggy_osk_free(allocation);
+	_mali_osk_free(allocation);
 }
 
-static maliggy_physical_memory_allocation_result os_allocator_allocate_page_table_block(void * ctx, maliggy_page_table_block * block)
+static mali_physical_memory_allocation_result os_allocator_allocate_page_table_block(void * ctx, mali_page_table_block * block)
 {
 /* MALI_SEC 6->10 */
 #ifndef CONFIG_FORCE_MAX_ZONEORDER
@@ -259,18 +259,18 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate_page_tabl
 	info = (os_allocator*)ctx;
 
 	/* Ensure we don't allocate more than we're supposed to from the ctx */
-	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
+	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
 
 	/* if the number of pages to be requested lead to exceeding the memory
 	 * limit in info->num_pages_max, reduce the size that is to be requested. */
 	while ( (info->num_pages_allocated + (1 << allocation_order) > info->num_pages_max)
-	        && _maliggy_osk_mem_check_allocated(info->num_pages_max * _MALI_OSK_CPU_PAGE_SIZE) )
+	        && _mali_osk_mem_check_allocated(info->num_pages_max * _MALI_OSK_CPU_PAGE_SIZE) )
 	{
 		if ( allocation_order > 0 ) {
 			--allocation_order;
 		} else {
 			/* return OOM */
-			_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+			_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 			return MALI_MEM_ALLOC_NONE;
 		}
 	}
@@ -280,7 +280,7 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate_page_tabl
 	while ( allocation_order >= 0 )
 	{
 		size = _MALI_OSK_CPU_PAGE_SIZE << allocation_order;
-		virt = _maliggy_osk_mem_allocioregion( &cpu_phys_base, size );
+		virt = _mali_osk_mem_allocioregion( &cpu_phys_base, size );
 
 		if (NULL != virt) break;
 
@@ -291,7 +291,7 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate_page_tabl
 	{
 		MALI_DEBUG_PRINT(1, ("Failed to allocate consistent memory. Is CONSISTENT_DMA_SIZE set too low?\n"));
 		/* return OOM */
-		_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 		return MALI_MEM_ALLOC_NONE;
 	}
 
@@ -312,12 +312,12 @@ static maliggy_physical_memory_allocation_result os_allocator_allocate_page_tabl
 
 	info->num_pages_allocated += (1 << allocation_order);
 
-	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 
 	return MALI_MEM_ALLOC_FINISHED;
 }
 
-static void os_allocator_page_table_block_release( maliggy_page_table_block *page_table_block )
+static void os_allocator_page_table_block_release( mali_page_table_block *page_table_block )
 {
 	os_allocator * info;
 	u32 allocation_order;
@@ -335,7 +335,7 @@ static void os_allocator_page_table_block_release( maliggy_page_table_block *pag
 
 	MALI_DEBUG_ASSERT( pages_allocated * _MALI_OSK_CPU_PAGE_SIZE == page_table_block->size );
 
-	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
+	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
 	{
 		MALI_DEBUG_PRINT(1, ("allocator release: Failed to get mutex\n"));
 		return;
@@ -345,7 +345,7 @@ static void os_allocator_page_table_block_release( maliggy_page_table_block *pag
 	info->num_pages_allocated -= pages_allocated;
 
 	/* Adjust phys_base from mali physical address to CPU physical address */
-	_maliggy_osk_mem_freeioregion( page_table_block->phys_base + info->cpu_usage_adjust, page_table_block->size, page_table_block->mapping );
+	_mali_osk_mem_freeioregion( page_table_block->phys_base + info->cpu_usage_adjust, page_table_block->size, page_table_block->mapping );
 
-	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 }

@@ -14,7 +14,7 @@
 typedef struct
 {
 	void *unused;
-} maliggy_cinstr_counter_info;
+} mali_cinstr_counter_info;
 
 typedef enum
 {

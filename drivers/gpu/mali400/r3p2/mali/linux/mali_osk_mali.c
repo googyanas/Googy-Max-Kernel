@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_osk_mali.c
+ * @file mali_osk_mali.c
  * Implementation of the OS abstraction layer which is specific for the Mali kernel device driver
  */
 #include <linux/kernel.h>
@@ -23,31 +23,31 @@
 #include "mali_uk_types.h"
 #include "mali_kernel_linux.h"
 
-_maliggy_osk_errcode_t _maliggy_osk_resource_find(u32 addr, _maliggy_osk_resource_t *res)
+_mali_osk_errcode_t _mali_osk_resource_find(u32 addr, _mali_osk_resource_t *res)
 {
 	int i;
 
-	if (NULL == maliggy_platform_device)
+	if (NULL == mali_platform_device)
 	{
 		/* Not connected to a device */
 		return _MALI_OSK_ERR_ITEM_NOT_FOUND;
 	}
 
-	for (i = 0; i < maliggy_platform_device->num_resources; i++)
+	for (i = 0; i < mali_platform_device->num_resources; i++)
 	{
-		if (IORESOURCE_MEM == resource_type(&(maliggy_platform_device->resource[i])) &&
-		    maliggy_platform_device->resource[i].start == addr)
+		if (IORESOURCE_MEM == resource_type(&(mali_platform_device->resource[i])) &&
+		    mali_platform_device->resource[i].start == addr)
 		{
 			if (NULL != res)
 			{
 				res->base = addr;
-				res->description = maliggy_platform_device->resource[i].name;
+				res->description = mali_platform_device->resource[i].name;
 
 				/* Any (optional) IRQ resource belonging to this resource will follow */
-				if ((i + 1) < maliggy_platform_device->num_resources &&
-				    IORESOURCE_IRQ == resource_type(&(maliggy_platform_device->resource[i+1])))
+				if ((i + 1) < mali_platform_device->num_resources &&
+				    IORESOURCE_IRQ == resource_type(&(mali_platform_device->resource[i+1])))
 				{
-					res->irq = maliggy_platform_device->resource[i+1].start;
+					res->irq = mali_platform_device->resource[i+1].start;
 				}
 				else
 				{
@@ -61,20 +61,20 @@ _maliggy_osk_errcode_t _maliggy_osk_resource_find(u32 addr, _maliggy_osk_resourc
 	return _MALI_OSK_ERR_ITEM_NOT_FOUND;
 }
 
-u32 _maliggy_osk_resource_base_address(void)
+u32 _mali_osk_resource_base_address(void)
 {
 	u32 lowest_addr = 0xFFFFFFFF;
 	u32 ret = 0;
 
-	if (NULL != maliggy_platform_device)
+	if (NULL != mali_platform_device)
 	{
 		int i;
-		for (i = 0; i < maliggy_platform_device->num_resources; i++)
+		for (i = 0; i < mali_platform_device->num_resources; i++)
 		{
-			if (maliggy_platform_device->resource[i].flags & IORESOURCE_MEM &&
-			    maliggy_platform_device->resource[i].start < lowest_addr)
+			if (mali_platform_device->resource[i].flags & IORESOURCE_MEM &&
+			    mali_platform_device->resource[i].start < lowest_addr)
 			{
-				lowest_addr = maliggy_platform_device->resource[i].start;
+				lowest_addr = mali_platform_device->resource[i].start;
 				ret = lowest_addr;
 			}
 		}
@@ -83,15 +83,15 @@ u32 _maliggy_osk_resource_base_address(void)
 	return ret;
 }
 
-_maliggy_osk_errcode_t _maliggy_osk_device_data_get(struct _maliggy_osk_device_data *data)
+_mali_osk_errcode_t _mali_osk_device_data_get(struct _mali_osk_device_data *data)
 {
 	MALI_DEBUG_ASSERT_POINTER(data);
 
-	if (NULL != maliggy_platform_device)
+	if (NULL != mali_platform_device)
 	{
-		struct maliggy_gpu_device_data* os_data = NULL;
+		struct mali_gpu_device_data* os_data = NULL;
 
-		os_data = (struct maliggy_gpu_device_data*)maliggy_platform_device->dev.platform_data;
+		os_data = (struct mali_gpu_device_data*)mali_platform_device->dev.platform_data;
 		if (NULL != os_data)
 		{
 			/* Copy data from OS dependant struct to Mali neutral struct (identical!) */
@@ -110,19 +110,19 @@ _maliggy_osk_errcode_t _maliggy_osk_device_data_get(struct _maliggy_osk_device_d
 	return _MALI_OSK_ERR_ITEM_NOT_FOUND;
 }
 
-maliggy_bool _maliggy_osk_shared_interrupts(void)
+mali_bool _mali_osk_shared_interrupts(void)
 {
 	u32 irqs[128];
 	u32 i, j, irq, num_irqs_found = 0;
 
-	MALI_DEBUG_ASSERT_POINTER(maliggy_platform_device);
-	MALI_DEBUG_ASSERT(128 >= maliggy_platform_device->num_resources);
+	MALI_DEBUG_ASSERT_POINTER(mali_platform_device);
+	MALI_DEBUG_ASSERT(128 >= mali_platform_device->num_resources);
 
-	for (i = 0; i < maliggy_platform_device->num_resources; i++)
+	for (i = 0; i < mali_platform_device->num_resources; i++)
 	{
-		if (IORESOURCE_IRQ & maliggy_platform_device->resource[i].flags)
+		if (IORESOURCE_IRQ & mali_platform_device->resource[i].flags)
 		{
-			irq = maliggy_platform_device->resource[i].start;
+			irq = mali_platform_device->resource[i].start;
 
 			for (j = 0; j < num_irqs_found; ++j)
 			{

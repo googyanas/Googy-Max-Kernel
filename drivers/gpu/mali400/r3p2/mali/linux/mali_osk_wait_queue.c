@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_osk_wait_queue.c
+ * @file mali_osk_wait_queue.c
  * Implemenation of the OS abstraction layer for the kernel device driver
  */
 
@@ -20,16 +20,16 @@
 #include "mali_osk.h"
 #include "mali_kernel_common.h"
 
-struct _maliggy_osk_wait_queue_t_struct
+struct _mali_osk_wait_queue_t_struct
 {
     wait_queue_head_t wait_queue;
 };
 
-_maliggy_osk_wait_queue_t* _maliggy_osk_wait_queue_init( void )
+_mali_osk_wait_queue_t* _mali_osk_wait_queue_init( void )
 {
-    _maliggy_osk_wait_queue_t* ret = NULL;
+    _mali_osk_wait_queue_t* ret = NULL;
 
-    ret = kmalloc(sizeof(_maliggy_osk_wait_queue_t), GFP_KERNEL);
+    ret = kmalloc(sizeof(_mali_osk_wait_queue_t), GFP_KERNEL);
 
     if (NULL == ret)
     {
@@ -42,14 +42,14 @@ _maliggy_osk_wait_queue_t* _maliggy_osk_wait_queue_init( void )
     return ret;
 }
 
-void _maliggy_osk_wait_queue_wait_event( _maliggy_osk_wait_queue_t *queue, maliggy_bool (*condition)(void) )
+void _mali_osk_wait_queue_wait_event( _mali_osk_wait_queue_t *queue, mali_bool (*condition)(void) )
 {
     MALI_DEBUG_ASSERT_POINTER( queue );
     MALI_DEBUG_PRINT(6, ("Adding to wait queue %p\n", queue));
     wait_event(queue->wait_queue, condition());
 }
 
-void _maliggy_osk_wait_queue_wake_up( _maliggy_osk_wait_queue_t *queue )
+void _mali_osk_wait_queue_wake_up( _mali_osk_wait_queue_t *queue )
 {
     MALI_DEBUG_ASSERT_POINTER( queue );
 
@@ -63,7 +63,7 @@ void _maliggy_osk_wait_queue_wake_up( _maliggy_osk_wait_queue_t *queue )
     MALI_DEBUG_PRINT(6, ("... elements in wait queue %p woken up\n", queue));
 }
 
-void _maliggy_osk_wait_queue_term( _maliggy_osk_wait_queue_t *queue )
+void _mali_osk_wait_queue_term( _mali_osk_wait_queue_t *queue )
 {
 	/* Parameter validation  */
 	MALI_DEBUG_ASSERT_POINTER( queue );

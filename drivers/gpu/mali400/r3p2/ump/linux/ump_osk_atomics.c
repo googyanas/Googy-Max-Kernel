@@ -9,19 +9,19 @@
  */
 
 /**
- * @file umpggy_osk_atomics.c
+ * @file ump_osk_atomics.c
  * Implementation of the OS abstraction layer for the UMP kernel device driver
  */
 
 #include "ump_osk.h"
 #include <asm/atomic.h>
 
-int _umpggy_osk_atomic_dec_and_read( _maliggy_osk_atomic_t *atom )
+int _ump_osk_atomic_dec_and_read( _mali_osk_atomic_t *atom )
 {
 	return atomic_dec_return((atomic_t *)&atom->u.val);
 }
 
-int _umpggy_osk_atomic_inc_and_read( _maliggy_osk_atomic_t *atom )
+int _ump_osk_atomic_inc_and_read( _mali_osk_atomic_t *atom )
 {
 	return atomic_inc_return((atomic_t *)&atom->u.val);
 }

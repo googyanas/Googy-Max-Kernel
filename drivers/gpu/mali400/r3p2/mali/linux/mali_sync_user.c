@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_sync_user.c
+ * @file mali_sync_user.c
  *
  */
 
@@ -28,7 +28,7 @@
 #include "mali_kernel_common.h"
 #include "mali_sync.h"
 
-static int maliggy_stream_close(struct inode * inode, struct file * file)
+static int mali_stream_close(struct inode * inode, struct file * file)
 {
 	struct sync_timeline * tl;
 	tl = (struct sync_timeline*)file->private_data;
@@ -40,15 +40,15 @@ static int maliggy_stream_close(struct inode * inode, struct file * file)
 static struct file_operations stream_fops =
 {
 	.owner = THIS_MODULE,
-	.release = maliggy_stream_close,
+	.release = mali_stream_close,
 };
 
-_maliggy_osk_errcode_t maliggy_stream_create(const char * name, int *out_fd)
+_mali_osk_errcode_t mali_stream_create(const char * name, int *out_fd)
 {
 	struct sync_timeline * tl;
 	BUG_ON(!out_fd);
 
-	tl = maliggy_sync_timeline_alloc(name);
+	tl = mali_sync_timeline_alloc(name);
 	if (!tl)
 	{
 		return _MALI_OSK_ERR_FAULT;
@@ -67,7 +67,7 @@ _maliggy_osk_errcode_t maliggy_stream_create(const char * name, int *out_fd)
 	}
 }
 
-static maliggy_sync_pt *maliggy_stream_create_point_internal(int tl_fd, maliggy_bool timed)
+static mali_sync_pt *mali_stream_create_point_internal(int tl_fd, mali_bool timed)
 {
 	struct sync_timeline *tl;
 	struct sync_pt * pt;
@@ -87,11 +87,11 @@ static maliggy_sync_pt *maliggy_stream_create_point_internal(int tl_fd, maliggy_
 
 	if (unlikely(timed))
 	{
-		pt = maliggy_sync_timed_pt_alloc(tl);
+		pt = mali_sync_timed_pt_alloc(tl);
 	}
 	else
 	{
-		pt = maliggy_sync_pt_alloc(tl);
+		pt = mali_sync_pt_alloc(tl);
 	}
 
 	if (!pt)
@@ -106,12 +106,12 @@ out:
 	return pt;
 }
 
-maliggy_sync_pt *maliggy_stream_create_point(int tl_fd)
+mali_sync_pt *mali_stream_create_point(int tl_fd)
 {
-	return maliggy_stream_create_point_internal(tl_fd, MALI_FALSE);
+	return mali_stream_create_point_internal(tl_fd, MALI_FALSE);
 }
 
-int maliggy_stream_create_fence(maliggy_sync_pt *pt)
+int mali_stream_create_fence(mali_sync_pt *pt)
 {
 	struct sync_fence *fence;
 	struct fdtable * fdt;
@@ -151,21 +151,21 @@ out:
 	return fd;
 }
 
-int maliggy_stream_create_empty_fence(int tl_fd)
+int mali_stream_create_empty_fence(int tl_fd)
 {
 	int fd;
-	maliggy_sync_pt *pt;
+	mali_sync_pt *pt;
 
-	pt = maliggy_stream_create_point_internal(tl_fd, MALI_TRUE);
+	pt = mali_stream_create_point_internal(tl_fd, MALI_TRUE);
 
 	if (NULL == pt) return -ENOMEM;
 
-	fd = maliggy_stream_create_fence(pt);
+	fd = mali_stream_create_fence(pt);
 
 	return fd;
 }
 
-_maliggy_osk_errcode_t maliggy_fence_validate(int fd)
+_mali_osk_errcode_t mali_fence_validate(int fd)
 {
 	struct sync_fence * fence;
 	fence = sync_fence_fdget(fd);

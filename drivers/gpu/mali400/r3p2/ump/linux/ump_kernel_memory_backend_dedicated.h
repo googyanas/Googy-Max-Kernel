@@ -9,7 +9,7 @@
  */
 
 /**
- * @file umpggy_kernel_memory_backend_dedicated.h
+ * @file ump_kernel_memory_backend_dedicated.h
  */
 
 #ifndef __UMP_KERNEL_MEMORY_BACKEND_DEDICATED_H__
@@ -17,7 +17,7 @@
 
 #include "ump_kernel_memory_backend.h"
 
-umpggy_memory_backend * umpggy_block_allocator_create(u32 base_address, u32 size);
+ump_memory_backend * ump_block_allocator_create(u32 base_address, u32 size);
 
 #endif /* __UMP_KERNEL_MEMORY_BACKEND_DEDICATED_H__ */
 

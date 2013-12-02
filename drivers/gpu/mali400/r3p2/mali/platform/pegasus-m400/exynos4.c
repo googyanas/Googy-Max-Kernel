@@ -51,18 +51,18 @@ extern struct platform_device exynos4_device_pd[];
 extern struct platform_device s5pv310_device_pd[];
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0) */
 
-static void maliggy_platform_device_release(struct device *device);
+static void mali_platform_device_release(struct device *device);
 
 #if defined(CONFIG_PM_RUNTIME)
 #if defined(USE_PM_NOTIFIER)
-static int maliggy_os_suspend(struct device *device);
-static int maliggy_os_resume(struct device *device);
-static int maliggy_os_freeze(struct device *device);
-static int maliggy_os_thaw(struct device *device);
+static int mali_os_suspend(struct device *device);
+static int mali_os_resume(struct device *device);
+static int mali_os_freeze(struct device *device);
+static int mali_os_thaw(struct device *device);
 
-static int maliggy_runtime_suspend(struct device *device);
-static int maliggy_runtime_resume(struct device *device);
-static int maliggy_runtime_idle(struct device *device);
+static int mali_runtime_suspend(struct device *device);
+static int mali_runtime_resume(struct device *device);
+static int mali_runtime_idle(struct device *device);
 #endif
 #endif
 
@@ -93,7 +93,7 @@ static int maliggy_runtime_idle(struct device *device);
 #define MALI_PP2_MMU_IRQ  MALI_BASE_IRQ + 2
 #define MALI_PP3_MMU_IRQ  MALI_BASE_IRQ + 3
 
-static struct resource maliggy_gpu_resources[] =
+static struct resource mali_gpu_resources[] =
 {
 	MALI_GPU_RESOURCES_MALI400_MP4(0x13000000,
 								   MALI_GP_IRQ, MALI_GP_MMU_IRQ,
@@ -105,50 +105,50 @@ static struct resource maliggy_gpu_resources[] =
 
 #ifdef CONFIG_PM_RUNTIME
 #if defined(USE_PM_NOTIFIER)
-static int maliggy_pwr_suspend_notifier(struct notifier_block *nb,unsigned long event,void* dummy);
+static int mali_pwr_suspend_notifier(struct notifier_block *nb,unsigned long event,void* dummy);
 
-static struct notifier_block maliggy_pwr_notif_block = {
-	.notifier_call = maliggy_pwr_suspend_notifier
+static struct notifier_block mali_pwr_notif_block = {
+	.notifier_call = mali_pwr_suspend_notifier
 };
 #endif
 #endif /* CONFIG_PM_RUNTIME */
 
 #if 0
-static struct dev_pm_ops maliggy_gpu_device_type_pm_ops =
+static struct dev_pm_ops mali_gpu_device_type_pm_ops =
 {
 #ifndef CONFIG_PM_RUNTIME
-	.suspend = maliggy_os_suspend,
-	.resume = maliggy_os_resume,
+	.suspend = mali_os_suspend,
+	.resume = mali_os_resume,
 #endif
-	.freeze = maliggy_os_freeze,
-	.thaw = maliggy_os_thaw,
+	.freeze = mali_os_freeze,
+	.thaw = mali_os_thaw,
 #ifdef CONFIG_PM_RUNTIME
-	.runtime_suspend = maliggy_runtime_suspend,
-	.runtime_resume = maliggy_runtime_resume,
-	.runtime_idle = maliggy_runtime_idle,
+	.runtime_suspend = mali_runtime_suspend,
+	.runtime_resume = mali_runtime_resume,
+	.runtime_idle = mali_runtime_idle,
 #endif
 };
 #endif
 
 #if defined(USE_PM_NOTIFIER)
-static struct device_type maliggy_gpu_device_device_type =
+static struct device_type mali_gpu_device_device_type =
 {
-	.pm = &maliggy_gpu_device_type_pm_ops,
+	.pm = &mali_gpu_device_type_pm_ops,
 };
 #endif
 
-static struct platform_device maliggy_gpu_device =
+static struct platform_device mali_gpu_device =
 {
 	.name = "mali_dev", /* MALI_SEC MALI_GPU_NAME_UTGARD, */
 	.id = 0,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0)
-	/* Set in maliggy_platform_device_register() for these kernels */
+	/* Set in mali_platform_device_register() for these kernels */
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
 	.dev.parent = &exynos4_device_pd[PD_G3D].dev,
 #else
 	.dev.parent = &s5pv310_device_pd[PD_G3D].dev,
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0) */
-	.dev.release = maliggy_platform_device_release,
+	.dev.release = mali_platform_device_release,
 #if 0
 	/*
 	 * We temporarily make use of a device type so that we can control the Mali power
@@ -156,39 +156,39 @@ static struct platform_device maliggy_gpu_device =
 	 * Ideally .dev.pm_domain should be used instead, as this is the new framework designed
 	 * to control the power of devices.
 	 */
-	.dev.type = &maliggy_gpu_device_device_type, /* We should probably use the pm_domain instead of type on newer kernels */
+	.dev.type = &mali_gpu_device_device_type, /* We should probably use the pm_domain instead of type on newer kernels */
 #endif
 };
 
-static struct maliggy_gpu_device_data maliggy_gpu_data =
+static struct mali_gpu_device_data mali_gpu_data =
 {
 	.shared_mem_size = 256 * 1024 * 1024, /* 256MB */
 	.fb_start = 0x40000000,
 	.fb_size = 0xb1000000,
 	.utilization_interval = 100, /* 100ms */
-	.utilization_callback = maliggy_gpu_utilization_handler,
+	.utilization_callback = mali_gpu_utilization_handler,
 };
 
-int maliggy_platform_device_register(void)
+int mali_platform_device_register(void)
 {
 	int err;
 
 	MALI_DEBUG_PRINT(4, ("mali_platform_device_register() called\n"));
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0)
-	exynos_pm_add_dev_to_genpd(&maliggy_gpu_device, &exynos4_pd_g3d);
+	exynos_pm_add_dev_to_genpd(&mali_gpu_device, &exynos4_pd_g3d);
 #endif
 
 	/* Connect resources to the device */
-	err = platform_device_add_resources(&maliggy_gpu_device, maliggy_gpu_resources, sizeof(maliggy_gpu_resources) / sizeof(maliggy_gpu_resources[0]));
+	err = platform_device_add_resources(&mali_gpu_device, mali_gpu_resources, sizeof(mali_gpu_resources) / sizeof(mali_gpu_resources[0]));
 	if (0 == err)
 	{
-		err = platform_device_add_data(&maliggy_gpu_device, &maliggy_gpu_data, sizeof(maliggy_gpu_data));
+		err = platform_device_add_data(&mali_gpu_device, &mali_gpu_data, sizeof(mali_gpu_data));
 		if (0 == err)
 		{
 #ifdef CONFIG_PM_RUNTIME
 #if defined(USE_PM_NOTIFIER)
-			err = register_pm_notifier(&maliggy_pwr_notif_block);
+			err = register_pm_notifier(&mali_pwr_notif_block);
 			if (err)
 			{
 				goto plat_init_err;
@@ -197,17 +197,17 @@ int maliggy_platform_device_register(void)
 #endif /* CONFIG_PM_RUNTIME */
 
 			/* Register the platform device */
-			err = platform_device_register(&maliggy_gpu_device);
+			err = platform_device_register(&mali_gpu_device);
 			if (0 == err)
 			{
-				maliggy_platform_init(&(maliggy_gpu_device.dev));
+				mali_platform_init(&(mali_gpu_device.dev));
 
 #ifdef CONFIG_PM_RUNTIME
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,37))
-				pm_runtime_set_autosuspend_delay(&(maliggy_gpu_device.dev), 1000);
-				pm_runtime_use_autosuspend(&(maliggy_gpu_device.dev));
+				pm_runtime_set_autosuspend_delay(&(mali_gpu_device.dev), 1000);
+				pm_runtime_use_autosuspend(&(mali_gpu_device.dev));
 #endif
-				pm_runtime_enable(&(maliggy_gpu_device.dev));
+				pm_runtime_enable(&(mali_gpu_device.dev));
 #endif
 
 				return 0;
@@ -217,50 +217,50 @@ int maliggy_platform_device_register(void)
 #ifdef CONFIG_PM_RUNTIME
 #if defined(USE_PM_NOTIFIER)
 plat_init_err:
-		unregister_pm_notifier(&maliggy_pwr_notif_block);
+		unregister_pm_notifier(&mali_pwr_notif_block);
 #endif
 #endif /* CONFIG_PM_RUNTIME */
-		platform_device_unregister(&maliggy_gpu_device);
+		platform_device_unregister(&mali_gpu_device);
 	}
 
 	return err;
 }
 
-void maliggy_platform_device_unregister(void)
+void mali_platform_device_unregister(void)
 {
 	MALI_DEBUG_PRINT(4, ("mali_platform_device_unregister() called\n"));
 
 #ifdef CONFIG_PM_RUNTIME
 #if defined(USE_PM_NOTIFIER)
-	unregister_pm_notifier(&maliggy_pwr_notif_block);
+	unregister_pm_notifier(&mali_pwr_notif_block);
 #endif
 #endif /* CONFIG_PM_RUNTIME */
 
-	maliggy_platform_deinit(&(maliggy_gpu_device.dev));
+	mali_platform_deinit(&(mali_gpu_device.dev));
 
-	platform_device_unregister(&maliggy_gpu_device);
+	platform_device_unregister(&mali_gpu_device);
 }
 
-static void maliggy_platform_device_release(struct device *device)
+static void mali_platform_device_release(struct device *device)
 {
 	MALI_DEBUG_PRINT(4, ("mali_platform_device_release() called\n"));
 }
 
 #ifdef CONFIG_PM_RUNTIME
 #if defined(USE_PM_NOTIFIER)
-static int maliggy_pwr_suspend_notifier(struct notifier_block *nb,unsigned long event,void* dummy)
+static int mali_pwr_suspend_notifier(struct notifier_block *nb,unsigned long event,void* dummy)
 {
 	int err = 0;
 	switch (event)
 	{
 		case PM_SUSPEND_PREPARE:
-			maliggy_pm_os_suspend();
-			err = maliggy_os_suspend(&(maliggy_platform_device->dev));
+			mali_pm_os_suspend();
+			err = mali_os_suspend(&(mali_platform_device->dev));
 			break;
 
 		case PM_POST_SUSPEND:
-			err = maliggy_os_resume(&(maliggy_platform_device->dev));
-			maliggy_pm_os_resume();
+			err = mali_os_resume(&(mali_platform_device->dev));
+			mali_pm_os_resume();
 			break;
 		default:
 			break;
@@ -268,13 +268,13 @@ static int maliggy_pwr_suspend_notifier(struct notifier_block *nb,unsigned long 
 	return err;
 }
 
-static int maliggy_os_suspend(struct device *device)
+static int mali_os_suspend(struct device *device)
 {
 	int ret = 0;
 	MALI_DEBUG_PRINT(4, ("mali_os_suspend() called\n"));
 
 #ifdef CONFIG_MALI_DVFS
-	maliggy_utilization_suspend();
+	mali_utilization_suspend();
 #endif
 
 	if (NULL != device &&
@@ -286,21 +286,21 @@ static int maliggy_os_suspend(struct device *device)
 		ret = device->driver->pm->suspend(device);
 	}
 
-	maliggy_platform_power_mode_change(device, MALI_POWER_MODE_DEEP_SLEEP);
+	mali_platform_power_mode_change(device, MALI_POWER_MODE_DEEP_SLEEP);
 
 	return ret;
 }
 
-static int maliggy_os_resume(struct device *device)
+static int mali_os_resume(struct device *device)
 {
 	int ret = 0;
 
 	MALI_DEBUG_PRINT(4, ("mali_os_resume() called\n"));
 #ifdef CONFIG_REGULATOR
-	maliggy_regulator_enable();
-	g3d_power_domain_control_ggy_ggy(1);
+	mali_regulator_enable();
+	g3d_power_domain_control(1);
 #endif
-	maliggy_platform_power_mode_change(device, MALI_POWER_MODE_ON);
+	mali_platform_power_mode_change(device, MALI_POWER_MODE_ON);
 
 	if (NULL != device &&
 		NULL != device->driver &&
@@ -314,7 +314,7 @@ static int maliggy_os_resume(struct device *device)
 	return ret;
 }
 
-static int maliggy_os_freeze(struct device *device)
+static int mali_os_freeze(struct device *device)
 {
 	int ret = 0;
 	MALI_DEBUG_PRINT(4, ("mali_os_freeze() called\n"));
@@ -330,7 +330,7 @@ static int maliggy_os_freeze(struct device *device)
 	return ret;
 }
 
-static int maliggy_os_thaw(struct device *device)
+static int mali_os_thaw(struct device *device)
 {
 	int ret = 0;
 	MALI_DEBUG_PRINT(4, ("mali_os_thaw() called\n"));
@@ -346,7 +346,7 @@ static int maliggy_os_thaw(struct device *device)
 	return ret;
 }
 
-static int maliggy_runtime_suspend(struct device *device)
+static int mali_runtime_suspend(struct device *device)
 {
 	int ret = 0;
 
@@ -359,17 +359,17 @@ static int maliggy_runtime_suspend(struct device *device)
 		ret = device->driver->pm->runtime_suspend(device);
 	}
 
-	maliggy_platform_power_mode_change(device, MALI_POWER_MODE_LIGHT_SLEEP);
+	mali_platform_power_mode_change(device, MALI_POWER_MODE_LIGHT_SLEEP);
 
 	return ret;
 }
 
-static int maliggy_runtime_resume(struct device *device)
+static int mali_runtime_resume(struct device *device)
 {
 	int ret = 0;
 	MALI_DEBUG_PRINT(4, ("mali_runtime_resume() called\n"));
 
-	maliggy_platform_power_mode_change(device, MALI_POWER_MODE_ON);
+	mali_platform_power_mode_change(device, MALI_POWER_MODE_ON);
 
 	if (NULL != device->driver &&
 		NULL != device->driver->pm &&
@@ -382,7 +382,7 @@ static int maliggy_runtime_resume(struct device *device)
 	return ret;
 }
 
-static int maliggy_runtime_idle(struct device *device)
+static int mali_runtime_idle(struct device *device)
 {
 	MALI_DEBUG_PRINT(4, ("mali_runtime_idle() called\n"));
 	if (NULL != device->driver &&

@@ -16,64 +16,64 @@
 #include "mali_session.h"
 #include "mali_ukk_wrappers.h"
 
-int mem_init_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_init_mem_s __user *uargs)
+int mem_init_wrapper(struct mali_session_data *session_data, _mali_uk_init_mem_s __user *uargs)
 {
-    _maliggy_uk_init_mem_s kargs;
-    _maliggy_osk_errcode_t err;
+    _mali_uk_init_mem_s kargs;
+    _mali_osk_errcode_t err;
 
     MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
     kargs.ctx = session_data;
-    err = _maliggy_ukk_init_mem(&kargs);
+    err = _mali_ukk_init_mem(&kargs);
     if (_MALI_OSK_ERR_OK != err)
     {
-        return map_errcode_ggy_ggy(err);
+        return map_errcode(err);
     }
 
-    if (0 != put_user(kargs.maliggy_address_base, &uargs->maliggy_address_base)) goto mem_init_rollback;
+    if (0 != put_user(kargs.mali_address_base, &uargs->mali_address_base)) goto mem_init_rollback;
     if (0 != put_user(kargs.memory_size, &uargs->memory_size)) goto mem_init_rollback;
 
     return 0;
 
 mem_init_rollback:
 	{
-		_maliggy_uk_term_mem_s kargs;
+		_mali_uk_term_mem_s kargs;
 		kargs.ctx = session_data;
-		err = _maliggy_ukk_term_mem(&kargs);
+		err = _mali_ukk_term_mem(&kargs);
 		if (_MALI_OSK_ERR_OK != err)
 		{
-			MALI_DEBUG_PRINT(4, ("reverting _maliggy_ukk_init_mem, as a result of failing put_user(), failed\n"));
+			MALI_DEBUG_PRINT(4, ("reverting _mali_ukk_init_mem, as a result of failing put_user(), failed\n"));
 		}
 	}
     return -EFAULT;
 }
 
-int mem_term_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_term_mem_s __user *uargs)
+int mem_term_wrapper(struct mali_session_data *session_data, _mali_uk_term_mem_s __user *uargs)
 {
-    _maliggy_uk_term_mem_s kargs;
-    _maliggy_osk_errcode_t err;
+    _mali_uk_term_mem_s kargs;
+    _mali_osk_errcode_t err;
 
     MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
     kargs.ctx = session_data;
-    err = _maliggy_ukk_term_mem(&kargs);
+    err = _mali_ukk_term_mem(&kargs);
     if (_MALI_OSK_ERR_OK != err)
     {
-        return map_errcode_ggy_ggy(err);
+        return map_errcode(err);
     }
 
     return 0;
 }
 
-int mem_write_safe_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_mem_write_safe_s __user * uargs)
+int mem_write_safe_wrapper(struct mali_session_data *session_data, _mali_uk_mem_write_safe_s __user * uargs)
 {
-	_maliggy_uk_mem_write_safe_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_mem_write_safe_s kargs;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 	MALI_CHECK_NON_NULL(session_data, -EINVAL);
 
-	if (0 != copy_from_user(&kargs, uargs, sizeof(_maliggy_uk_mem_write_safe_s)))
+	if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_mem_write_safe_s)))
 	{
 		return -EFAULT;
 	}
@@ -94,10 +94,10 @@ int mem_write_safe_wrapper(struct maliggy_session_data *session_data, _maliggy_u
 		return -EINVAL;
 	}
 
-	err = _maliggy_ukk_mem_write_safe(&kargs);
+	err = _mali_ukk_mem_write_safe(&kargs);
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	if (0 != put_user(kargs.size, &uargs->size))
@@ -108,154 +108,154 @@ int mem_write_safe_wrapper(struct maliggy_session_data *session_data, _maliggy_u
 	return 0;
 }
 
-int mem_map_ext_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_map_external_mem_s __user * argument)
+int mem_map_ext_wrapper(struct mali_session_data *session_data, _mali_uk_map_external_mem_s __user * argument)
 {
-	_maliggy_uk_map_external_mem_s uk_args;
-	_maliggy_osk_errcode_t err_code;
+	_mali_uk_map_external_mem_s uk_args;
+	_mali_osk_errcode_t err_code;
 
 	/* validate input */
 	/* the session_data pointer was validated by caller */
     MALI_CHECK_NON_NULL( argument, -EINVAL);
 
 	/* get call arguments from user space. copy_from_user returns how many bytes which where NOT copied */
-	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_maliggy_uk_map_external_mem_s)) )
+	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_mali_uk_map_external_mem_s)) )
 	{
 		return -EFAULT;
 	}
 
     uk_args.ctx = session_data;
-	err_code = _maliggy_ukk_map_external_mem( &uk_args );
+	err_code = _mali_ukk_map_external_mem( &uk_args );
 
     if (0 != put_user(uk_args.cookie, &argument->cookie))
     {
         if (_MALI_OSK_ERR_OK == err_code)
         {
             /* Rollback */
-           	_maliggy_uk_unmap_external_mem_s uk_args_unmap;
+           	_mali_uk_unmap_external_mem_s uk_args_unmap;
 
             uk_args_unmap.ctx = session_data;
             uk_args_unmap.cookie = uk_args.cookie;
-            err_code = _maliggy_ukk_unmap_external_mem( &uk_args_unmap );
+            err_code = _mali_ukk_unmap_external_mem( &uk_args_unmap );
             if (_MALI_OSK_ERR_OK != err_code)
             {
-                MALI_DEBUG_PRINT(4, ("reverting _maliggy_ukk_unmap_external_mem, as a result of failing put_user(), failed\n"));
+                MALI_DEBUG_PRINT(4, ("reverting _mali_ukk_unmap_external_mem, as a result of failing put_user(), failed\n"));
             }
         }
         return -EFAULT;
     }
 
-    /* Return the error that _maliggy_ukk_free_big_block produced */
-	return map_errcode_ggy_ggy(err_code);
+    /* Return the error that _mali_ukk_free_big_block produced */
+	return map_errcode(err_code);
 }
 
-int mem_unmap_ext_wrapper_ggy_ggy(struct maliggy_session_data *session_data, _maliggy_uk_unmap_external_mem_s __user * argument)
+int mem_unmap_ext_wrapper(struct mali_session_data *session_data, _mali_uk_unmap_external_mem_s __user * argument)
 {
-	_maliggy_uk_unmap_external_mem_s uk_args;
-	_maliggy_osk_errcode_t err_code;
+	_mali_uk_unmap_external_mem_s uk_args;
+	_mali_osk_errcode_t err_code;
 
 	/* validate input */
 	/* the session_data pointer was validated by caller */
     MALI_CHECK_NON_NULL( argument, -EINVAL);
 
 	/* get call arguments from user space. copy_from_user returns how many bytes which where NOT copied */
-	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_maliggy_uk_unmap_external_mem_s)) )
+	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_mali_uk_unmap_external_mem_s)) )
 	{
 		return -EFAULT;
 	}
 
     uk_args.ctx = session_data;
-	err_code = _maliggy_ukk_unmap_external_mem( &uk_args );
+	err_code = _mali_ukk_unmap_external_mem( &uk_args );
 
-	/* Return the error that _maliggy_ukk_free_big_block produced */
-	return map_errcode_ggy_ggy(err_code);
+	/* Return the error that _mali_ukk_free_big_block produced */
+	return map_errcode(err_code);
 }
 
 #if defined(CONFIG_MALI400_UMP)
-int mem_release_umpggy_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_release_umpggy_mem_s __user * argument)
+int mem_release_ump_wrapper(struct mali_session_data *session_data, _mali_uk_release_ump_mem_s __user * argument)
 {
-	_maliggy_uk_release_umpggy_mem_s uk_args;
-	_maliggy_osk_errcode_t err_code;
+	_mali_uk_release_ump_mem_s uk_args;
+	_mali_osk_errcode_t err_code;
 
 	/* validate input */
 	/* the session_data pointer was validated by caller */
     MALI_CHECK_NON_NULL( argument, -EINVAL);
 
 	/* get call arguments from user space. copy_from_user returns how many bytes which where NOT copied */
-	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_maliggy_uk_release_umpggy_mem_s)) )
+	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_mali_uk_release_ump_mem_s)) )
 	{
 		return -EFAULT;
 	}
 
     uk_args.ctx = session_data;
-	err_code = _maliggy_ukk_release_umpggy_mem( &uk_args );
+	err_code = _mali_ukk_release_ump_mem( &uk_args );
 
-	/* Return the error that _maliggy_ukk_free_big_block produced */
-	return map_errcode_ggy_ggy(err_code);
+	/* Return the error that _mali_ukk_free_big_block produced */
+	return map_errcode(err_code);
 }
 
-int mem_attach_umpggy_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_attach_umpggy_mem_s __user * argument)
+int mem_attach_ump_wrapper(struct mali_session_data *session_data, _mali_uk_attach_ump_mem_s __user * argument)
 {
-	_maliggy_uk_attach_umpggy_mem_s uk_args;
-	_maliggy_osk_errcode_t err_code;
+	_mali_uk_attach_ump_mem_s uk_args;
+	_mali_osk_errcode_t err_code;
 
 	/* validate input */
 	/* the session_data pointer was validated by caller */
     MALI_CHECK_NON_NULL( argument, -EINVAL);
 
 	/* get call arguments from user space. copy_from_user returns how many bytes which where NOT copied */
-	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_maliggy_uk_attach_umpggy_mem_s)) )
+	if ( 0 != copy_from_user(&uk_args, (void __user *)argument, sizeof(_mali_uk_attach_ump_mem_s)) )
 	{
 		return -EFAULT;
 	}
 
     uk_args.ctx = session_data;
-	err_code = _maliggy_ukk_attach_umpggy_mem( &uk_args );
+	err_code = _mali_ukk_attach_ump_mem( &uk_args );
 
     if (0 != put_user(uk_args.cookie, &argument->cookie))
     {
         if (_MALI_OSK_ERR_OK == err_code)
         {
             /* Rollback */
-           	_maliggy_uk_release_umpggy_mem_s uk_args_unmap;
+           	_mali_uk_release_ump_mem_s uk_args_unmap;
 
             uk_args_unmap.ctx = session_data;
             uk_args_unmap.cookie = uk_args.cookie;
-            err_code = _maliggy_ukk_release_umpggy_mem( &uk_args_unmap );
+            err_code = _mali_ukk_release_ump_mem( &uk_args_unmap );
             if (_MALI_OSK_ERR_OK != err_code)
             {
-                MALI_DEBUG_PRINT(4, ("reverting _maliggy_ukk_attach_mem, as a result of failing put_user(), failed\n"));
+                MALI_DEBUG_PRINT(4, ("reverting _mali_ukk_attach_mem, as a result of failing put_user(), failed\n"));
             }
         }
         return -EFAULT;
     }
 
-    /* Return the error that _maliggy_ukk_map_external_umpggy_mem produced */
-	return map_errcode_ggy_ggy(err_code);
+    /* Return the error that _mali_ukk_map_external_ump_mem produced */
+	return map_errcode(err_code);
 }
 #endif /* CONFIG_MALI400_UMP */
 
-int mem_query_mmu_page_table_dumpggy_size_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_query_mmu_page_table_dumpggy_size_s __user * uargs)
+int mem_query_mmu_page_table_dump_size_wrapper(struct mali_session_data *session_data, _mali_uk_query_mmu_page_table_dump_size_s __user * uargs)
 {
-    _maliggy_uk_query_mmu_page_table_dumpggy_size_s kargs;
-    _maliggy_osk_errcode_t err;
+    _mali_uk_query_mmu_page_table_dump_size_s kargs;
+    _mali_osk_errcode_t err;
 
     MALI_CHECK_NON_NULL(uargs, -EINVAL);
     MALI_CHECK_NON_NULL(session_data, -EINVAL);
 
     kargs.ctx = session_data;
 
-    err = _maliggy_ukk_query_mmu_page_table_dumpggy_size(&kargs);
-    if (_MALI_OSK_ERR_OK != err) return map_errcode_ggy_ggy(err);
+    err = _mali_ukk_query_mmu_page_table_dump_size(&kargs);
+    if (_MALI_OSK_ERR_OK != err) return map_errcode(err);
 
     if (0 != put_user(kargs.size, &uargs->size)) return -EFAULT;
 
     return 0;
 }
 
-int mem_dumpggy_mmu_page_table_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_dumpggy_mmu_page_table_s __user * uargs)
+int mem_dump_mmu_page_table_wrapper(struct mali_session_data *session_data, _mali_uk_dump_mmu_page_table_s __user * uargs)
 {
-    _maliggy_uk_dumpggy_mmu_page_table_s kargs;
-    _maliggy_osk_errcode_t err;
+    _mali_uk_dump_mmu_page_table_s kargs;
+    _mali_osk_errcode_t err;
     void *buffer;
     int rc = -EFAULT;
 
@@ -274,7 +274,7 @@ int mem_dumpggy_mmu_page_table_wrapper(struct maliggy_session_data *session_data
 
     /* allocate temporary buffer (kernel side) to store mmu page table info */
     MALI_CHECK(kargs.size > 0, -ENOMEM);
-    kargs.buffer = _maliggy_osk_valloc(kargs.size);
+    kargs.buffer = _mali_osk_valloc(kargs.size);
     if (NULL == kargs.buffer)
     {
         rc = -ENOMEM;
@@ -282,10 +282,10 @@ int mem_dumpggy_mmu_page_table_wrapper(struct maliggy_session_data *session_data
     }
 
     kargs.ctx = session_data;
-    err = _maliggy_ukk_dumpggy_mmu_page_table(&kargs);
+    err = _mali_ukk_dump_mmu_page_table(&kargs);
     if (_MALI_OSK_ERR_OK != err)
     {
-        rc = map_errcode_ggy_ggy(err);
+        rc = map_errcode(err);
         goto err_exit;
     }
 
@@ -294,10 +294,10 @@ int mem_dumpggy_mmu_page_table_wrapper(struct maliggy_session_data *session_data
     if (0 != put_user((kargs.register_writes - (u32 *)kargs.buffer) + (u32 *)uargs->buffer, &uargs->register_writes)) goto err_exit;
     if (0 != put_user((kargs.page_table_dump - (u32 *)kargs.buffer) + (u32 *)uargs->buffer, &uargs->page_table_dump)) goto err_exit;
     if (0 != put_user(kargs.register_writes_size, &uargs->register_writes_size)) goto err_exit;
-    if (0 != put_user(kargs.page_table_dumpggy_size, &uargs->page_table_dumpggy_size)) goto err_exit;
+    if (0 != put_user(kargs.page_table_dump_size, &uargs->page_table_dump_size)) goto err_exit;
     rc = 0;
 
 err_exit:
-    if (kargs.buffer) _maliggy_osk_vfree(kargs.buffer);
+    if (kargs.buffer) _mali_osk_vfree(kargs.buffer);
     return rc;
 }

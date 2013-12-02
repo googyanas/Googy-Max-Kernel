@@ -17,23 +17,23 @@
 #include "mali_session.h"
 #include "mali_ukk_wrappers.h"
 
-int profiling_start_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_profiling_start_s __user *uargs)
+int profiling_start_wrapper(struct mali_session_data *session_data, _mali_uk_profiling_start_s __user *uargs)
 {
-	_maliggy_uk_profiling_start_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_profiling_start_s kargs;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
-	if (0 != copy_from_user(&kargs, uargs, sizeof(_maliggy_uk_profiling_start_s)))
+	if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_profiling_start_s)))
 	{
 		return -EFAULT;
 	}
 
 	kargs.ctx = session_data;
-	err = _maliggy_ukk_profiling_start(&kargs);
+	err = _mali_ukk_profiling_start(&kargs);
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	if (0 != put_user(kargs.limit, &uargs->limit))
@@ -44,40 +44,40 @@ int profiling_start_wrapper(struct maliggy_session_data *session_data, _maliggy_
 	return 0;
 }
 
-int profiling_add_event_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_profiling_add_event_s __user *uargs)
+int profiling_add_event_wrapper(struct mali_session_data *session_data, _mali_uk_profiling_add_event_s __user *uargs)
 {
-	_maliggy_uk_profiling_add_event_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_profiling_add_event_s kargs;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
-	if (0 != copy_from_user(&kargs, uargs, sizeof(_maliggy_uk_profiling_add_event_s)))
+	if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_profiling_add_event_s)))
 	{
 		return -EFAULT;
 	}
 
 	kargs.ctx = session_data;
-	err = _maliggy_ukk_profiling_add_event(&kargs);
+	err = _mali_ukk_profiling_add_event(&kargs);
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	return 0;
 }
 
-int profiling_stop_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_profiling_stop_s __user *uargs)
+int profiling_stop_wrapper(struct mali_session_data *session_data, _mali_uk_profiling_stop_s __user *uargs)
 {
-	_maliggy_uk_profiling_stop_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_profiling_stop_s kargs;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
 	kargs.ctx = session_data;
-	err = _maliggy_ukk_profiling_stop(&kargs);
+	err = _mali_ukk_profiling_stop(&kargs);
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	if (0 != put_user(kargs.count, &uargs->count))
@@ -88,10 +88,10 @@ int profiling_stop_wrapper(struct maliggy_session_data *session_data, _maliggy_u
 	return 0;
 }
 
-int profiling_get_event_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_profiling_get_event_s __user *uargs)
+int profiling_get_event_wrapper(struct mali_session_data *session_data, _mali_uk_profiling_get_event_s __user *uargs)
 {
-	_maliggy_uk_profiling_get_event_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_profiling_get_event_s kargs;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
@@ -102,14 +102,14 @@ int profiling_get_event_wrapper(struct maliggy_session_data *session_data, _mali
 
 	kargs.ctx = session_data;
 
-	err = _maliggy_ukk_profiling_get_event(&kargs);
+	err = _mali_ukk_profiling_get_event(&kargs);
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	kargs.ctx = NULL; /* prevent kernel address to be returned to user space */
-	if (0 != copy_to_user(uargs, &kargs, sizeof(_maliggy_uk_profiling_get_event_s)))
+	if (0 != copy_to_user(uargs, &kargs, sizeof(_mali_uk_profiling_get_event_s)))
 	{
 		return -EFAULT;
 	}
@@ -117,32 +117,32 @@ int profiling_get_event_wrapper(struct maliggy_session_data *session_data, _mali
 	return 0;
 }
 
-int profiling_clear_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_profiling_clear_s __user *uargs)
+int profiling_clear_wrapper(struct mali_session_data *session_data, _mali_uk_profiling_clear_s __user *uargs)
 {
-	_maliggy_uk_profiling_clear_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_profiling_clear_s kargs;
+	_mali_osk_errcode_t err;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
 	kargs.ctx = session_data;
-	err = _maliggy_ukk_profiling_clear(&kargs);
+	err = _mali_ukk_profiling_clear(&kargs);
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	return 0;
 }
 
-int profiling_report_sw_counters_wrapper(struct maliggy_session_data *session_data, _maliggy_uk_sw_counters_report_s __user *uargs)
+int profiling_report_sw_counters_wrapper(struct mali_session_data *session_data, _mali_uk_sw_counters_report_s __user *uargs)
 {
-	_maliggy_uk_sw_counters_report_s kargs;
-	_maliggy_osk_errcode_t err;
+	_mali_uk_sw_counters_report_s kargs;
+	_mali_osk_errcode_t err;
 	u32 *counter_buffer;
 
 	MALI_CHECK_NON_NULL(uargs, -EINVAL);
 
-	if (0 != copy_from_user(&kargs, uargs, sizeof(_maliggy_uk_sw_counters_report_s)))
+	if (0 != copy_from_user(&kargs, uargs, sizeof(_mali_uk_sw_counters_report_s)))
 	{
 		return -EFAULT;
 	}
@@ -168,13 +168,13 @@ int profiling_report_sw_counters_wrapper(struct maliggy_session_data *session_da
 	kargs.ctx = session_data;
 	kargs.counters = counter_buffer;
 
-	err = _maliggy_ukk_sw_counters_report(&kargs);
+	err = _mali_ukk_sw_counters_report(&kargs);
 
 	kfree(counter_buffer);
 
 	if (_MALI_OSK_ERR_OK != err)
 	{
-		return map_errcode_ggy_ggy(err);
+		return map_errcode(err);
 	}
 
 	return 0;

@@ -13,6 +13,6 @@
 
 #include "mali_kernel_memory_engine.h"
 
-maliggy_physical_memory_allocator * maliggy_block_allocator_create(u32 base_address, u32 cpu_usage_adjust, u32 size, const char *name);
+mali_physical_memory_allocator * mali_block_allocator_create(u32 base_address, u32 cpu_usage_adjust, u32 size, const char *name);
 
 #endif /* __MALI_BLOCK_ALLOCATOR_H__ */

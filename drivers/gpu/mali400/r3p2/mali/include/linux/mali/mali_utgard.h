@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_utgard.h
+ * @file mali_utgard.h
  * Defines types and interface exposed by the Mali Utgard device driver
  */
 
@@ -316,14 +316,14 @@
 		.end = pp_mmu_bcast_addr + 0x100, \
 	},
 
-struct maliggy_gpu_utilization_data
+struct mali_gpu_utilization_data
 {
 	unsigned int utilization_gpu; /* Utilization for GP and all PP cores combined, 0 = no utilization, 256 = full utilization */
 	unsigned int utilization_gp;  /* Utilization for GP core only, 0 = no utilization, 256 = full utilization */
 	unsigned int utilization_pp;  /* Utilization for all PP cores combined, 0 = no utilization, 256 = full utilization */
 };
 
-struct maliggy_gpu_device_data
+struct mali_gpu_device_data
 {
 	/* Dedicated GPU memory range (physical). */
 	unsigned long dedicated_mem_start;
@@ -340,7 +340,7 @@ struct maliggy_gpu_device_data
 	unsigned long utilization_interval;
 
 	/* Function that will receive periodic GPU utilization numbers */
-	void (*utilization_callback)(struct maliggy_gpu_utilization_data *data);
+	void (*utilization_callback)(struct mali_gpu_utilization_data *data);
 
 	/*
 	 * Mali PMU switch delay.
@@ -356,27 +356,27 @@ struct maliggy_gpu_device_data
  * 
  * called to power down all cores 
  */
-int maliggy_pmu_powerdown(void);
+int mali_pmu_powerdown(void);
 
 
 /** @brief MALI GPU power up using MALI in-built PMU
  * 
  * called to power up all cores 
  */
-int maliggy_pmu_powerup(void);
+int mali_pmu_powerup(void);
 
 /**
  * Pause the scheduling and power state changes of Mali device driver.
- * maliggy_dev_resume() must always be called as soon as possible after this function
+ * mali_dev_resume() must always be called as soon as possible after this function
  * in order to resume normal operation of the Mali driver.
  */
-void maliggy_dev_pause(void);
+void mali_dev_pause(void);
 
 /**
  * Resume scheduling and allow power changes in Mali device driver.
- * This must always be called after maliggy_dev_pause().
+ * This must always be called after mali_dev_pause().
  */
-void maliggy_dev_resume(void);
+void mali_dev_resume(void);
 
 /** @brief Set the desired number of PP cores to use.
  *
@@ -385,6 +385,6 @@ void maliggy_dev_resume(void);
  * @param num_cores The number of desired cores
  * @return 0 on success, otherwise error. -EINVAL means an invalid number of cores was specified.
  */
-int maliggy_perf_set_num_pp_cores(unsigned int num_cores);
+int mali_perf_set_num_pp_cores(unsigned int num_cores);
 
 #endif

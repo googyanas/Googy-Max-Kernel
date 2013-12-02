@@ -48,20 +48,20 @@ typedef struct block_allocator
 } block_allocator;
 
 
-static void block_allocator_shutdown(umpggy_memory_backend * backend);
-static int block_allocator_allocate(void* ctx, umpggy_dd_mem * mem);
-static void block_allocator_release(void * ctx, umpggy_dd_mem * handle);
+static void block_allocator_shutdown(ump_memory_backend * backend);
+static int block_allocator_allocate(void* ctx, ump_dd_mem * mem);
+static void block_allocator_release(void * ctx, ump_dd_mem * handle);
 static inline u32 get_phys(block_allocator * allocator, block_info * block);
-static u32 block_allocator_stat(struct umpggy_memory_backend *backend);
+static u32 block_allocator_stat(struct ump_memory_backend *backend);
 
 
 
 /*
  * Create dedicated memory backend
  */
-umpggy_memory_backend * umpggy_block_allocator_create(u32 base_address, u32 size)
+ump_memory_backend * ump_block_allocator_create(u32 base_address, u32 size)
 {
-	umpggy_memory_backend * backend;
+	ump_memory_backend * backend;
 	block_allocator * allocator;
 	u32 usable_size;
 	u32 num_blocks;
@@ -78,7 +78,7 @@ umpggy_memory_backend * umpggy_block_allocator_create(u32 base_address, u32 size
 	DBG_MSG(5, ("Creating dedicated UMP memory backend. Base address: 0x%08x, size: 0x%08x\n", base_address, size));
 	DBG_MSG(6, ("%u usable bytes which becomes %u blocks\n", usable_size, num_blocks));
 
-	backend = kzalloc(sizeof(umpggy_memory_backend), GFP_KERNEL);
+	backend = kzalloc(sizeof(ump_memory_backend), GFP_KERNEL);
 	if (NULL != backend)
 	{
 		allocator = kmalloc(sizeof(block_allocator), GFP_KERNEL);
@@ -107,7 +107,7 @@ umpggy_memory_backend * umpggy_block_allocator_create(u32 base_address, u32 size
 				backend->shutdown = block_allocator_shutdown;
 				backend->stat = block_allocator_stat;
 				backend->pre_allocate_physical_check = NULL;
-				backend->adjust_to_maliggy_phys = NULL;
+				backend->adjust_to_mali_phys = NULL;
 				/* MALI_SEC */
 				backend->get = NULL;
 				backend->set = NULL;
@@ -127,7 +127,7 @@ umpggy_memory_backend * umpggy_block_allocator_create(u32 base_address, u32 size
 /*
  * Destroy specified dedicated memory backend
  */
-static void block_allocator_shutdown(umpggy_memory_backend * backend)
+static void block_allocator_shutdown(ump_memory_backend * backend)
 {
 	block_allocator * allocator;
 
@@ -145,7 +145,7 @@ static void block_allocator_shutdown(umpggy_memory_backend * backend)
 
 
 
-static int block_allocator_allocate(void* ctx, umpggy_dd_mem * mem)
+static int block_allocator_allocate(void* ctx, ump_dd_mem * mem)
 {
 	block_allocator * allocator;
 	u32 left;
@@ -162,7 +162,7 @@ static int block_allocator_allocate(void* ctx, umpggy_dd_mem * mem)
 	BUG_ON(!&allocator->mutex);
 
 	mem->nr_blocks = ((left + UMP_BLOCK_SIZE - 1) & ~(UMP_BLOCK_SIZE - 1)) / UMP_BLOCK_SIZE;
-	mem->block_array = (umpggy_dd_physical_block*)vmalloc(sizeof(umpggy_dd_physical_block) * mem->nr_blocks);
+	mem->block_array = (ump_dd_physical_block*)vmalloc(sizeof(ump_dd_physical_block) * mem->nr_blocks);
 	if (NULL == mem->block_array)
 	{
 		MSG_ERR(("Failed to allocate block array\n"));
@@ -230,7 +230,7 @@ static int block_allocator_allocate(void* ctx, umpggy_dd_mem * mem)
 
 
 
-static void block_allocator_release(void * ctx, umpggy_dd_mem * handle)
+static void block_allocator_release(void * ctx, ump_dd_mem * handle)
 {
 	block_allocator * allocator;
 	block_info * block, * next;
@@ -277,7 +277,7 @@ static inline u32 get_phys(block_allocator * allocator, block_info * block)
 	return allocator->base + ((block - allocator->all_blocks) * UMP_BLOCK_SIZE);
 }
 
-static u32 block_allocator_stat(struct umpggy_memory_backend *backend)
+static u32 block_allocator_stat(struct ump_memory_backend *backend)
 {
 	block_allocator *allocator;
 	BUG_ON(!backend);

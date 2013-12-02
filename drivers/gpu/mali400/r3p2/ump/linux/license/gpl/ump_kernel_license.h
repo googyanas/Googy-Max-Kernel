@@ -9,7 +9,7 @@
  */
 
 /**
- * @file umpggy_kernel_license.h
+ * @file ump_kernel_license.h
  * Defines for the macro MODULE_LICENSE.
  */
 

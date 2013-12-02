@@ -18,18 +18,18 @@
 
 /** Initalize the HW independent parts of the  PP scheduler
  */
-_maliggy_osk_errcode_t maliggy_pp_scheduler_initialize(void);
-void maliggy_pp_scheduler_terminate(void);
+_mali_osk_errcode_t mali_pp_scheduler_initialize(void);
+void mali_pp_scheduler_terminate(void);
 
 /** Poplulate the PP scheduler with groups
  */
-void maliggy_pp_scheduler_populate(void);
-void maliggy_pp_scheduler_depopulate(void);
+void mali_pp_scheduler_populate(void);
+void mali_pp_scheduler_depopulate(void);
 
-void maliggy_pp_scheduler_job_done(struct maliggy_group *group, struct maliggy_pp_job *job, u32 sub_job, maliggy_bool success);
+void mali_pp_scheduler_job_done(struct mali_group *group, struct mali_pp_job *job, u32 sub_job, mali_bool success);
 
-void maliggy_pp_scheduler_suspend(void);
-void maliggy_pp_scheduler_resume(void);
+void mali_pp_scheduler_suspend(void);
+void mali_pp_scheduler_resume(void);
 
 /** @brief Abort all PP jobs from session running or queued
  *
@@ -38,7 +38,7 @@ void maliggy_pp_scheduler_resume(void);
  *
  * @param session Pointer to session whose jobs should be aborted
  */
-void maliggy_pp_scheduler_abort_session(struct maliggy_session_data *session);
+void mali_pp_scheduler_abort_session(struct mali_session_data *session);
 
 /**
  * @brief Reset all groups
@@ -50,31 +50,31 @@ void maliggy_pp_scheduler_abort_session(struct maliggy_session_data *session);
  * No locking is done, which can only be safe if the scheduler is paused and
  * all cores idle. That is always the case on init and power on.
  */
-void maliggy_pp_scheduler_reset_all_groups(void);
+void mali_pp_scheduler_reset_all_groups(void);
 
 /**
  * @brief Zap TLB on all groups with \a session active
  *
  * The scheculer will zap the session on all groups it owns.
  */
-void maliggy_pp_scheduler_zap_all_active(struct maliggy_session_data *session);
+void mali_pp_scheduler_zap_all_active(struct mali_session_data *session);
 
-int maliggy_pp_scheduler_get_queue_depth(void);
-u32 maliggy_pp_scheduler_dumpggy_state(char *buf, u32 size);
+int mali_pp_scheduler_get_queue_depth(void);
+u32 mali_pp_scheduler_dump_state(char *buf, u32 size);
 
-void maliggy_pp_scheduler_enable_group(struct maliggy_group *group);
-void maliggy_pp_scheduler_disable_group(struct maliggy_group *group);
+void mali_pp_scheduler_enable_group(struct mali_group *group);
+void mali_pp_scheduler_disable_group(struct mali_group *group);
 
-int maliggy_pp_scheduler_set_perf_level(u32 cores);
+int mali_pp_scheduler_set_perf_level(u32 cores);
 
-u32 maliggy_pp_scheduler_get_num_cores_total(void);
-u32 maliggy_pp_scheduler_get_num_cores_enabled(void);
+u32 mali_pp_scheduler_get_num_cores_total(void);
+u32 mali_pp_scheduler_get_num_cores_enabled(void);
 
 /**
  * @brief Returns the number of Pixel Processors in the system irrespective of the context
  *
  * @return number of physical Pixel Processor cores in the system
  */
-u32 maliggy_pp_scheduler_get_num_cores_total(void);
+u32 mali_pp_scheduler_get_num_cores_total(void);
 
 #endif /* __MALI_PP_SCHEDULER_H__ */

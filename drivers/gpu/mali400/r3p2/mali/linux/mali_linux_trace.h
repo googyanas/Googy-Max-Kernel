@@ -21,7 +21,7 @@
 #define TRACE_SYSTEM_STRING __stringfy(TRACE_SYSTEM)
 
 #define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE maliggy_linux_trace
+#define TRACE_INCLUDE_FILE mali_linux_trace
 
 /**
  * Define the tracepoint used to communicate the status of a GPU. Called 
@@ -36,7 +36,7 @@
  * @param d3 Fourth data parameter.
  * @param d4 Fifth data parameter.
  */
-TRACE_EVENT(maliggy_timeline_event,
+TRACE_EVENT(mali_timeline_event,
 
     TP_PROTO(unsigned int event_id, unsigned int d0, unsigned int d1, 
         unsigned int d2, unsigned int d3, unsigned int d4),
@@ -73,7 +73,7 @@ TRACE_EVENT(maliggy_timeline_event,
  * @param counter_id The counter ID.
  * @param value The value of the counter.
  */
-TRACE_EVENT(maliggy_hw_counter,
+TRACE_EVENT(mali_hw_counter,
 
     TP_PROTO(unsigned int counter_id, unsigned int value),
 
@@ -96,7 +96,7 @@ TRACE_EVENT(maliggy_hw_counter,
  *
  * @param counters The bundle of counters.
  */
-TRACE_EVENT(maliggy_sw_counters,
+TRACE_EVENT(mali_sw_counters,
 
     TP_PROTO(pid_t pid, pid_t tid, void * surface_id, unsigned int * counters),
 

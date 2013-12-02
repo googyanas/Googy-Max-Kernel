@@ -23,7 +23,7 @@
 #include <trace/events/gpu.h>
 #endif
 
-enum maliggy_gp_slot_state
+enum mali_gp_slot_state
 {
 	MALI_GP_SLOT_STATE_IDLE,
 	MALI_GP_SLOT_STATE_WORKING,
@@ -31,65 +31,65 @@ enum maliggy_gp_slot_state
 };
 
 /* A render slot is an entity which jobs can be scheduled onto */
-struct maliggy_gp_slot
+struct mali_gp_slot
 {
-	struct maliggy_group *group;
+	struct mali_group *group;
 	/*
 	 * We keep track of the state here as well as in the group object
 	 * so we don't need to take the group lock so often (and also avoid clutter with the working lock)
 	 */
-	enum maliggy_gp_slot_state state;
+	enum mali_gp_slot_state state;
 	u32 returned_cookie;
 };
 
 static u32 gp_version = 0;
 static _MALI_OSK_LIST_HEAD(job_queue);                          /* List of jobs with some unscheduled work */
-static struct maliggy_gp_slot slot;
+static struct mali_gp_slot slot;
 
 /* Variables to allow safe pausing of the scheduler */
-static _maliggy_osk_wait_queue_t *gp_scheduler_working_wait_queue = NULL;
+static _mali_osk_wait_queue_t *gp_scheduler_working_wait_queue = NULL;
 static u32 pause_count = 0;
 
-static maliggy_bool maliggy_gp_scheduler_is_suspended(void);
-static void maliggy_gp_scheduler_job_queued(void);
-static void maliggy_gp_scheduler_job_completed(void);
+static mali_bool mali_gp_scheduler_is_suspended(void);
+static void mali_gp_scheduler_job_queued(void);
+static void mali_gp_scheduler_job_completed(void);
 
-static _maliggy_osk_lock_t *gp_scheduler_lock = NULL;
+static _mali_osk_lock_t *gp_scheduler_lock = NULL;
 /* Contains tid of thread that locked the scheduler or 0, if not locked */
 
-_maliggy_osk_errcode_t maliggy_gp_scheduler_initialize(void)
+_mali_osk_errcode_t mali_gp_scheduler_initialize(void)
 {
 	u32 num_groups;
 	u32 i;
 
 	_MALI_OSK_INIT_LIST_HEAD(&job_queue);
 
-	gp_scheduler_lock = _maliggy_osk_lock_init(_MALI_OSK_LOCKFLAG_ORDERED | _MALI_OSK_LOCKFLAG_SPINLOCK | _MALI_OSK_LOCKFLAG_NONINTERRUPTABLE, 0, _MALI_OSK_LOCK_ORDER_SCHEDULER);
+	gp_scheduler_lock = _mali_osk_lock_init(_MALI_OSK_LOCKFLAG_ORDERED | _MALI_OSK_LOCKFLAG_SPINLOCK | _MALI_OSK_LOCKFLAG_NONINTERRUPTABLE, 0, _MALI_OSK_LOCK_ORDER_SCHEDULER);
 	if (NULL == gp_scheduler_lock)
 	{
 		return _MALI_OSK_ERR_NOMEM;
 	}
 
-	gp_scheduler_working_wait_queue = _maliggy_osk_wait_queue_init();
+	gp_scheduler_working_wait_queue = _mali_osk_wait_queue_init();
 	if (NULL == gp_scheduler_working_wait_queue)
 	{
-		_maliggy_osk_lock_term(gp_scheduler_lock);
+		_mali_osk_lock_term(gp_scheduler_lock);
 		return _MALI_OSK_ERR_NOMEM;
 	}
 
 	/* Find all the available GP cores */
-	num_groups = maliggy_group_get_glob_num_groups();
+	num_groups = mali_group_get_glob_num_groups();
 	for (i = 0; i < num_groups; i++)
 	{
-		struct maliggy_group *group = maliggy_group_get_glob_group(i);
+		struct mali_group *group = mali_group_get_glob_group(i);
 
-		struct maliggy_gp_core *gp_core = maliggy_group_get_gp_core(group);
+		struct mali_gp_core *gp_core = mali_group_get_gp_core(group);
 		if (NULL != gp_core)
 		{
 			if (0 == gp_version)
 			{
 				/* Retrieve GP version */
-				gp_version = maliggy_gp_core_get_version(gp_core);
+				gp_version = mali_gp_core_get_version(gp_core);
 			}
 			slot.group = group;
 			slot.state = MALI_GP_SLOT_STATE_IDLE;
@@ -100,20 +100,20 @@ _maliggy_osk_errcode_t maliggy_gp_scheduler_initialize(void)
 	return _MALI_OSK_ERR_OK;
 }
 
-void maliggy_gp_scheduler_terminate(void)
+void mali_gp_scheduler_terminate(void)
 {
 	MALI_DEBUG_ASSERT(   MALI_GP_SLOT_STATE_IDLE     == slot.state
 	                  || MALI_GP_SLOT_STATE_DISABLED == slot.state);
 	MALI_DEBUG_ASSERT_POINTER(slot.group);
-	maliggy_group_delete(slot.group);
+	mali_group_delete(slot.group);
 
-	_maliggy_osk_wait_queue_term(gp_scheduler_working_wait_queue);
-	_maliggy_osk_lock_term(gp_scheduler_lock);
+	_mali_osk_wait_queue_term(gp_scheduler_working_wait_queue);
+	_mali_osk_lock_term(gp_scheduler_lock);
 }
 
-MALI_STATIC_INLINE void maliggy_gp_scheduler_lock(void)
+MALI_STATIC_INLINE void mali_gp_scheduler_lock(void)
 {
-	if(_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(gp_scheduler_lock, _MALI_OSK_LOCKMODE_RW))
+	if(_MALI_OSK_ERR_OK != _mali_osk_lock_wait(gp_scheduler_lock, _MALI_OSK_LOCKMODE_RW))
 	{
 		/* Non-interruptable lock failed: this should never happen. */
 		MALI_DEBUG_ASSERT(0);
@@ -121,89 +121,89 @@ MALI_STATIC_INLINE void maliggy_gp_scheduler_lock(void)
 	MALI_DEBUG_PRINT(5, ("Mali GP scheduler: GP scheduler lock taken\n"));
 }
 
-MALI_STATIC_INLINE void maliggy_gp_scheduler_unlock(void)
+MALI_STATIC_INLINE void mali_gp_scheduler_unlock(void)
 {
 	MALI_DEBUG_PRINT(5, ("Mali GP scheduler: Releasing GP scheduler lock\n"));
-	_maliggy_osk_lock_signal(gp_scheduler_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(gp_scheduler_lock, _MALI_OSK_LOCKMODE_RW);
 }
 
 #ifdef DEBUG
-MALI_STATIC_INLINE void maliggy_gp_scheduler_assert_locked(void)
+MALI_STATIC_INLINE void mali_gp_scheduler_assert_locked(void)
 {
 	MALI_DEBUG_ASSERT_LOCK_HELD(gp_scheduler_lock);
 }
-#define MALI_ASSERT_GP_SCHEDULER_LOCKED() maliggy_gp_scheduler_assert_locked()
+#define MALI_ASSERT_GP_SCHEDULER_LOCKED() mali_gp_scheduler_assert_locked()
 #else
 #define MALI_ASSERT_GP_SCHEDULER_LOCKED()
 #endif
 
-static void maliggy_gp_scheduler_schedule(void)
+static void mali_gp_scheduler_schedule(void)
 {
-	struct maliggy_gp_job *job;
+	struct mali_gp_job *job;
 
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 
-	if (0 < pause_count || MALI_GP_SLOT_STATE_IDLE != slot.state || _maliggy_osk_list_empty(&job_queue))
+	if (0 < pause_count || MALI_GP_SLOT_STATE_IDLE != slot.state || _mali_osk_list_empty(&job_queue))
 	{
 		MALI_DEBUG_PRINT(4, ("Mali GP scheduler: Nothing to schedule (paused=%u, idle slots=%u)\n",
 		                     pause_count, MALI_GP_SLOT_STATE_IDLE == slot.state ? 1 : 0));
-		maliggy_gp_scheduler_unlock();
+		mali_gp_scheduler_unlock();
 		return; /* Nothing to do, so early out */
 	}
 
 	/* Get (and remove) next job in queue */
-	job = _MALI_OSK_LIST_ENTRY(job_queue.next, struct maliggy_gp_job, list);
-	_maliggy_osk_list_del(&job->list);
+	job = _MALI_OSK_LIST_ENTRY(job_queue.next, struct mali_gp_job, list);
+	_mali_osk_list_del(&job->list);
 
 	/* Mark slot as busy */
 	slot.state = MALI_GP_SLOT_STATE_WORKING;
 
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_unlock();
 
-	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Starting job %u (0x%08X)\n", maliggy_gp_job_get_id(job), job));
+	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Starting job %u (0x%08X)\n", mali_gp_job_get_id(job), job));
 
-	maliggy_group_lock(slot.group);
-	maliggy_group_start_gp_job(slot.group, job);
-	maliggy_group_unlock(slot.group);
+	mali_group_lock(slot.group);
+	mali_group_start_gp_job(slot.group, job);
+	mali_group_unlock(slot.group);
 }
 
-static void maliggy_gp_scheduler_schedule_on_group(struct maliggy_group *group)
+static void mali_gp_scheduler_schedule_on_group(struct mali_group *group)
 {
-	struct maliggy_gp_job *job;
+	struct mali_gp_job *job;
 
 	MALI_DEBUG_ASSERT_LOCK_HELD(group->lock);
 	MALI_DEBUG_ASSERT_LOCK_HELD(gp_scheduler_lock);
 
-	if (0 < pause_count || MALI_GP_SLOT_STATE_IDLE != slot.state || _maliggy_osk_list_empty(&job_queue))
+	if (0 < pause_count || MALI_GP_SLOT_STATE_IDLE != slot.state || _mali_osk_list_empty(&job_queue))
 	{
-		maliggy_gp_scheduler_unlock();
+		mali_gp_scheduler_unlock();
 		MALI_DEBUG_PRINT(4, ("Mali GP scheduler: Nothing to schedule (paused=%u, idle slots=%u)\n",
 		                     pause_count, MALI_GP_SLOT_STATE_IDLE == slot.state ? 1 : 0));
 #if defined(CONFIG_GPU_TRACEPOINTS) && defined(CONFIG_TRACEPOINTS)
-		trace_gpu_sched_switch(maliggy_gp_get_hw_core_desc(group->gp_core), sched_clock(), 0, 0, 0);
+		trace_gpu_sched_switch(mali_gp_get_hw_core_desc(group->gp_core), sched_clock(), 0, 0, 0);
 #endif
 		return; /* Nothing to do, so early out */
 	}
 
 	/* Get (and remove) next job in queue */
-	job = _MALI_OSK_LIST_ENTRY(job_queue.next, struct maliggy_gp_job, list);
-	_maliggy_osk_list_del(&job->list);
+	job = _MALI_OSK_LIST_ENTRY(job_queue.next, struct mali_gp_job, list);
+	_mali_osk_list_del(&job->list);
 
 	/* Mark slot as busy */
 	slot.state = MALI_GP_SLOT_STATE_WORKING;
 
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_unlock();
 
-	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Starting job %u (0x%08X)\n", maliggy_gp_job_get_id(job), job));
+	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Starting job %u (0x%08X)\n", mali_gp_job_get_id(job), job));
 
-	maliggy_group_start_gp_job(slot.group, job);
+	mali_group_start_gp_job(slot.group, job);
 }
 
-static void maliggy_gp_scheduler_return_job_to_user(struct maliggy_gp_job *job, maliggy_bool success)
+static void mali_gp_scheduler_return_job_to_user(struct mali_gp_job *job, mali_bool success)
 {
-	_maliggy_uk_gp_job_finished_s *jobres = job->finished_notification->result_buffer;
-	_maliggy_osk_memset(jobres, 0, sizeof(_maliggy_uk_gp_job_finished_s)); /* @@@@ can be removed once we initialize all members in this struct */
-	jobres->user_job_ptr = maliggy_gp_job_get_user_id(job);
+	_mali_uk_gp_job_finished_s *jobres = job->finished_notification->result_buffer;
+	_mali_osk_memset(jobres, 0, sizeof(_mali_uk_gp_job_finished_s)); /* @@@@ can be removed once we initialize all members in this struct */
+	jobres->user_job_ptr = mali_gp_job_get_user_id(job);
 	if (MALI_TRUE == success)
 	{
 		jobres->status = _MALI_UK_JOB_STATUS_END_SUCCESS;
@@ -213,23 +213,23 @@ static void maliggy_gp_scheduler_return_job_to_user(struct maliggy_gp_job *job, 
 		jobres->status = _MALI_UK_JOB_STATUS_END_UNKNOWN_ERR;
 	}
 
-	jobres->heap_current_addr = maliggy_gp_job_get_current_heap_addr(job);
-	jobres->perf_counter0 = maliggy_gp_job_get_perf_counter_value0(job);
-	jobres->perf_counter1 = maliggy_gp_job_get_perf_counter_value1(job);
+	jobres->heap_current_addr = mali_gp_job_get_current_heap_addr(job);
+	jobres->perf_counter0 = mali_gp_job_get_perf_counter_value0(job);
+	jobres->perf_counter1 = mali_gp_job_get_perf_counter_value1(job);
 
-	maliggy_session_send_notification(maliggy_gp_job_get_session(job), job->finished_notification);
+	mali_session_send_notification(mali_gp_job_get_session(job), job->finished_notification);
 	job->finished_notification = NULL;
 
-	maliggy_gp_job_delete(job);
+	mali_gp_job_delete(job);
 }
 
-void maliggy_gp_scheduler_job_done(struct maliggy_group *group, struct maliggy_gp_job *job, maliggy_bool success)
+void mali_gp_scheduler_job_done(struct mali_group *group, struct mali_gp_job *job, mali_bool success)
 {
-	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Job %u (0x%08X) completed (%s)\n", maliggy_gp_job_get_id(job), job, success ? "success" : "failure"));
+	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Job %u (0x%08X) completed (%s)\n", mali_gp_job_get_id(job), job, success ? "success" : "failure"));
 
-	maliggy_gp_scheduler_return_job_to_user(job, success);
+	mali_gp_scheduler_return_job_to_user(job, success);
 
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 
 	/* Mark slot as idle again */
 	slot.state = MALI_GP_SLOT_STATE_IDLE;
@@ -237,35 +237,35 @@ void maliggy_gp_scheduler_job_done(struct maliggy_group *group, struct maliggy_g
 	/* If paused, then this was the last job, so wake up sleeping workers */
 	if (pause_count > 0)
 	{
-		_maliggy_osk_wait_queue_wake_up(gp_scheduler_working_wait_queue);
+		_mali_osk_wait_queue_wake_up(gp_scheduler_working_wait_queue);
 	}
 
-	maliggy_gp_scheduler_schedule_on_group(group);
+	mali_gp_scheduler_schedule_on_group(group);
 
 	/* It is ok to do this after schedule, since START/STOP is simply ++ and -- anyways */
-	maliggy_gp_scheduler_job_completed();
+	mali_gp_scheduler_job_completed();
 }
 
-void maliggy_gp_scheduler_oom(struct maliggy_group *group, struct maliggy_gp_job *job)
+void mali_gp_scheduler_oom(struct mali_group *group, struct mali_gp_job *job)
 {
-	_maliggy_uk_gp_job_suspended_s * jobres;
-	_maliggy_osk_notification_t * notification;
+	_mali_uk_gp_job_suspended_s * jobres;
+	_mali_osk_notification_t * notification;
 
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 
 	notification = job->oom_notification;
 	job->oom_notification = NULL;
-	slot.returned_cookie = maliggy_gp_job_get_id(job);
+	slot.returned_cookie = mali_gp_job_get_id(job);
 
-	jobres = (_maliggy_uk_gp_job_suspended_s *)notification->result_buffer;
-	jobres->user_job_ptr = maliggy_gp_job_get_user_id(job);
-	jobres->cookie = maliggy_gp_job_get_id(job);
+	jobres = (_mali_uk_gp_job_suspended_s *)notification->result_buffer;
+	jobres->user_job_ptr = mali_gp_job_get_user_id(job);
+	jobres->cookie = mali_gp_job_get_id(job);
 
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_unlock();
 
 	jobres->reason = _MALIGP_JOB_SUSPENDED_OUT_OF_MEMORY;
 
-	maliggy_session_send_notification(maliggy_gp_job_get_session(job), notification);
+	mali_session_send_notification(mali_gp_job_get_session(job), notification);
 
 	/*
 	* If this function failed, then we could return the job to user space right away,
@@ -274,37 +274,37 @@ void maliggy_gp_scheduler_oom(struct maliggy_group *group, struct maliggy_gp_job
 	*/
 }
 
-void maliggy_gp_scheduler_suspend(void)
+void mali_gp_scheduler_suspend(void)
 {
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 	pause_count++; /* Increment the pause_count so that no more jobs will be scheduled */
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_unlock();
 
-	_maliggy_osk_wait_queue_wait_event(gp_scheduler_working_wait_queue, maliggy_gp_scheduler_is_suspended);
+	_mali_osk_wait_queue_wait_event(gp_scheduler_working_wait_queue, mali_gp_scheduler_is_suspended);
 }
 
-void maliggy_gp_scheduler_resume(void)
+void mali_gp_scheduler_resume(void)
 {
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 	pause_count--; /* Decrement pause_count to allow scheduling again (if it reaches 0) */
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_unlock();
 	if (0 == pause_count)
 	{
-		maliggy_gp_scheduler_schedule();
+		mali_gp_scheduler_schedule();
 	}
 }
 
-_maliggy_osk_errcode_t _maliggy_ukk_gp_start_job(void *ctx, _maliggy_uk_gp_start_job_s *uargs)
+_mali_osk_errcode_t _mali_ukk_gp_start_job(void *ctx, _mali_uk_gp_start_job_s *uargs)
 {
-	struct maliggy_session_data *session;
-	struct maliggy_gp_job *job;
+	struct mali_session_data *session;
+	struct mali_gp_job *job;
 
 	MALI_DEBUG_ASSERT_POINTER(uargs);
 	MALI_DEBUG_ASSERT_POINTER(ctx);
 
-	session = (struct maliggy_session_data*)ctx;
+	session = (struct mali_session_data*)ctx;
 
-	job = maliggy_gp_job_create(session, uargs, maliggy_scheduler_get_new_id());
+	job = mali_gp_job_create(session, uargs, mali_scheduler_get_new_id());
 	if (NULL == job)
 	{
 		return _MALI_OSK_ERR_NOMEM;
@@ -312,28 +312,28 @@ _maliggy_osk_errcode_t _maliggy_ukk_gp_start_job(void *ctx, _maliggy_uk_gp_start
 
 #if PROFILING_SKIP_PP_AND_GP_JOBS
 #warning GP jobs will not be executed
-	maliggy_gp_scheduler_return_job_to_user(job, MALI_TRUE);
+	mali_gp_scheduler_return_job_to_user(job, MALI_TRUE);
 	return _MALI_OSK_ERR_OK;
 #endif
 
 #if defined(CONFIG_GPU_TRACEPOINTS) && defined(CONFIG_TRACEPOINTS)
-	trace_gpu_job_enqueue(maliggy_gp_job_get_tid(job), maliggy_gp_job_get_id(job), "GP");
+	trace_gpu_job_enqueue(mali_gp_job_get_tid(job), mali_gp_job_get_id(job), "GP");
 #endif
 
-	maliggy_gp_scheduler_job_queued();
+	mali_gp_scheduler_job_queued();
 
-	maliggy_gp_scheduler_lock();
-	_maliggy_osk_list_addtail(&job->list, &job_queue);
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_lock();
+	_mali_osk_list_addtail(&job->list, &job_queue);
+	mali_gp_scheduler_unlock();
 
-	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Job %u (0x%08X) queued\n", maliggy_gp_job_get_id(job), job));
+	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Job %u (0x%08X) queued\n", mali_gp_job_get_id(job), job));
 
-	maliggy_gp_scheduler_schedule();
+	mali_gp_scheduler_schedule();
 
 	return _MALI_OSK_ERR_OK;
 }
 
-_maliggy_osk_errcode_t _maliggy_ukk_get_gp_number_of_cores(_maliggy_uk_get_gp_number_of_cores_s *args)
+_mali_osk_errcode_t _mali_ukk_get_gp_number_of_cores(_mali_uk_get_gp_number_of_cores_s *args)
 {
 	MALI_DEBUG_ASSERT_POINTER(args);
 	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
@@ -341,7 +341,7 @@ _maliggy_osk_errcode_t _maliggy_ukk_get_gp_number_of_cores(_maliggy_uk_get_gp_nu
 	return _MALI_OSK_ERR_OK;
 }
 
-_maliggy_osk_errcode_t _maliggy_ukk_get_gp_core_version(_maliggy_uk_get_gp_core_version_s *args)
+_mali_osk_errcode_t _mali_ukk_get_gp_core_version(_mali_uk_get_gp_core_version_s *args)
 {
 	MALI_DEBUG_ASSERT_POINTER(args);
 	MALI_CHECK_NON_NULL(args->ctx, _MALI_OSK_ERR_INVALID_ARGS);
@@ -349,11 +349,11 @@ _maliggy_osk_errcode_t _maliggy_ukk_get_gp_core_version(_maliggy_uk_get_gp_core_
 	return _MALI_OSK_ERR_OK;
 }
 
-_maliggy_osk_errcode_t _maliggy_ukk_gp_suspend_response(_maliggy_uk_gp_suspend_response_s *args)
+_mali_osk_errcode_t _mali_ukk_gp_suspend_response(_mali_uk_gp_suspend_response_s *args)
 {
-	struct maliggy_session_data *session;
-	struct maliggy_gp_job *resumed_job;
-	_maliggy_osk_notification_t *new_notification = 0;
+	struct mali_session_data *session;
+	struct mali_gp_job *resumed_job;
+	_mali_osk_notification_t *new_notification = 0;
 
 	MALI_DEBUG_ASSERT_POINTER(args);
 
@@ -362,7 +362,7 @@ _maliggy_osk_errcode_t _maliggy_ukk_gp_suspend_response(_maliggy_uk_gp_suspend_r
 		return _MALI_OSK_ERR_INVALID_ARGS;
 	}
 
-	session = (struct maliggy_session_data*)args->ctx;
+	session = (struct mali_session_data*)args->ctx;
 	if (NULL == session)
 	{
 		return _MALI_OSK_ERR_FAULT;
@@ -370,156 +370,156 @@ _maliggy_osk_errcode_t _maliggy_ukk_gp_suspend_response(_maliggy_uk_gp_suspend_r
 
 	if (_MALIGP_JOB_RESUME_WITH_NEW_HEAP == args->code)
 	{
-		new_notification = _maliggy_osk_notification_create(_MALI_NOTIFICATION_GP_STALLED, sizeof(_maliggy_uk_gp_job_suspended_s));
+		new_notification = _mali_osk_notification_create(_MALI_NOTIFICATION_GP_STALLED, sizeof(_mali_uk_gp_job_suspended_s));
 
 		if (NULL == new_notification)
 		{
 			MALI_PRINT_ERROR(("Mali GP scheduler: Failed to allocate notification object. Will abort GP job.\n"));
-			maliggy_group_lock(slot.group);
-			maliggy_group_abort_gp_job(slot.group, args->cookie);
-			maliggy_group_unlock(slot.group);
+			mali_group_lock(slot.group);
+			mali_group_abort_gp_job(slot.group, args->cookie);
+			mali_group_unlock(slot.group);
 			return _MALI_OSK_ERR_FAULT;
 		}
 	}
 
-	maliggy_group_lock(slot.group);
+	mali_group_lock(slot.group);
 
 	if (_MALIGP_JOB_RESUME_WITH_NEW_HEAP == args->code)
 	{
 		MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Resuming job %u with new heap; 0x%08X - 0x%08X\n", args->cookie, args->arguments[0], args->arguments[1]));
 
-		resumed_job = maliggy_group_resume_gp_with_new_heap(slot.group, args->cookie, args->arguments[0], args->arguments[1]);
+		resumed_job = mali_group_resume_gp_with_new_heap(slot.group, args->cookie, args->arguments[0], args->arguments[1]);
 		if (NULL != resumed_job)
 		{
 			resumed_job->oom_notification = new_notification;
-			maliggy_group_unlock(slot.group);
+			mali_group_unlock(slot.group);
 			return _MALI_OSK_ERR_OK;
 		}
 		else
 		{
-			maliggy_group_unlock(slot.group);
-			_maliggy_osk_notification_delete(new_notification);
+			mali_group_unlock(slot.group);
+			_mali_osk_notification_delete(new_notification);
 			return _MALI_OSK_ERR_FAULT;
 		}
 	}
 
 	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Aborting job %u, no new heap provided\n", args->cookie));
-	maliggy_group_abort_gp_job(slot.group, args->cookie);
-	maliggy_group_unlock(slot.group);
+	mali_group_abort_gp_job(slot.group, args->cookie);
+	mali_group_unlock(slot.group);
 	return _MALI_OSK_ERR_OK;
 }
 
-void maliggy_gp_scheduler_abort_session(struct maliggy_session_data *session)
+void mali_gp_scheduler_abort_session(struct mali_session_data *session)
 {
-	struct maliggy_gp_job *job, *tmp;
+	struct mali_gp_job *job, *tmp;
 
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 	MALI_DEBUG_PRINT(3, ("Mali GP scheduler: Aborting all jobs from session 0x%08x\n", session));
 
 	/* Check queue for jobs and remove */
-	_MALI_OSK_LIST_FOREACHENTRY(job, tmp, &job_queue, struct maliggy_gp_job, list)
+	_MALI_OSK_LIST_FOREACHENTRY(job, tmp, &job_queue, struct mali_gp_job, list)
 	{
-		if (maliggy_gp_job_get_session(job) == session)
+		if (mali_gp_job_get_session(job) == session)
 		{
 			MALI_DEBUG_PRINT(4, ("Mali GP scheduler: Removing GP job 0x%08x from queue\n", job));
-			_maliggy_osk_list_del(&(job->list));
-			maliggy_gp_job_delete(job);
+			_mali_osk_list_del(&(job->list));
+			mali_gp_job_delete(job);
 
-			maliggy_gp_scheduler_job_completed();
+			mali_gp_scheduler_job_completed();
 		}
 	}
 
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_unlock();
 
-	maliggy_group_abort_session(slot.group, session);
+	mali_group_abort_session(slot.group, session);
 }
 
-static maliggy_bool maliggy_gp_scheduler_is_suspended(void)
+static mali_bool mali_gp_scheduler_is_suspended(void)
 {
-	maliggy_bool ret;
+	mali_bool ret;
 
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 	ret = pause_count > 0 && slot.state == MALI_GP_SLOT_STATE_IDLE;
-	maliggy_gp_scheduler_unlock();
+	mali_gp_scheduler_unlock();
 
 	return ret;
 }
 
 
 #if MALI_STATE_TRACKING
-u32 maliggy_gp_scheduler_dumpggy_state(char *buf, u32 size)
+u32 mali_gp_scheduler_dump_state(char *buf, u32 size)
 {
 	int n = 0;
 
-	n += _maliggy_osk_snprintf(buf + n, size - n, "GP\n");
-	n += _maliggy_osk_snprintf(buf + n, size - n, "\tQueue is %s\n", _maliggy_osk_list_empty(&job_queue) ? "empty" : "not empty");
+	n += _mali_osk_snprintf(buf + n, size - n, "GP\n");
+	n += _mali_osk_snprintf(buf + n, size - n, "\tQueue is %s\n", _mali_osk_list_empty(&job_queue) ? "empty" : "not empty");
 
-	n += maliggy_group_dumpggy_state(slot.group, buf + n, size - n);
-	n += _maliggy_osk_snprintf(buf + n, size - n, "\n");
+	n += mali_group_dump_state(slot.group, buf + n, size - n);
+	n += _mali_osk_snprintf(buf + n, size - n, "\n");
 
 	return n;
 }
 #endif
 
-void maliggy_gp_scheduler_reset_all_groups(void)
+void mali_gp_scheduler_reset_all_groups(void)
 {
 	if (NULL != slot.group)
 	{
-		maliggy_group_lock(slot.group);
-		maliggy_group_reset(slot.group);
-		maliggy_group_unlock(slot.group);
+		mali_group_lock(slot.group);
+		mali_group_reset(slot.group);
+		mali_group_unlock(slot.group);
 	}
 }
 
-void maliggy_gp_scheduler_zap_all_active(struct maliggy_session_data *session)
+void mali_gp_scheduler_zap_all_active(struct mali_session_data *session)
 {
 	if (NULL != slot.group)
 	{
-		maliggy_group_zap_session(slot.group, session);
+		mali_group_zap_session(slot.group, session);
 	}
 }
 
-void maliggy_gp_scheduler_enable_group(struct maliggy_group *group)
+void mali_gp_scheduler_enable_group(struct mali_group *group)
 {
 	MALI_DEBUG_ASSERT_POINTER(group);
 	MALI_DEBUG_ASSERT(slot.group == group);
 	MALI_DEBUG_PRINT(2, ("Mali GP scheduler: enabling gp group %p\n", group));
 
-	maliggy_group_lock(group);
+	mali_group_lock(group);
 
 	if (MALI_GROUP_STATE_DISABLED != group->state)
 	{
-		maliggy_group_unlock(group);
+		mali_group_unlock(group);
 		MALI_DEBUG_PRINT(2, ("Mali GP scheduler: gp group %p already enabled\n", group));
 		return;
 	}
 
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_lock();
 
 	MALI_DEBUG_ASSERT(MALI_GROUP_STATE_DISABLED == group->state);
 	MALI_DEBUG_ASSERT(MALI_GP_SLOT_STATE_DISABLED == slot.state);
 	slot.state = MALI_GP_SLOT_STATE_IDLE;
 	group->state = MALI_GROUP_STATE_IDLE;
 
-	maliggy_group_power_on_group(group);
-	maliggy_group_reset(group);
+	mali_group_power_on_group(group);
+	mali_group_reset(group);
 
-	maliggy_gp_scheduler_unlock();
-	maliggy_group_unlock(group);
+	mali_gp_scheduler_unlock();
+	mali_group_unlock(group);
 
 	/* Pick up any jobs that might have been queued while the GP group was disabled. */
-	maliggy_gp_scheduler_schedule();
+	mali_gp_scheduler_schedule();
 }
 
-void maliggy_gp_scheduler_disable_group(struct maliggy_group *group)
+void mali_gp_scheduler_disable_group(struct mali_group *group)
 {
 	MALI_DEBUG_ASSERT_POINTER(group);
 	MALI_DEBUG_ASSERT(slot.group == group);
 	MALI_DEBUG_PRINT(2, ("Mali GP scheduler: disabling gp group %p\n", group));
 
-	maliggy_gp_scheduler_suspend();
-	maliggy_group_lock(group);
-	maliggy_gp_scheduler_lock();
+	mali_gp_scheduler_suspend();
+	mali_group_lock(group);
+	mali_gp_scheduler_lock();
 
 	MALI_DEBUG_ASSERT(   MALI_GROUP_STATE_IDLE     == group->state
 	                  || MALI_GROUP_STATE_DISABLED == group->state);
@@ -535,37 +535,37 @@ void maliggy_gp_scheduler_disable_group(struct maliggy_group *group)
 		slot.state = MALI_GP_SLOT_STATE_DISABLED;
 		group->state = MALI_GROUP_STATE_DISABLED;
 
-		maliggy_group_power_off_group(group);
+		mali_group_power_off_group(group);
 	}
 
-	maliggy_gp_scheduler_unlock();
-	maliggy_group_unlock(group);
-	maliggy_gp_scheduler_resume();
+	mali_gp_scheduler_unlock();
+	mali_group_unlock(group);
+	mali_gp_scheduler_resume();
 }
 
-static void maliggy_gp_scheduler_job_queued(void)
+static void mali_gp_scheduler_job_queued(void)
 {
 	/* We hold a PM reference for every job we hold queued (and running) */
-	_maliggy_osk_pm_dev_ref_add();
+	_mali_osk_pm_dev_ref_add();
 
-	if (maliggy_utilization_enabled())
+	if (mali_utilization_enabled())
 	{
 		/*
 		 * We cheat a little bit by counting the PP as busy from the time a GP job is queued.
 		 * This will be fine because we only loose the tiny idle gap between jobs, but
 		 * we will instead get less utilization work to do (less locks taken)
 		 */
-		maliggy_utilization_gp_start();
+		mali_utilization_gp_start();
 	}
 }
 
-static void maliggy_gp_scheduler_job_completed(void)
+static void mali_gp_scheduler_job_completed(void)
 {
-	/* Release the PM reference we got in the maliggy_gp_scheduler_job_queued() function */
-	_maliggy_osk_pm_dev_ref_dec();
+	/* Release the PM reference we got in the mali_gp_scheduler_job_queued() function */
+	_mali_osk_pm_dev_ref_dec();
 
-	if (maliggy_utilization_enabled())
+	if (mali_utilization_enabled())
 	{
-		maliggy_utilization_gp_end();
+		mali_utilization_gp_end();
 	}
 }

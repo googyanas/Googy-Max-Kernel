@@ -9,7 +9,7 @@
  */
 
 /**
- * @file umpggy_ukk_wrappers.h
+ * @file ump_ukk_wrappers.h
  * Defines the wrapper functions which turn Linux IOCTL calls into _ukk_ calls for the reference implementation
  */
 
@@ -25,16 +25,16 @@ extern "C"
 #endif
 
 
-int umpggy_allocate_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
+int ump_allocate_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
 
 /* MALI_SEC */
 #ifdef CONFIG_ION_EXYNOS
-int umpggy_ion_import_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data);
+int ump_ion_import_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
 #endif
 /* MALI_SEC */
 #ifdef CONFIG_DMA_SHARED_BUFFER
-int umpggy_dmabuf_import_wrapper(u32 __user *argument,
-				struct umpggy_session_data  *session_data);
+int ump_dmabuf_import_wrapper(u32 __user *argument,
+				struct ump_session_data  *session_data);
 #endif
 
 #ifdef __cplusplus

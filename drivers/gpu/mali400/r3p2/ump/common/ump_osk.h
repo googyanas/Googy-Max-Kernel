@@ -9,7 +9,7 @@
  */
 
 /**
- * @file umpggy_osk.h
+ * @file ump_osk.h
  * Defines the OS abstraction layer for the UMP kernel device driver (OSK)
  */
 
@@ -26,24 +26,24 @@ extern "C"
 {
 #endif
 
-_maliggy_osk_errcode_t _umpggy_osk_init( void );
+_mali_osk_errcode_t _ump_osk_init( void );
 
-_maliggy_osk_errcode_t _umpggy_osk_term( void );
+_mali_osk_errcode_t _ump_osk_term( void );
 
-int _umpggy_osk_atomic_inc_and_read( _maliggy_osk_atomic_t *atom );
+int _ump_osk_atomic_inc_and_read( _mali_osk_atomic_t *atom );
 
-int _umpggy_osk_atomic_dec_and_read( _maliggy_osk_atomic_t *atom );
+int _ump_osk_atomic_dec_and_read( _mali_osk_atomic_t *atom );
 
-_maliggy_osk_errcode_t _umpggy_osk_mem_mapregion_init( umpggy_memory_allocation *descriptor );
+_mali_osk_errcode_t _ump_osk_mem_mapregion_init( ump_memory_allocation *descriptor );
 
-_maliggy_osk_errcode_t _umpggy_osk_mem_mapregion_map( umpggy_memory_allocation * descriptor, u32 offset, u32 * phys_addr, unsigned long size );
+_mali_osk_errcode_t _ump_osk_mem_mapregion_map( ump_memory_allocation * descriptor, u32 offset, u32 * phys_addr, unsigned long size );
 
-void _umpggy_osk_mem_mapregion_term( umpggy_memory_allocation * descriptor );
+void _ump_osk_mem_mapregion_term( ump_memory_allocation * descriptor );
 
-void _umpggy_osk_msync( umpggy_dd_mem * mem, void * virt, u32 offset, u32 size, umpggy_uk_msync_op op, umpggy_session_data * session_data );
+void _ump_osk_msync( ump_dd_mem * mem, void * virt, u32 offset, u32 size, ump_uk_msync_op op, ump_session_data * session_data );
 
 /* MALI_SEC */
-void _umpggy_osk_mem_mapregion_get( umpggy_dd_mem ** mem, unsigned long vaddr);
+void _ump_osk_mem_mapregion_get( ump_dd_mem ** mem, unsigned long vaddr);
 
 #ifdef __cplusplus
 }

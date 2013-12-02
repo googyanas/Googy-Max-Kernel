@@ -11,8 +11,8 @@
 #ifndef __UMP_KERNEL_LINUX_H__
 #define __UMP_KERNEL_LINUX_H__
 
-int umpggy_kernel_device_initialize(void);
-void umpggy_kernel_device_terminate(void);
+int ump_kernel_device_initialize(void);
+void ump_kernel_device_terminate(void);
 
 
 #endif /* __UMP_KERNEL_H__ */

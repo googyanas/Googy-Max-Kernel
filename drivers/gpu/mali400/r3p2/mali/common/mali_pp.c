@@ -24,41 +24,41 @@
 /* Number of frame registers on Mali-300 and later */
 #define MALI_PP_MALI400_NUM_FRAME_REGISTERS ((0x058/4)+1)
 
-static struct maliggy_pp_core* maliggy_global_pp_cores[MALI_MAX_NUMBER_OF_PP_CORES] = { NULL };
-static u32 maliggy_global_num_pp_cores = 0;
+static struct mali_pp_core* mali_global_pp_cores[MALI_MAX_NUMBER_OF_PP_CORES] = { NULL };
+static u32 mali_global_num_pp_cores = 0;
 
 /* Interrupt handlers */
-static void maliggy_pp_irq_probe_trigger(void *data);
-static _maliggy_osk_errcode_t maliggy_pp_irq_probe_ack(void *data);
+static void mali_pp_irq_probe_trigger(void *data);
+static _mali_osk_errcode_t mali_pp_irq_probe_ack(void *data);
 
-struct maliggy_pp_core *maliggy_pp_create(const _maliggy_osk_resource_t *resource, struct maliggy_group *group, maliggy_bool is_virtual, u32 bcast_id)
+struct mali_pp_core *mali_pp_create(const _mali_osk_resource_t *resource, struct mali_group *group, mali_bool is_virtual, u32 bcast_id)
 {
-	struct maliggy_pp_core* core = NULL;
+	struct mali_pp_core* core = NULL;
 
 	MALI_DEBUG_PRINT(2, ("Mali PP: Creating Mali PP core: %s\n", resource->description));
 	MALI_DEBUG_PRINT(2, ("Mali PP: Base address of PP core: 0x%x\n", resource->base));
 
-	if (maliggy_global_num_pp_cores >= MALI_MAX_NUMBER_OF_PP_CORES)
+	if (mali_global_num_pp_cores >= MALI_MAX_NUMBER_OF_PP_CORES)
 	{
 		MALI_PRINT_ERROR(("Mali PP: Too many PP core objects created\n"));
 		return NULL;
 	}
 
-	core = _maliggy_osk_malloc(sizeof(struct maliggy_pp_core));
+	core = _mali_osk_malloc(sizeof(struct mali_pp_core));
 	if (NULL != core)
 	{
-		core->core_id = maliggy_global_num_pp_cores;
+		core->core_id = mali_global_num_pp_cores;
 		core->bcast_id = bcast_id;
 		core->counter_src0_used = MALI_HW_CORE_NO_COUNTER;
 		core->counter_src1_used = MALI_HW_CORE_NO_COUNTER;
 
-		if (_MALI_OSK_ERR_OK == maliggy_hw_core_create(&core->hw_core, resource, MALI200_REG_SIZEOF_REGISTER_BANK))
+		if (_MALI_OSK_ERR_OK == mali_hw_core_create(&core->hw_core, resource, MALI200_REG_SIZEOF_REGISTER_BANK))
 		{
-			_maliggy_osk_errcode_t ret;
+			_mali_osk_errcode_t ret;
 
 			if (!is_virtual)
 			{
-				ret = maliggy_pp_reset(core);
+				ret = mali_pp_reset(core);
 			}
 			else
 			{
@@ -67,23 +67,23 @@ struct maliggy_pp_core *maliggy_pp_create(const _maliggy_osk_resource_t *resourc
 
 			if (_MALI_OSK_ERR_OK == ret)
 			{
-				ret = maliggy_group_add_pp_core(group, core);
+				ret = mali_group_add_pp_core(group, core);
 				if (_MALI_OSK_ERR_OK == ret)
 				{
 					/* Setup IRQ handlers (which will do IRQ probing if needed) */
 					MALI_DEBUG_ASSERT(!is_virtual || -1 != resource->irq);
 
-					core->irq = _maliggy_osk_irq_init(resource->irq,
-					                               maliggy_group_upper_half_pp,
+					core->irq = _mali_osk_irq_init(resource->irq,
+					                               mali_group_upper_half_pp,
 					                               group,
-					                               maliggy_pp_irq_probe_trigger,
-					                               maliggy_pp_irq_probe_ack,
+					                               mali_pp_irq_probe_trigger,
+					                               mali_pp_irq_probe_ack,
 					                               core,
 					                               "mali_pp_irq_handlers");
 					if (NULL != core->irq)
 					{
-						maliggy_global_pp_cores[maliggy_global_num_pp_cores] = core;
-						maliggy_global_num_pp_cores++;
+						mali_global_pp_cores[mali_global_num_pp_cores] = core;
+						mali_global_num_pp_cores++;
 
 						return core;
 					}
@@ -91,17 +91,17 @@ struct maliggy_pp_core *maliggy_pp_create(const _maliggy_osk_resource_t *resourc
 					{
 						MALI_PRINT_ERROR(("Mali PP: Failed to setup interrupt handlers for PP core %s\n", core->hw_core.description));
 					}
-					maliggy_group_remove_pp_core(group);
+					mali_group_remove_pp_core(group);
 				}
 				else
 				{
 					MALI_PRINT_ERROR(("Mali PP: Failed to add core %s to group\n", core->hw_core.description));
 				}
 			}
-			maliggy_hw_core_delete(&core->hw_core);
+			mali_hw_core_delete(&core->hw_core);
 		}
 
-		_maliggy_osk_free(core);
+		_mali_osk_free(core);
 	}
 	else
 	{
@@ -111,64 +111,64 @@ struct maliggy_pp_core *maliggy_pp_create(const _maliggy_osk_resource_t *resourc
 	return NULL;
 }
 
-void maliggy_pp_delete(struct maliggy_pp_core *core)
+void mali_pp_delete(struct mali_pp_core *core)
 {
 	u32 i;
 
 	MALI_DEBUG_ASSERT_POINTER(core);
 
-	_maliggy_osk_irq_term(core->irq);
-	maliggy_hw_core_delete(&core->hw_core);
+	_mali_osk_irq_term(core->irq);
+	mali_hw_core_delete(&core->hw_core);
 
 	/* Remove core from global list */
-	for (i = 0; i < maliggy_global_num_pp_cores; i++)
+	for (i = 0; i < mali_global_num_pp_cores; i++)
 	{
-		if (maliggy_global_pp_cores[i] == core)
+		if (mali_global_pp_cores[i] == core)
 		{
-			maliggy_global_pp_cores[i] = NULL;
-			maliggy_global_num_pp_cores--;
+			mali_global_pp_cores[i] = NULL;
+			mali_global_num_pp_cores--;
 
-			if (i != maliggy_global_num_pp_cores)
+			if (i != mali_global_num_pp_cores)
 			{
 				/* We removed a PP core from the middle of the array -- move the last
 				 * PP core to the current position to close the gap */
-				maliggy_global_pp_cores[i] = maliggy_global_pp_cores[maliggy_global_num_pp_cores];
-				maliggy_global_pp_cores[maliggy_global_num_pp_cores] = NULL;
+				mali_global_pp_cores[i] = mali_global_pp_cores[mali_global_num_pp_cores];
+				mali_global_pp_cores[mali_global_num_pp_cores] = NULL;
 			}
 
 			break;
 		}
 	}
 
-	_maliggy_osk_free(core);
+	_mali_osk_free(core);
 }
 
-void maliggy_pp_stop_bus(struct maliggy_pp_core *core)
+void mali_pp_stop_bus(struct mali_pp_core *core)
 {
 	MALI_DEBUG_ASSERT_POINTER(core);
 	/* Will only send the stop bus command, and not wait for it to complete */
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI200_REG_VAL_CTRL_MGMT_STOP_BUS);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI200_REG_VAL_CTRL_MGMT_STOP_BUS);
 }
 
-_maliggy_osk_errcode_t maliggy_pp_stop_bus_wait(struct maliggy_pp_core *core)
+_mali_osk_errcode_t mali_pp_stop_bus_wait(struct mali_pp_core *core)
 {
 	int i;
 
 	MALI_DEBUG_ASSERT_POINTER(core);
 
 	/* Send the stop bus command. */
-	maliggy_pp_stop_bus(core);
+	mali_pp_stop_bus(core);
 
 	/* Wait for bus to be stopped */
 	for (i = 0; i < MALI_REG_POLL_COUNT_FAST; i++)
 	{
-		if (maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS) & MALI200_REG_VAL_STATUS_BUS_STOPPED)
+		if (mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS) & MALI200_REG_VAL_STATUS_BUS_STOPPED)
 			break;
 	}
 
 	if (MALI_REG_POLL_COUNT_FAST == i)
 	{
-		MALI_PRINT_ERROR(("Mali PP: Failed to stop bus on %s. Status: 0x%08x\n", core->hw_core.description, maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS)));
+		MALI_PRINT_ERROR(("Mali PP: Failed to stop bus on %s. Status: 0x%08x\n", core->hw_core.description, mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS)));
 		return _MALI_OSK_ERR_FAULT;
 	}
 	return _MALI_OSK_ERR_OK;
@@ -176,7 +176,7 @@ _maliggy_osk_errcode_t maliggy_pp_stop_bus_wait(struct maliggy_pp_core *core)
 
 /* Frame register reset values.
  * Taken from the Mali400 TRM, 3.6. Pixel processor control register summary */
-static const u32 maliggy_frame_registers_reset_values[_MALI_PP_MAX_FRAME_REGISTERS] =
+static const u32 mali_frame_registers_reset_values[_MALI_PP_MAX_FRAME_REGISTERS] =
 {
 	0x0, /* Renderer List Address Register */
 	0x0, /* Renderer State Word Base Address Register */
@@ -204,7 +204,7 @@ static const u32 maliggy_frame_registers_reset_values[_MALI_PP_MAX_FRAME_REGISTE
 };
 
 /* WBx register reset values */
-static const u32 maliggy_wb_registers_reset_values[_MALI_PP_MAX_WB_REGISTERS] =
+static const u32 mali_wb_registers_reset_values[_MALI_PP_MAX_WB_REGISTERS] =
 {
 	0x0, /* WBx Source Select Register */
 	0x0, /* WBx Target Address Register */
@@ -221,9 +221,9 @@ static const u32 maliggy_wb_registers_reset_values[_MALI_PP_MAX_WB_REGISTERS] =
 };
 
 /* Performance Counter 0 Enable Register reset value */
-static const u32 maliggy_perf_cnt_enable_reset_value = 0;
+static const u32 mali_perf_cnt_enable_reset_value = 0;
 
-_maliggy_osk_errcode_t maliggy_pp_hard_reset(struct maliggy_pp_core *core)
+_mali_osk_errcode_t mali_pp_hard_reset(struct mali_pp_core *core)
 {
 	/* Bus must be stopped before calling this function */
 	const u32 reset_invalid_value = 0xC0FFE000;
@@ -234,17 +234,17 @@ _maliggy_osk_errcode_t maliggy_pp_hard_reset(struct maliggy_pp_core *core)
 	MALI_DEBUG_PRINT(2, ("Mali PP: Hard reset of core %s\n", core->hw_core.description));
 
 	/* Set register to a bogus value. The register will be used to detect when reset is complete */
-	maliggy_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW, reset_invalid_value);
-	maliggy_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_NONE);
+	mali_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW, reset_invalid_value);
+	mali_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_NONE);
 
 	/* Force core to reset */
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI200_REG_VAL_CTRL_MGMT_FORCE_RESET);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI200_REG_VAL_CTRL_MGMT_FORCE_RESET);
 
 	/* Wait for reset to be complete */
 	for (i = 0; i < MALI_REG_POLL_COUNT_FAST; i++)
 	{
-		maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW, reset_check_value);
-		if (reset_check_value == maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW))
+		mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW, reset_check_value);
+		if (reset_check_value == mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW))
 		{
 			break;
 		}
@@ -255,35 +255,35 @@ _maliggy_osk_errcode_t maliggy_pp_hard_reset(struct maliggy_pp_core *core)
 		MALI_PRINT_ERROR(("Mali PP: The hard reset loop didn't work, unable to recover\n"));
 	}
 
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW, 0x00000000); /* set it back to the default */
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_WRITE_BOUNDARY_LOW, 0x00000000); /* set it back to the default */
 	/* Re-enable interrupts */
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_CLEAR, MALI200_REG_VAL_IRQ_MASK_ALL);
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_USED);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_CLEAR, MALI200_REG_VAL_IRQ_MASK_ALL);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_USED);
 
 	return _MALI_OSK_ERR_OK;
 }
 
-void maliggy_pp_reset_async(struct maliggy_pp_core *core)
+void mali_pp_reset_async(struct mali_pp_core *core)
 {
 	MALI_DEBUG_ASSERT_POINTER(core);
 
 	MALI_DEBUG_PRINT(4, ("Mali PP: Reset of core %s\n", core->hw_core.description));
 
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, 0); /* disable the IRQs */
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT, MALI200_REG_VAL_IRQ_MASK_ALL);
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI400PP_REG_VAL_CTRL_MGMT_SOFT_RESET);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, 0); /* disable the IRQs */
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT, MALI200_REG_VAL_IRQ_MASK_ALL);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI400PP_REG_VAL_CTRL_MGMT_SOFT_RESET);
 }
 
-_maliggy_osk_errcode_t maliggy_pp_reset_wait(struct maliggy_pp_core *core)
+_mali_osk_errcode_t mali_pp_reset_wait(struct mali_pp_core *core)
 {
 	int i;
 	u32 rawstat = 0;
 
 	for (i = 0; i < MALI_REG_POLL_COUNT_FAST; i++)
 	{
-		if (!(maliggy_pp_read_status(core) & MALI200_REG_VAL_STATUS_RENDERING_ACTIVE))
+		if (!(mali_pp_read_status(core) & MALI200_REG_VAL_STATUS_RENDERING_ACTIVE))
 		{
-			rawstat = maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT);
+			rawstat = mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT);
 			if (rawstat == MALI400PP_REG_VAL_IRQ_RESET_COMPLETED)
 			{
 				break;
@@ -299,29 +299,29 @@ _maliggy_osk_errcode_t maliggy_pp_reset_wait(struct maliggy_pp_core *core)
 	}
 
 	/* Re-enable interrupts */
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_CLEAR, MALI200_REG_VAL_IRQ_MASK_ALL);
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_USED);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_CLEAR, MALI200_REG_VAL_IRQ_MASK_ALL);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_USED);
 
 	return _MALI_OSK_ERR_OK;
 }
 
-_maliggy_osk_errcode_t maliggy_pp_reset(struct maliggy_pp_core *core)
+_mali_osk_errcode_t mali_pp_reset(struct mali_pp_core *core)
 {
-	maliggy_pp_reset_async(core);
-	return maliggy_pp_reset_wait(core);
+	mali_pp_reset_async(core);
+	return mali_pp_reset_wait(core);
 }
 
-void maliggy_pp_job_start(struct maliggy_pp_core *core, struct maliggy_pp_job *job, u32 sub_job, maliggy_bool restart_virtual)
+void mali_pp_job_start(struct mali_pp_core *core, struct mali_pp_job *job, u32 sub_job, mali_bool restart_virtual)
 {
 	u32 relative_address;
 	u32 start_index;
 	u32 nr_of_regs;
-	u32 *frame_registers = maliggy_pp_job_get_frame_registers(job);
-	u32 *wb0_registers = maliggy_pp_job_get_wb0_registers(job);
-	u32 *wb1_registers = maliggy_pp_job_get_wb1_registers(job);
-	u32 *wb2_registers = maliggy_pp_job_get_wb2_registers(job);
-	core->counter_src0_used = maliggy_pp_job_get_perf_counter_src0(job);
-	core->counter_src1_used = maliggy_pp_job_get_perf_counter_src1(job);
+	u32 *frame_registers = mali_pp_job_get_frame_registers(job);
+	u32 *wb0_registers = mali_pp_job_get_wb0_registers(job);
+	u32 *wb1_registers = mali_pp_job_get_wb1_registers(job);
+	u32 *wb2_registers = mali_pp_job_get_wb2_registers(job);
+	core->counter_src0_used = mali_pp_job_get_perf_counter_src0(job);
+	core->counter_src1_used = mali_pp_job_get_perf_counter_src1(job);
 
 	MALI_DEBUG_ASSERT_POINTER(core);
 
@@ -332,12 +332,12 @@ void maliggy_pp_job_start(struct maliggy_pp_core *core, struct maliggy_pp_job *j
 	 * 1. The Renderer List Address Register (MALI200_REG_ADDR_FRAME)
 	 * 2. The FS Stack Address Register (MALI200_REG_ADDR_STACK)
 	 */
-	maliggy_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_FRAME, maliggy_pp_job_get_addr_frame(job, sub_job), maliggy_frame_registers_reset_values[MALI200_REG_ADDR_FRAME / sizeof(u32)]);
+	mali_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_FRAME, mali_pp_job_get_addr_frame(job, sub_job), mali_frame_registers_reset_values[MALI200_REG_ADDR_FRAME / sizeof(u32)]);
 
 	/* For virtual jobs, the stack address shouldn't be broadcast but written individually */
-	if (!maliggy_pp_job_is_virtual(job) || restart_virtual)
+	if (!mali_pp_job_is_virtual(job) || restart_virtual)
 	{
-		maliggy_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_STACK, maliggy_pp_job_get_addr_stack(job, sub_job), maliggy_frame_registers_reset_values[MALI200_REG_ADDR_STACK / sizeof(u32)]);
+		mali_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_STACK, mali_pp_job_get_addr_stack(job, sub_job), mali_frame_registers_reset_values[MALI200_REG_ADDR_STACK / sizeof(u32)]);
 	}
 
 	/* Write registers between MALI200_REG_ADDR_FRAME and MALI200_REG_ADDR_STACK */
@@ -345,17 +345,17 @@ void maliggy_pp_job_start(struct maliggy_pp_core *core, struct maliggy_pp_job *j
 	start_index = MALI200_REG_ADDR_RSW / sizeof(u32);
 	nr_of_regs = (MALI200_REG_ADDR_STACK - MALI200_REG_ADDR_RSW) / sizeof(u32);
 
-	maliggy_hw_core_register_write_array_relaxed_conditional(&core->hw_core,
+	mali_hw_core_register_write_array_relaxed_conditional(&core->hw_core,
 	        relative_address, &frame_registers[start_index],
-	        nr_of_regs, &maliggy_frame_registers_reset_values[start_index]);
+	        nr_of_regs, &mali_frame_registers_reset_values[start_index]);
 
 	/* MALI200_REG_ADDR_STACK_SIZE */
 	relative_address = MALI200_REG_ADDR_STACK_SIZE;
 	start_index = MALI200_REG_ADDR_STACK_SIZE / sizeof(u32);
 
-	maliggy_hw_core_register_write_relaxed_conditional(&core->hw_core,
+	mali_hw_core_register_write_relaxed_conditional(&core->hw_core,
 	        relative_address, frame_registers[start_index],
-	        maliggy_frame_registers_reset_values[start_index]);
+	        mali_frame_registers_reset_values[start_index]);
 
 	/* Skip 2 reserved registers */
 
@@ -364,89 +364,89 @@ void maliggy_pp_job_start(struct maliggy_pp_core *core, struct maliggy_pp_job *j
 	start_index = MALI200_REG_ADDR_ORIGIN_OFFSET_X / sizeof(u32);
 	nr_of_regs = MALI_PP_MALI400_NUM_FRAME_REGISTERS - MALI200_REG_ADDR_ORIGIN_OFFSET_X / sizeof(u32);
 
-	maliggy_hw_core_register_write_array_relaxed_conditional(&core->hw_core,
+	mali_hw_core_register_write_array_relaxed_conditional(&core->hw_core,
 	        relative_address, &frame_registers[start_index],
-	        nr_of_regs, &maliggy_frame_registers_reset_values[start_index]);
+	        nr_of_regs, &mali_frame_registers_reset_values[start_index]);
 
 	/* Write WBx registers */
 	if (wb0_registers[0]) /* M200_WB0_REG_SOURCE_SELECT register */
 	{
-		maliggy_hw_core_register_write_array_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_WB0, wb0_registers, _MALI_PP_MAX_WB_REGISTERS, maliggy_wb_registers_reset_values);
+		mali_hw_core_register_write_array_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_WB0, wb0_registers, _MALI_PP_MAX_WB_REGISTERS, mali_wb_registers_reset_values);
 	}
 
 	if (wb1_registers[0]) /* M200_WB1_REG_SOURCE_SELECT register */
 	{
-		maliggy_hw_core_register_write_array_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_WB1, wb1_registers, _MALI_PP_MAX_WB_REGISTERS, maliggy_wb_registers_reset_values);
+		mali_hw_core_register_write_array_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_WB1, wb1_registers, _MALI_PP_MAX_WB_REGISTERS, mali_wb_registers_reset_values);
 	}
 
 	if (wb2_registers[0]) /* M200_WB2_REG_SOURCE_SELECT register */
 	{
-		maliggy_hw_core_register_write_array_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_WB2, wb2_registers, _MALI_PP_MAX_WB_REGISTERS, maliggy_wb_registers_reset_values);
+		mali_hw_core_register_write_array_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_WB2, wb2_registers, _MALI_PP_MAX_WB_REGISTERS, mali_wb_registers_reset_values);
 	}
 
 	if (MALI_HW_CORE_NO_COUNTER != core->counter_src0_used)
 	{
-		maliggy_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_SRC, core->counter_src0_used);
-		maliggy_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_ENABLE, MALI200_REG_VAL_PERF_CNT_ENABLE, maliggy_perf_cnt_enable_reset_value);
+		mali_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_SRC, core->counter_src0_used);
+		mali_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_ENABLE, MALI200_REG_VAL_PERF_CNT_ENABLE, mali_perf_cnt_enable_reset_value);
 	}
 	if (MALI_HW_CORE_NO_COUNTER != core->counter_src1_used)
 	{
-		maliggy_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_SRC, core->counter_src1_used);
-		maliggy_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_ENABLE, MALI200_REG_VAL_PERF_CNT_ENABLE, maliggy_perf_cnt_enable_reset_value);
+		mali_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_SRC, core->counter_src1_used);
+		mali_hw_core_register_write_relaxed_conditional(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_ENABLE, MALI200_REG_VAL_PERF_CNT_ENABLE, mali_perf_cnt_enable_reset_value);
 	}
 
-	MALI_DEBUG_PRINT(3, ("Mali PP: Starting job 0x%08X part %u/%u on PP core %s\n", job, sub_job + 1, maliggy_pp_job_get_sub_job_count(job), core->hw_core.description));
+	MALI_DEBUG_PRINT(3, ("Mali PP: Starting job 0x%08X part %u/%u on PP core %s\n", job, sub_job + 1, mali_pp_job_get_sub_job_count(job), core->hw_core.description));
 
 	/* Adding barrier to make sure all rester writes are finished */
-	_maliggy_osk_write_mem_barrier();
+	_mali_osk_write_mem_barrier();
 
 	/* This is the command that starts the core. */
-	maliggy_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI200_REG_VAL_CTRL_MGMT_START_RENDERING);
+	mali_hw_core_register_write_relaxed(&core->hw_core, MALI200_REG_ADDR_MGMT_CTRL_MGMT, MALI200_REG_VAL_CTRL_MGMT_START_RENDERING);
 
 	/* Adding barrier to make sure previous rester writes is finished */
-	_maliggy_osk_write_mem_barrier();
+	_mali_osk_write_mem_barrier();
 }
 
-u32 maliggy_pp_core_get_version(struct maliggy_pp_core *core)
+u32 mali_pp_core_get_version(struct mali_pp_core *core)
 {
 	MALI_DEBUG_ASSERT_POINTER(core);
-	return maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_VERSION);
+	return mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_VERSION);
 }
 
-struct maliggy_pp_core* maliggy_pp_get_global_pp_core(u32 index)
+struct mali_pp_core* mali_pp_get_global_pp_core(u32 index)
 {
-	if (maliggy_global_num_pp_cores > index)
+	if (mali_global_num_pp_cores > index)
 	{
-		return maliggy_global_pp_cores[index];
+		return mali_global_pp_cores[index];
 	}
 
 	return NULL;
 }
 
-u32 maliggy_pp_get_glob_num_pp_cores(void)
+u32 mali_pp_get_glob_num_pp_cores(void)
 {
-	return maliggy_global_num_pp_cores;
+	return mali_global_num_pp_cores;
 }
 
 /* ------------- interrupt handling below ------------------ */
-static void maliggy_pp_irq_probe_trigger(void *data)
+static void mali_pp_irq_probe_trigger(void *data)
 {
-	struct maliggy_pp_core *core = (struct maliggy_pp_core *)data;
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_USED);
-	maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT, MALI200_REG_VAL_IRQ_FORCE_HANG);
-	_maliggy_osk_mem_barrier();
+	struct mali_pp_core *core = (struct mali_pp_core *)data;
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK, MALI200_REG_VAL_IRQ_MASK_USED);
+	mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT, MALI200_REG_VAL_IRQ_FORCE_HANG);
+	_mali_osk_mem_barrier();
 }
 
-static _maliggy_osk_errcode_t maliggy_pp_irq_probe_ack(void *data)
+static _mali_osk_errcode_t mali_pp_irq_probe_ack(void *data)
 {
-	struct maliggy_pp_core *core = (struct maliggy_pp_core *)data;
+	struct mali_pp_core *core = (struct mali_pp_core *)data;
 	u32 irq_readout;
 
-	irq_readout = maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_STATUS);
+	irq_readout = mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_STATUS);
 	if (MALI200_REG_VAL_IRQ_FORCE_HANG & irq_readout)
 	{
-		maliggy_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_CLEAR, MALI200_REG_VAL_IRQ_FORCE_HANG);
-		_maliggy_osk_mem_barrier();
+		mali_hw_core_register_write(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_CLEAR, MALI200_REG_VAL_IRQ_FORCE_HANG);
+		_mali_osk_mem_barrier();
 		return _MALI_OSK_ERR_OK;
 	}
 
@@ -455,32 +455,32 @@ static _maliggy_osk_errcode_t maliggy_pp_irq_probe_ack(void *data)
 
 
 #if 0
-static void maliggy_pp_print_registers(struct maliggy_pp_core *core)
+static void mali_pp_print_registers(struct mali_pp_core *core)
 {
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_VERSION = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_VERSION)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_CURRENT_REND_LIST_ADDR = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_CURRENT_REND_LIST_ADDR)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_STATUS = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_INT_RAWSTAT = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_INT_MASK = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_INT_STATUS = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_STATUS)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_BUS_ERROR_STATUS = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_BUS_ERROR_STATUS)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_0_ENABLE = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_ENABLE)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_0_SRC = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_SRC)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_0_VALUE = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_VALUE)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_1_ENABLE = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_ENABLE)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_1_SRC = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_SRC)));
-	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_1_VALUE = 0x%08X\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_VALUE)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_VERSION = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_VERSION)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_CURRENT_REND_LIST_ADDR = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_CURRENT_REND_LIST_ADDR)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_STATUS = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_INT_RAWSTAT = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_RAWSTAT)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_INT_MASK = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_MASK)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_INT_STATUS = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_INT_STATUS)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_BUS_ERROR_STATUS = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_BUS_ERROR_STATUS)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_0_ENABLE = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_ENABLE)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_0_SRC = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_SRC)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_0_VALUE = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_VALUE)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_1_ENABLE = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_ENABLE)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_1_SRC = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_SRC)));
+	MALI_DEBUG_PRINT(2, ("Mali PP: Register MALI200_REG_ADDR_MGMT_PERF_CNT_1_VALUE = 0x%08X\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_VALUE)));
 }
 #endif
 
 #if 0
-void maliggy_pp_print_state(struct maliggy_pp_core *core)
+void mali_pp_print_state(struct mali_pp_core *core)
 {
-	MALI_DEBUG_PRINT(2, ("Mali PP: State: 0x%08x\n", maliggy_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS) ));
+	MALI_DEBUG_PRINT(2, ("Mali PP: State: 0x%08x\n", mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS) ));
 }
 #endif
 
-void maliggy_pp_update_performance_counters(struct maliggy_pp_core *parent, struct maliggy_pp_core *child, struct maliggy_pp_job *job, u32 subjob)
+void mali_pp_update_performance_counters(struct mali_pp_core *parent, struct mali_pp_core *child, struct mali_pp_job *job, u32 subjob)
 {
 	u32 val0 = 0;
 	u32 val1 = 0;
@@ -490,31 +490,31 @@ void maliggy_pp_update_performance_counters(struct maliggy_pp_core *parent, stru
 
 	if (MALI_HW_CORE_NO_COUNTER != parent->counter_src0_used)
 	{
-		val0 = maliggy_hw_core_register_read(&child->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_VALUE);
-		maliggy_pp_job_set_perf_counter_value0(job, subjob, val0);
+		val0 = mali_hw_core_register_read(&child->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_0_VALUE);
+		mali_pp_job_set_perf_counter_value0(job, subjob, val0);
 
 #if defined(CONFIG_MALI400_PROFILING)
-		_maliggy_osk_profiling_report_hw_counter(counter_index, val0);
+		_mali_osk_profiling_report_hw_counter(counter_index, val0);
 #endif
 	}
 
 	if (MALI_HW_CORE_NO_COUNTER != parent->counter_src1_used)
 	{
-		val1 = maliggy_hw_core_register_read(&child->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_VALUE);
-		maliggy_pp_job_set_perf_counter_value1(job, subjob, val1);
+		val1 = mali_hw_core_register_read(&child->hw_core, MALI200_REG_ADDR_MGMT_PERF_CNT_1_VALUE);
+		mali_pp_job_set_perf_counter_value1(job, subjob, val1);
 
 #if defined(CONFIG_MALI400_PROFILING)
-		_maliggy_osk_profiling_report_hw_counter(counter_index + 1, val1);
+		_mali_osk_profiling_report_hw_counter(counter_index + 1, val1);
 #endif
 	}
 }
 
 #if MALI_STATE_TRACKING
-u32 maliggy_pp_dumpggy_state(struct maliggy_pp_core *core, char *buf, u32 size)
+u32 mali_pp_dump_state(struct mali_pp_core *core, char *buf, u32 size)
 {
 	int n = 0;
 
-	n += _maliggy_osk_snprintf(buf + n, size - n, "\tPP #%d: %s\n", core->core_id, core->hw_core.description);
+	n += _mali_osk_snprintf(buf + n, size - n, "\tPP #%d: %s\n", core->core_id, core->hw_core.description);
 
 	return n;
 }

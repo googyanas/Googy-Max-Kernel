@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_sync.h
+ * @file mali_sync.h
  *
  */
 
@@ -31,14 +31,14 @@
  * - dup to add a ref
  * - close to remove a ref
  */
-_maliggy_osk_errcode_t maliggy_stream_create(const char * name, int * out_fd);
+_mali_osk_errcode_t mali_stream_create(const char * name, int * out_fd);
 
 /*
  * Create a fence in a stream object
  */
-struct sync_pt *maliggy_stream_create_point(int tl_fd);
-int maliggy_stream_create_fence(struct sync_pt *pt);
-int maliggy_stream_create_empty_fence(int tl_fd);
+struct sync_pt *mali_stream_create_point(int tl_fd);
+int mali_stream_create_fence(struct sync_pt *pt);
+int mali_stream_create_empty_fence(int tl_fd);
 
 /**
  * Commit an empty timed fence
@@ -49,7 +49,7 @@ int maliggy_stream_create_empty_fence(int tl_fd);
  * Returns -ETIME if fence is already signalled, in which case it can not be
  * used, or 0 when the timer was stopped and the fence is OK to use.
  */
-int maliggy_sync_timed_commit(struct sync_pt *pt);
+int mali_sync_timed_commit(struct sync_pt *pt);
 
 /*
  * Validate a fd to be a valid fence
@@ -58,36 +58,36 @@ int maliggy_sync_timed_commit(struct sync_pt *pt);
  * This function is only usable to catch unintentional user errors early,
  * it does not stop malicious code changing the fd after this function returns.
  */
-_maliggy_osk_errcode_t maliggy_fence_validate(int fd);
+_mali_osk_errcode_t mali_fence_validate(int fd);
 
 
 /* Returns true if the specified timeline is allocated by Mali */
-int maliggy_sync_timeline_is_ours(struct sync_timeline *timeline);
+int mali_sync_timeline_is_ours(struct sync_timeline *timeline);
 
 /* Allocates a timeline for Mali
  *
  * One timeline should be allocated per API context.
  */
-struct sync_timeline *maliggy_sync_timeline_alloc(const char *name);
+struct sync_timeline *mali_sync_timeline_alloc(const char *name);
 
 /* Allocates a sync point within the timeline.
  *
- * The timeline must be the one allocated by maliggy_sync_timeline_alloc
+ * The timeline must be the one allocated by mali_sync_timeline_alloc
  *
  * Sync points must be triggered in *exactly* the same order as they are allocated.
  */
-struct sync_pt *maliggy_sync_pt_alloc(struct sync_timeline *parent);
+struct sync_pt *mali_sync_pt_alloc(struct sync_timeline *parent);
 
 /* Allocates a timed sync point within the timeline.
  *
- * The timeline must be the one allocated by maliggy_sync_timeline_alloc
+ * The timeline must be the one allocated by mali_sync_timeline_alloc
  *
  * Sync points must be triggered in *exactly* the same order as they are allocated.
  *
  * Timed sync points should be backed by a proper event before reaching the
  * timeout. If timeout is reached the fence will be signalled with an error (-ETIME).
  */
-struct sync_pt *maliggy_sync_timed_pt_alloc(struct sync_timeline *parent);
+struct sync_pt *mali_sync_timed_pt_alloc(struct sync_timeline *parent);
 
 /* Signals a particular sync point
  *
@@ -96,7 +96,7 @@ struct sync_pt *maliggy_sync_timed_pt_alloc(struct sync_timeline *parent);
  * If they are signalled in the wrong order then a message will be printed in debug
  * builds and otherwise attempts to signal order sync_pts will be ignored.
  */
-void maliggy_sync_signal_pt(struct sync_pt *pt, int error);
+void mali_sync_signal_pt(struct sync_pt *pt, int error);
 
 #endif /* CONFIG_SYNC */
 #endif /* _MALI_SYNC_H_ */

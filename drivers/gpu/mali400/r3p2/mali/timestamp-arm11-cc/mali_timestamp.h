@@ -13,7 +13,7 @@
 
 #include "mali_osk.h"
 
-MALI_STATIC_INLINE _maliggy_osk_errcode_t _maliggy_timestamp_reset(void)
+MALI_STATIC_INLINE _mali_osk_errcode_t _mali_timestamp_reset(void)
 {
 	/*
 	 * reset counters and overflow flags
@@ -35,7 +35,7 @@ MALI_STATIC_INLINE _maliggy_osk_errcode_t _maliggy_timestamp_reset(void)
 	return _MALI_OSK_ERR_OK;
 }
 
-MALI_STATIC_INLINE u64 _maliggy_timestamp_get(void)
+MALI_STATIC_INLINE u64 _mali_timestamp_get(void)
 {
 	u32 result;
 

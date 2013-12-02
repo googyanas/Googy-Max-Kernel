@@ -11,11 +11,11 @@
 #include "mali_kernel_common.h"
 #include "mali_osk.h"
 
-static _maliggy_osk_atomic_t maliggy_job_autonumber;
+static _mali_osk_atomic_t mali_job_autonumber;
 
-_maliggy_osk_errcode_t maliggy_scheduler_initialize(void)
+_mali_osk_errcode_t mali_scheduler_initialize(void)
 {
-	if ( _MALI_OSK_ERR_OK != _maliggy_osk_atomic_init(&maliggy_job_autonumber, 0))
+	if ( _MALI_OSK_ERR_OK != _mali_osk_atomic_init(&mali_job_autonumber, 0))
 	{
 		MALI_DEBUG_PRINT(1,  ("Initialization of atomic job id counter failed.\n"));
 		return _MALI_OSK_ERR_FAULT;
@@ -24,14 +24,14 @@ _maliggy_osk_errcode_t maliggy_scheduler_initialize(void)
 	return _MALI_OSK_ERR_OK;
 }
 
-void maliggy_scheduler_terminate(void)
+void mali_scheduler_terminate(void)
 {
-	_maliggy_osk_atomic_term(&maliggy_job_autonumber);
+	_mali_osk_atomic_term(&mali_job_autonumber);
 }
 
-u32 maliggy_scheduler_get_new_id(void)
+u32 mali_scheduler_get_new_id(void)
 {
-	u32 job_id = _maliggy_osk_atomic_inc_return(&maliggy_job_autonumber);
+	u32 job_id = _mali_osk_atomic_inc_return(&mali_job_autonumber);
 	return job_id;
 }
 

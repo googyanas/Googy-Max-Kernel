@@ -9,7 +9,7 @@
  */
 
 /**
- * @file maliggy_osk_locks.c
+ * @file mali_osk_locks.c
  * Implemenation of the OS abstraction layer for the kernel device driver
  */
 
@@ -39,11 +39,11 @@ typedef enum
 	 * One-locks, of any sort - no optimization for this fact will be made.
 	 */
 
-} _maliggy_osk_internal_locktype;
+} _mali_osk_internal_locktype;
 
-struct _maliggy_osk_lock_t_struct
+struct _mali_osk_lock_t_struct
 {
-    _maliggy_osk_internal_locktype type;
+    _mali_osk_internal_locktype type;
 	unsigned long flags;
     union
     {
@@ -53,19 +53,19 @@ struct _maliggy_osk_lock_t_struct
     } obj;
 	MALI_DEBUG_CODE(
 				  /** original flags for debug checking */
-				  _maliggy_osk_lock_flags_t orig_flags;
+				  _mali_osk_lock_flags_t orig_flags;
 
 				  /* id of the thread currently holding this lock, 0 if no
 				   * threads hold it. */
 				  u32 owner;
 				  /* what mode the lock was taken in */
-				  _maliggy_osk_lock_mode_t mode;
+				  _mali_osk_lock_mode_t mode;
 	); /* MALI_DEBUG_CODE */
 };
 
-_maliggy_osk_lock_t *_maliggy_osk_lock_init( _maliggy_osk_lock_flags_t flags, u32 initial, u32 order )
+_mali_osk_lock_t *_mali_osk_lock_init( _mali_osk_lock_flags_t flags, u32 initial, u32 order )
 {
-    _maliggy_osk_lock_t *lock = NULL;
+    _mali_osk_lock_t *lock = NULL;
 
 	/* Validate parameters: */
 	/* Flags acceptable */
@@ -81,7 +81,7 @@ _maliggy_osk_lock_t *_maliggy_osk_lock_init( _maliggy_osk_lock_flags_t flags, u3
 	/* Parameter initial SBZ - for future expansion */
 	MALI_DEBUG_ASSERT( 0 == initial );
 
-	lock = kmalloc(sizeof(_maliggy_osk_lock_t), GFP_KERNEL);
+	lock = kmalloc(sizeof(_mali_osk_lock_t), GFP_KERNEL);
 
 	if ( NULL == lock )
 	{
@@ -137,20 +137,20 @@ _maliggy_osk_lock_t *_maliggy_osk_lock_init( _maliggy_osk_lock_flags_t flags, u3
 }
 
 #ifdef DEBUG
-u32 _maliggy_osk_lock_get_owner( _maliggy_osk_lock_t *lock )
+u32 _mali_osk_lock_get_owner( _mali_osk_lock_t *lock )
 {
 	return lock->owner;
 }
 
-u32 _maliggy_osk_lock_get_mode( _maliggy_osk_lock_t *lock )
+u32 _mali_osk_lock_get_mode( _mali_osk_lock_t *lock )
 {
 	return lock->mode;
 }
 #endif /* DEBUG */
 
-_maliggy_osk_errcode_t _maliggy_osk_lock_wait( _maliggy_osk_lock_t *lock, _maliggy_osk_lock_mode_t mode)
+_mali_osk_errcode_t _mali_osk_lock_wait( _mali_osk_lock_t *lock, _mali_osk_lock_mode_t mode)
 {
-    _maliggy_osk_errcode_t err = _MALI_OSK_ERR_OK;
+    _mali_osk_errcode_t err = _MALI_OSK_ERR_OK;
 
 	/* Parameter validation */
 	MALI_DEBUG_ASSERT_POINTER( lock );
@@ -215,10 +215,10 @@ _maliggy_osk_errcode_t _maliggy_osk_lock_wait( _maliggy_osk_lock_t *lock, _malig
 		{
 			if (0 != lock->owner)
 			{
-				printk(KERN_ERR "%d: ERROR: Lock %p already has owner %d\n", _maliggy_osk_get_tid(), lock, lock->owner);
-				dumpggy_stack();
+				printk(KERN_ERR "%d: ERROR: Lock %p already has owner %d\n", _mali_osk_get_tid(), lock, lock->owner);
+				dump_stack();
 			}
-			lock->owner = _maliggy_osk_get_tid();
+			lock->owner = _mali_osk_get_tid();
 			lock->mode = mode;
 		}
 		else /* mode == _MALI_OSK_LOCKMODE_RO */
@@ -231,7 +231,7 @@ _maliggy_osk_errcode_t _maliggy_osk_lock_wait( _maliggy_osk_lock_t *lock, _malig
     return err;
 }
 
-void _maliggy_osk_lock_signal( _maliggy_osk_lock_t *lock, _maliggy_osk_lock_mode_t mode )
+void _mali_osk_lock_signal( _mali_osk_lock_t *lock, _mali_osk_lock_mode_t mode )
 {
 	/* Parameter validation */
 	MALI_DEBUG_ASSERT_POINTER( lock );
@@ -249,10 +249,10 @@ void _maliggy_osk_lock_signal( _maliggy_osk_lock_t *lock, _maliggy_osk_lock_mode
 	/* make sure the thread releasing the lock actually was the owner */
 	if (mode == _MALI_OSK_LOCKMODE_RW)
 	{
-		if (_maliggy_osk_get_tid() != lock->owner)
+		if (_mali_osk_get_tid() != lock->owner)
 		{
-			printk(KERN_ERR "%d: ERROR: Lock %p owner was %d\n", _maliggy_osk_get_tid(), lock, lock->owner);
-			dumpggy_stack();
+			printk(KERN_ERR "%d: ERROR: Lock %p owner was %d\n", _mali_osk_get_tid(), lock, lock->owner);
+			dump_stack();
 		}
 		/* This lock now has no owner */
 		lock->owner = 0;
@@ -293,7 +293,7 @@ void _maliggy_osk_lock_signal( _maliggy_osk_lock_t *lock, _maliggy_osk_lock_mode
 	}
 }
 
-void _maliggy_osk_lock_term( _maliggy_osk_lock_t *lock )
+void _mali_osk_lock_term( _mali_osk_lock_t *lock )
 {
 	/* Parameter validation  */
 	MALI_DEBUG_ASSERT_POINTER( lock );

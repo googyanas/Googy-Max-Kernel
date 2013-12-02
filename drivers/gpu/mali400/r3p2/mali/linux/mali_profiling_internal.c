@@ -17,42 +17,42 @@
 #include "mali_user_settings_db.h"
 #include "mali_profiling_internal.h"
 
-typedef struct maliggy_profiling_entry
+typedef struct mali_profiling_entry
 {
 	u64 timestamp;
 	u32 event_id;
 	u32 data[5];
-} maliggy_profiling_entry;
+} mali_profiling_entry;
 
 
-typedef enum maliggy_profiling_state
+typedef enum mali_profiling_state
 {
 	MALI_PROFILING_STATE_UNINITIALIZED,
 	MALI_PROFILING_STATE_IDLE,
 	MALI_PROFILING_STATE_RUNNING,
 	MALI_PROFILING_STATE_RETURN,
-} maliggy_profiling_state;
+} mali_profiling_state;
 
-static _maliggy_osk_lock_t *lock = NULL;
-static maliggy_profiling_state prof_state = MALI_PROFILING_STATE_UNINITIALIZED;
-static maliggy_profiling_entry* profile_entries = NULL;
-static _maliggy_osk_atomic_t profile_insert_index;
+static _mali_osk_lock_t *lock = NULL;
+static mali_profiling_state prof_state = MALI_PROFILING_STATE_UNINITIALIZED;
+static mali_profiling_entry* profile_entries = NULL;
+static _mali_osk_atomic_t profile_insert_index;
 static u32 profile_mask = 0;
 static inline void add_event(u32 event_id, u32 data0, u32 data1, u32 data2, u32 data3, u32 data4);
 
-void probe_maliggy_timeline_event(void *data, TP_PROTO(unsigned int event_id, unsigned int d0, unsigned int d1, unsigned
+void probe_mali_timeline_event(void *data, TP_PROTO(unsigned int event_id, unsigned int d0, unsigned int d1, unsigned
 			int d2, unsigned int d3, unsigned int d4))
 {
 	add_event(event_id, d0, d1, d2, d3, d4);
 }
 
-_maliggy_osk_errcode_t _maliggy_internal_profiling_init(maliggy_bool auto_start)
+_mali_osk_errcode_t _mali_internal_profiling_init(mali_bool auto_start)
 {
 	profile_entries = NULL;
 	profile_mask = 0;
-	_maliggy_osk_atomic_init(&profile_insert_index, 0);
+	_mali_osk_atomic_init(&profile_insert_index, 0);
 
-	lock = _maliggy_osk_lock_init(_MALI_OSK_LOCKFLAG_ORDERED | _MALI_OSK_LOCKFLAG_NONINTERRUPTABLE, 0, _MALI_OSK_LOCK_ORDER_PROFILING);
+	lock = _mali_osk_lock_init(_MALI_OSK_LOCKFLAG_ORDERED | _MALI_OSK_LOCKFLAG_NONINTERRUPTABLE, 0, _MALI_OSK_LOCK_ORDER_PROFILING);
 	if (NULL == lock)
 	{
 		return _MALI_OSK_ERR_FAULT;
@@ -64,8 +64,8 @@ _maliggy_osk_errcode_t _maliggy_internal_profiling_init(maliggy_bool auto_start)
 	{
 		u32 limit = MALI_PROFILING_MAX_BUFFER_ENTRIES; /* Use maximum buffer size */
 
-		maliggy_set_user_setting(_MALI_UK_USER_SETTING_SW_EVENTS_ENABLE, MALI_TRUE);
-		if (_MALI_OSK_ERR_OK != _maliggy_internal_profiling_start(&limit))
+		mali_set_user_setting(_MALI_UK_USER_SETTING_SW_EVENTS_ENABLE, MALI_TRUE);
+		if (_MALI_OSK_ERR_OK != _mali_internal_profiling_start(&limit))
 		{
 			return _MALI_OSK_ERR_FAULT;
 		}
@@ -74,46 +74,46 @@ _maliggy_osk_errcode_t _maliggy_internal_profiling_init(maliggy_bool auto_start)
 	return _MALI_OSK_ERR_OK;
 }
 
-void _maliggy_internal_profiling_term(void)
+void _mali_internal_profiling_term(void)
 {
 	u32 count;
 
 	/* Ensure profiling is stopped */
-	_maliggy_internal_profiling_stop(&count);
+	_mali_internal_profiling_stop(&count);
 
 	prof_state = MALI_PROFILING_STATE_UNINITIALIZED;
 
 	if (NULL != profile_entries)
 	{
-		_maliggy_osk_vfree(profile_entries);
+		_mali_osk_vfree(profile_entries);
 		profile_entries = NULL;
 	}
 
 	if (NULL != lock)
 	{
-		_maliggy_osk_lock_term(lock);
+		_mali_osk_lock_term(lock);
 		lock = NULL;
 	}
 }
 
-_maliggy_osk_errcode_t _maliggy_internal_profiling_start(u32 * limit)
+_mali_osk_errcode_t _mali_internal_profiling_start(u32 * limit)
 {
-	_maliggy_osk_errcode_t ret;
-	maliggy_profiling_entry *new_profile_entries;
+	_mali_osk_errcode_t ret;
+	mali_profiling_entry *new_profile_entries;
 
-	_maliggy_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
 
 	if (MALI_PROFILING_STATE_RUNNING == prof_state)
 	{
-		_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 		return _MALI_OSK_ERR_BUSY;
 	}
 
-	new_profile_entries = _maliggy_osk_valloc(*limit * sizeof(maliggy_profiling_entry));
+	new_profile_entries = _mali_osk_valloc(*limit * sizeof(mali_profiling_entry));
 
 	if (NULL == new_profile_entries)
 	{
-		_maliggy_osk_vfree(new_profile_entries);
+		_mali_osk_vfree(new_profile_entries);
 		return _MALI_OSK_ERR_NOMEM;
 	}
 
@@ -135,14 +135,14 @@ _maliggy_osk_errcode_t _maliggy_internal_profiling_start(u32 * limit)
 
 	if (MALI_PROFILING_STATE_IDLE != prof_state)
 	{
-		_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
-		_maliggy_osk_vfree(new_profile_entries);
+		_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_vfree(new_profile_entries);
 		return _MALI_OSK_ERR_INVALID_ARGS; /* invalid to call this function in this state */
 	}
 
 	profile_entries = new_profile_entries;
 
-	ret = _maliggy_timestamp_reset();
+	ret = _mali_timestamp_reset();
 
 	if (_MALI_OSK_ERR_OK == ret)
 	{
@@ -150,21 +150,21 @@ _maliggy_osk_errcode_t _maliggy_internal_profiling_start(u32 * limit)
 	}
 	else
 	{
-		_maliggy_osk_vfree(profile_entries);
+		_mali_osk_vfree(profile_entries);
 		profile_entries = NULL;
 	}
 
-	register_trace_maliggy_timeline_event(probe_maliggy_timeline_event, NULL);
+	register_trace_mali_timeline_event(probe_mali_timeline_event, NULL);
 
-	_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 	return ret;
 }
 
 static inline void add_event(u32 event_id, u32 data0, u32 data1, u32 data2, u32 data3, u32 data4)
 {
-	u32 cur_index = (_maliggy_osk_atomic_inc_return(&profile_insert_index) - 1) & profile_mask;
+	u32 cur_index = (_mali_osk_atomic_inc_return(&profile_insert_index) - 1) & profile_mask;
 
-	profile_entries[cur_index].timestamp = _maliggy_timestamp_get();
+	profile_entries[cur_index].timestamp = _mali_timestamp_get();
 	profile_entries[cur_index].event_id = event_id;
 	profile_entries[cur_index].data[0] = data0;
 	profile_entries[cur_index].data[1] = data1;
@@ -177,55 +177,55 @@ static inline void add_event(u32 event_id, u32 data0, u32 data1, u32 data2, u32 
 	 * much memory was used when leaving a function. */
 	if (event_id == (MALI_PROFILING_EVENT_TYPE_SINGLE|MALI_PROFILING_EVENT_CHANNEL_SOFTWARE|MALI_PROFILING_EVENT_REASON_SINGLE_SW_LEAVE_API_FUNC))
 	{
-		profile_entries[cur_index].data[4] = _maliggy_ukk_report_memory_usage();
+		profile_entries[cur_index].data[4] = _mali_ukk_report_memory_usage();
 	}
 }
 
-_maliggy_osk_errcode_t _maliggy_internal_profiling_stop(u32 * count)
+_mali_osk_errcode_t _mali_internal_profiling_stop(u32 * count)
 {
-	_maliggy_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
 
 	if (MALI_PROFILING_STATE_RUNNING != prof_state)
 	{
-		_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 		return _MALI_OSK_ERR_INVALID_ARGS; /* invalid to call this function in this state */
 	}
 
 	/* go into return state (user to retreive events), no more events will be added after this */
 	prof_state = MALI_PROFILING_STATE_RETURN;
 
-	unregister_trace_maliggy_timeline_event(probe_maliggy_timeline_event, NULL);
+	unregister_trace_mali_timeline_event(probe_mali_timeline_event, NULL);
 
-	_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 
 	tracepoint_synchronize_unregister();
 
-	*count = _maliggy_osk_atomic_read(&profile_insert_index);
+	*count = _mali_osk_atomic_read(&profile_insert_index);
 	if (*count > profile_mask) *count = profile_mask;
 
 	return _MALI_OSK_ERR_OK;
 }
 
-u32 _maliggy_internal_profiling_get_count(void)
+u32 _mali_internal_profiling_get_count(void)
 {
 	u32 retval = 0;
 
-	_maliggy_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
 	if (MALI_PROFILING_STATE_RETURN == prof_state)
 	{
-		retval = _maliggy_osk_atomic_read(&profile_insert_index);
+		retval = _mali_osk_atomic_read(&profile_insert_index);
 		if (retval > profile_mask) retval = profile_mask;
 	}
-	_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 
 	return retval;
 }
 
-_maliggy_osk_errcode_t _maliggy_internal_profiling_get_event(u32 index, u64* timestamp, u32* event_id, u32 data[5])
+_mali_osk_errcode_t _mali_internal_profiling_get_event(u32 index, u64* timestamp, u32* event_id, u32 data[5])
 {
-	u32 raw_index = _maliggy_osk_atomic_read(&profile_insert_index);
+	u32 raw_index = _mali_osk_atomic_read(&profile_insert_index);
 
-	_maliggy_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
 
 	if (index < profile_mask)
 	{
@@ -237,13 +237,13 @@ _maliggy_osk_errcode_t _maliggy_internal_profiling_get_event(u32 index, u64* tim
 
 		if (prof_state != MALI_PROFILING_STATE_RETURN)
 		{
-			_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+			_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 			return _MALI_OSK_ERR_INVALID_ARGS; /* invalid to call this function in this state */
 		}
 
 		if(index >= raw_index)
 		{
-			_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+			_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 			return _MALI_OSK_ERR_FAULT;
 		}
 
@@ -257,44 +257,44 @@ _maliggy_osk_errcode_t _maliggy_internal_profiling_get_event(u32 index, u64* tim
 	}
 	else
 	{
-		_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 		return _MALI_OSK_ERR_FAULT;
 	}
 
-	_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 	return _MALI_OSK_ERR_OK;
 }
 
-_maliggy_osk_errcode_t _maliggy_internal_profiling_clear(void)
+_mali_osk_errcode_t _mali_internal_profiling_clear(void)
 {
-	_maliggy_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(lock, _MALI_OSK_LOCKMODE_RW);
 
 	if (MALI_PROFILING_STATE_RETURN != prof_state)
 	{
-		_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 		return _MALI_OSK_ERR_INVALID_ARGS; /* invalid to call this function in this state */
 	}
 
 	prof_state = MALI_PROFILING_STATE_IDLE;
 	profile_mask = 0;
-	_maliggy_osk_atomic_init(&profile_insert_index, 0);
+	_mali_osk_atomic_init(&profile_insert_index, 0);
 
 	if (NULL != profile_entries)
 	{
-		_maliggy_osk_vfree(profile_entries);
+		_mali_osk_vfree(profile_entries);
 		profile_entries = NULL;
 	}
 
-	_maliggy_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(lock, _MALI_OSK_LOCKMODE_RW);
 	return _MALI_OSK_ERR_OK;
 }
 
-maliggy_bool _maliggy_internal_profiling_is_recording(void)
+mali_bool _mali_internal_profiling_is_recording(void)
 {
 	return prof_state == MALI_PROFILING_STATE_RUNNING ? MALI_TRUE : MALI_FALSE;
 }
 
-maliggy_bool _maliggy_internal_profiling_have_recording(void)
+mali_bool _mali_internal_profiling_have_recording(void)
 {
 	return prof_state == MALI_PROFILING_STATE_RETURN ? MALI_TRUE : MALI_FALSE;
 }

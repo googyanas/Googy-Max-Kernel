@@ -21,11 +21,11 @@
 #define UMP_MINIMUM_SIZE_MASK    (~(UMP_MINIMUM_SIZE-1))
 #define UMP_SIZE_ALIGN(x)        (((x)+UMP_MINIMUM_SIZE-1)&UMP_MINIMUM_SIZE_MASK)
 #define UMP_ADDR_ALIGN_OFFSET(x) ((x)&(UMP_MINIMUM_SIZE-1))
-static void phys_blocks_release(void * ctx, struct umpggy_dd_mem * descriptor);
+static void phys_blocks_release(void * ctx, struct ump_dd_mem * descriptor);
 
-UMP_KERNEL_API_EXPORT umpggy_dd_handle umpggy_dd_handle_create_from_phys_blocks(umpggy_dd_physical_block * blocks, unsigned long num_blocks)
+UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks)
 {
-	umpggy_dd_mem * mem;
+	ump_dd_mem * mem;
 	unsigned long size_total = 0;
 	int map_id;
 	u32 i;
@@ -52,108 +52,108 @@ UMP_KERNEL_API_EXPORT umpggy_dd_handle umpggy_dd_handle_create_from_phys_blocks(
 		}
 	}
 
-	/* Allocate the umpggy_dd_mem struct for this allocation */
-	mem = _maliggy_osk_malloc(sizeof(*mem));
+	/* Allocate the ump_dd_mem struct for this allocation */
+	mem = _mali_osk_malloc(sizeof(*mem));
 	if (NULL == mem)
 	{
-		DBG_MSG(1, ("Could not allocate umpggy_dd_mem in umpggy_dd_handle_create_from_phys_blocks()\n"));
+		DBG_MSG(1, ("Could not allocate ump_dd_mem in ump_dd_handle_create_from_phys_blocks()\n"));
 		return UMP_DD_HANDLE_INVALID;
 	}
 
 	/* Find a secure ID for this allocation */
-	_maliggy_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-	map_id = umpggy_descriptor_mapping_allocate_mapping(device.secure_id_map, (void*) mem);
+	_mali_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	map_id = ump_descriptor_mapping_allocate_mapping(device.secure_id_map, (void*) mem);
 
 	if (map_id < 0)
 	{
-		_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		_maliggy_osk_free(mem);
-		DBG_MSG(1, ("Failed to allocate secure ID in umpggy_dd_handle_create_from_phys_blocks()\n"));
+		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_free(mem);
+		DBG_MSG(1, ("Failed to allocate secure ID in ump_dd_handle_create_from_phys_blocks()\n"));
 		return UMP_DD_HANDLE_INVALID;
 	}
 
 	/* Now, make a copy of the block information supplied by the user */
-	mem->block_array = _maliggy_osk_malloc(sizeof(umpggy_dd_physical_block)* num_blocks);
+	mem->block_array = _mali_osk_malloc(sizeof(ump_dd_physical_block)* num_blocks);
 	if (NULL == mem->block_array)
 	{
-		umpggy_descriptor_mapping_free(device.secure_id_map, map_id);
-		_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		_maliggy_osk_free(mem);
-		DBG_MSG(1, ("Could not allocate a mem handle for function umpggy_dd_handle_create_from_phys_blocks().\n"));
+		ump_descriptor_mapping_free(device.secure_id_map, map_id);
+		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_free(mem);
+		DBG_MSG(1, ("Could not allocate a mem handle for function ump_dd_handle_create_from_phys_blocks().\n"));
 		return UMP_DD_HANDLE_INVALID;
 	}
 
-	_maliggy_osk_memcpy(mem->block_array, blocks, sizeof(umpggy_dd_physical_block) * num_blocks);
+	_mali_osk_memcpy(mem->block_array, blocks, sizeof(ump_dd_physical_block) * num_blocks);
 
-	/* And setup the rest of the umpggy_dd_mem struct */
-	_maliggy_osk_atomic_init(&mem->ref_count, 1);
-	mem->secure_id = (umpggy_secure_id)map_id;
+	/* And setup the rest of the ump_dd_mem struct */
+	_mali_osk_atomic_init(&mem->ref_count, 1);
+	mem->secure_id = (ump_secure_id)map_id;
 	mem->size_bytes = size_total;
 	mem->nr_blocks = num_blocks;
 	mem->backend_info = NULL;
 	mem->ctx = NULL;
 	mem->release_func = phys_blocks_release;
-	/* For now UMP handles created by umpggy_dd_handle_create_from_phys_blocks() is forced to be Uncached */
+	/* For now UMP handles created by ump_dd_handle_create_from_phys_blocks() is forced to be Uncached */
 	mem->is_cached = 0;
 	mem->hw_device = _UMP_UK_USED_BY_CPU;
 	mem->lock_usage = UMP_NOT_LOCKED;
 
-	_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
 	DBG_MSG(3, ("UMP memory created. ID: %u, size: %lu\n", mem->secure_id, mem->size_bytes));
 
-	return (umpggy_dd_handle)mem;
+	return (ump_dd_handle)mem;
 }
 
-static void phys_blocks_release(void * ctx, struct umpggy_dd_mem * descriptor)
+static void phys_blocks_release(void * ctx, struct ump_dd_mem * descriptor)
 {
-	_maliggy_osk_free(descriptor->block_array);
+	_mali_osk_free(descriptor->block_array);
 	descriptor->block_array = NULL;
 }
 
-_maliggy_osk_errcode_t _umpggy_ukk_allocate( _umpggy_uk_allocate_s *user_interaction )
+_mali_osk_errcode_t _ump_ukk_allocate( _ump_uk_allocate_s *user_interaction )
 {
-	umpggy_session_data * session_data = NULL;
-	umpggy_dd_mem *new_allocation = NULL;
-	umpggy_session_memory_list_element * session_memory_element = NULL;
+	ump_session_data * session_data = NULL;
+	ump_dd_mem *new_allocation = NULL;
+	ump_session_memory_list_element * session_memory_element = NULL;
 	int map_id;
 
 	DEBUG_ASSERT_POINTER( user_interaction );
 	DEBUG_ASSERT_POINTER( user_interaction->ctx );
 
-	session_data = (umpggy_session_data *) user_interaction->ctx;
+	session_data = (ump_session_data *) user_interaction->ctx;
 
-	session_memory_element = _maliggy_osk_calloc( 1, sizeof(umpggy_session_memory_list_element));
+	session_memory_element = _mali_osk_calloc( 1, sizeof(ump_session_memory_list_element));
 	if (NULL == session_memory_element)
 	{
-		DBG_MSG(1, ("Failed to allocate umpggy_session_memory_list_element in umpggy_ioctl_allocate()\n"));
+		DBG_MSG(1, ("Failed to allocate ump_session_memory_list_element in ump_ioctl_allocate()\n"));
 		return _MALI_OSK_ERR_NOMEM;
 	}
 
 
-	new_allocation = _maliggy_osk_calloc( 1, sizeof(umpggy_dd_mem));
+	new_allocation = _mali_osk_calloc( 1, sizeof(ump_dd_mem));
 	if (NULL==new_allocation)
 	{
-		_maliggy_osk_free(session_memory_element);
-		DBG_MSG(1, ("Failed to allocate umpggy_dd_mem in _umpggy_ukk_allocate()\n"));
+		_mali_osk_free(session_memory_element);
+		DBG_MSG(1, ("Failed to allocate ump_dd_mem in _ump_ukk_allocate()\n"));
 		return _MALI_OSK_ERR_NOMEM;
 	}
 
 	/* Create a secure ID for this allocation */
-	_maliggy_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-	map_id = umpggy_descriptor_mapping_allocate_mapping(device.secure_id_map, (void*)new_allocation);
+	_mali_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	map_id = ump_descriptor_mapping_allocate_mapping(device.secure_id_map, (void*)new_allocation);
 
 	if (map_id < 0)
 	{
-		_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		_maliggy_osk_free(session_memory_element);
-		_maliggy_osk_free(new_allocation);
-		DBG_MSG(1, ("Failed to allocate secure ID in umpggy_ioctl_allocate()\n"));
+		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_free(session_memory_element);
+		_mali_osk_free(new_allocation);
+		DBG_MSG(1, ("Failed to allocate secure ID in ump_ioctl_allocate()\n"));
 		return - _MALI_OSK_ERR_INVALID_FUNC;
 	}
 
 	/* Initialize the part of the new_allocation that we know so for */
-	new_allocation->secure_id = (umpggy_secure_id)map_id;
-	_maliggy_osk_atomic_init(&new_allocation->ref_count,1);
+	new_allocation->secure_id = (ump_secure_id)map_id;
+	_mali_osk_atomic_init(&new_allocation->ref_count,1);
 	if ( 0==(UMP_REF_DRV_UK_CONSTRAINT_USE_CACHE & user_interaction->constraints) )
 		 new_allocation->is_cached = 0;
 	else new_allocation->is_cached = 1;
@@ -170,24 +170,24 @@ _maliggy_osk_errcode_t _umpggy_ukk_allocate( _umpggy_uk_allocate_s *user_interac
 	/* Now, ask the active memory backend to do the actual memory allocation */
 	if (!device.backend->allocate( device.backend->ctx, new_allocation ) )
 	{
-		DBG_MSG(3, ("OOM: No more UMP memory left. Failed to allocate memory in umpggy_ioctl_allocate(). Size: %lu, requested size: %lu\n", new_allocation->size_bytes, (unsigned long)user_interaction->size));
-		umpggy_descriptor_mapping_free(device.secure_id_map, map_id);
-		_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		_maliggy_osk_free(new_allocation);
-		_maliggy_osk_free(session_memory_element);
+		DBG_MSG(3, ("OOM: No more UMP memory left. Failed to allocate memory in ump_ioctl_allocate(). Size: %lu, requested size: %lu\n", new_allocation->size_bytes, (unsigned long)user_interaction->size));
+		ump_descriptor_mapping_free(device.secure_id_map, map_id);
+		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+		_mali_osk_free(new_allocation);
+		_mali_osk_free(session_memory_element);
 		return _MALI_OSK_ERR_INVALID_FUNC;
 	}
 	new_allocation->hw_device = _UMP_UK_USED_BY_CPU;
 	new_allocation->ctx = device.backend->ctx;
 	new_allocation->release_func = device.backend->release;
 
-	_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
 
 	/* Initialize the session_memory_element, and add it to the session object */
 	session_memory_element->mem = new_allocation;
-	_maliggy_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
-	_maliggy_osk_list_add(&(session_memory_element->list), &(session_data->list_head_session_memory_list));
-	_maliggy_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_list_add(&(session_memory_element->list), &(session_data->list_head_session_memory_list));
+	_mali_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
 
 	user_interaction->secure_id = new_allocation->secure_id;
 	user_interaction->size = new_allocation->size_bytes;
@@ -197,63 +197,63 @@ _maliggy_osk_errcode_t _umpggy_ukk_allocate( _umpggy_uk_allocate_s *user_interac
 }
 
 /* MALI_SEC */
-UMP_KERNEL_API_EXPORT umpggy_dd_status_code umpggy_dd_meminfo_set(umpggy_dd_handle memh, void* args)
+UMP_KERNEL_API_EXPORT ump_dd_status_code ump_dd_meminfo_set(ump_dd_handle memh, void* args)
 {
-	umpggy_dd_mem * mem;
-	umpggy_secure_id secure_id;
+	ump_dd_mem * mem;
+	ump_secure_id secure_id;
 
 	DEBUG_ASSERT_POINTER(memh);
 
-	secure_id = umpggy_dd_secure_id_get(memh);
+	secure_id = ump_dd_secure_id_get(memh);
 
-	_maliggy_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-	if (0 == umpggy_descriptor_mapping_get(device.secure_id_map, (int)secure_id, (void**)&mem))
+	_mali_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	if (0 == ump_descriptor_mapping_get(device.secure_id_map, (int)secure_id, (void**)&mem))
 	{
 		device.backend->set(mem, args);
 	}
 	else
 	{
-		_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		DBG_MSG(1, ("Failed to look up mapping in umpggy_meminfo_set(). ID: %u\n", (umpggy_secure_id)secure_id));
+		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+		DBG_MSG(1, ("Failed to look up mapping in ump_meminfo_set(). ID: %u\n", (ump_secure_id)secure_id));
 		return UMP_DD_INVALID;
 	}
 
-	_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
 
 	return UMP_DD_SUCCESS;
 }
 
-UMP_KERNEL_API_EXPORT void *umpggy_dd_meminfo_get(umpggy_secure_id secure_id, void* args)
+UMP_KERNEL_API_EXPORT void *ump_dd_meminfo_get(ump_secure_id secure_id, void* args)
 {
-	umpggy_dd_mem * mem;
+	ump_dd_mem * mem;
 	void *result;
 
-	_maliggy_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-	if (0 == umpggy_descriptor_mapping_get(device.secure_id_map, (int)secure_id, (void**)&mem))
+	_mali_osk_lock_wait(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	if (0 == ump_descriptor_mapping_get(device.secure_id_map, (int)secure_id, (void**)&mem))
 	{
 		result = device.backend->get(mem, args);
 	}
 	else
 	{
-		_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
-		DBG_MSG(1, ("Failed to look up mapping in umpggy_meminfo_get(). ID: %u\n", (umpggy_secure_id)secure_id));
+		_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+		DBG_MSG(1, ("Failed to look up mapping in ump_meminfo_get(). ID: %u\n", (ump_secure_id)secure_id));
 		return UMP_DD_HANDLE_INVALID;
 	}
 
-	_maliggy_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
+	_mali_osk_lock_signal(device.secure_id_map_lock, _MALI_OSK_LOCKMODE_RW);
 
 	return result;
 }
 
-UMP_KERNEL_API_EXPORT umpggy_dd_handle umpggy_dd_handle_get_from_vaddr(unsigned long vaddr)
+UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_get_from_vaddr(unsigned long vaddr)
 {
-	umpggy_dd_mem * mem;
+	ump_dd_mem * mem;
 
 	DBG_MSG(5, ("Getting handle from Virtual address. vaddr: %u\n", vaddr));
 
-	_umpggy_osk_mem_mapregion_get(&mem, vaddr);
+	_ump_osk_mem_mapregion_get(&mem, vaddr);
 
 	DBG_MSG(1, ("Getting handle's Handle : 0x%8lx\n", mem));
 
-	return (umpggy_dd_handle)mem;
+	return (ump_dd_handle)mem;
 }

@@ -19,60 +19,60 @@
 #include "ump_kernel_memory_backend_dedicated.h"
 
 /* Configure which dynamic memory allocator to use */
-int umpggy_backend = ARCH_UMP_BACKEND_DEFAULT;
-module_param(umpggy_backend, int, S_IRUGO); /* r--r--r-- */
-MODULE_PARM_DESC(umpggy_backend, "0 = dedicated memory backend (default), 1 = OS memory backend");
+int ump_backend = ARCH_UMP_BACKEND_DEFAULT;
+module_param(ump_backend, int, S_IRUGO); /* r--r--r-- */
+MODULE_PARM_DESC(ump_backend, "0 = dedicated memory backend (default), 1 = OS memory backend");
 
 /* The base address of the memory block for the dedicated memory backend */
-unsigned int umpggy_memory_address = ARCH_UMP_MEMORY_ADDRESS_DEFAULT;
-module_param(umpggy_memory_address, uint, S_IRUGO); /* r--r--r-- */
-MODULE_PARM_DESC(umpggy_memory_address, "The physical address to map for the dedicated memory backend");
+unsigned int ump_memory_address = ARCH_UMP_MEMORY_ADDRESS_DEFAULT;
+module_param(ump_memory_address, uint, S_IRUGO); /* r--r--r-- */
+MODULE_PARM_DESC(ump_memory_address, "The physical address to map for the dedicated memory backend");
 
 /* The size of the memory block for the dedicated memory backend */
-unsigned int umpggy_memory_size = ARCH_UMP_MEMORY_SIZE_DEFAULT;
-module_param(umpggy_memory_size, uint, S_IRUGO); /* r--r--r-- */
-MODULE_PARM_DESC(umpggy_memory_size, "The size of fixed memory to map in the dedicated memory backend");
+unsigned int ump_memory_size = ARCH_UMP_MEMORY_SIZE_DEFAULT;
+module_param(ump_memory_size, uint, S_IRUGO); /* r--r--r-- */
+MODULE_PARM_DESC(ump_memory_size, "The size of fixed memory to map in the dedicated memory backend");
 
-umpggy_memory_backend* umpggy_memory_backend_create ( void )
+ump_memory_backend* ump_memory_backend_create ( void )
 {
-	umpggy_memory_backend * backend = NULL;
+	ump_memory_backend * backend = NULL;
 
 	/* Create the dynamic memory allocator backend */
-	if (0 == umpggy_backend)
+	if (0 == ump_backend)
 	{
 		DBG_MSG(2, ("Using dedicated memory backend\n"));
 
-		DBG_MSG(2, ("Requesting dedicated memory: 0x%08x, size: %u\n", umpggy_memory_address, umpggy_memory_size));
+		DBG_MSG(2, ("Requesting dedicated memory: 0x%08x, size: %u\n", ump_memory_address, ump_memory_size));
 		/* Ask the OS if we can use the specified physical memory */
-		if (NULL == request_mem_region(umpggy_memory_address, umpggy_memory_size, "UMP Memory"))
+		if (NULL == request_mem_region(ump_memory_address, ump_memory_size, "UMP Memory"))
 		{
-			MSG_ERR(("Failed to request memory region (0x%08X - 0x%08X). Is Mali DD already loaded?\n", umpggy_memory_address, umpggy_memory_address + umpggy_memory_size - 1));
+			MSG_ERR(("Failed to request memory region (0x%08X - 0x%08X). Is Mali DD already loaded?\n", ump_memory_address, ump_memory_address + ump_memory_size - 1));
 			return NULL;
 		}
-		backend = umpggy_block_allocator_create(umpggy_memory_address, umpggy_memory_size);
+		backend = ump_block_allocator_create(ump_memory_address, ump_memory_size);
 	}
-	else if (1 == umpggy_backend)
+	else if (1 == ump_backend)
 	{
-		DBG_MSG(2, ("Using OS memory backend, allocation limit: %d\n", umpggy_memory_size));
-		backend = umpggy_os_memory_backend_create(umpggy_memory_size);
+		DBG_MSG(2, ("Using OS memory backend, allocation limit: %d\n", ump_memory_size));
+		backend = ump_os_memory_backend_create(ump_memory_size);
 	}
 /* MALI_SEC */
 #ifdef CONFIG_UMP_VCM_ALLOC
-	else if (2 == umpggy_backend)
+	else if (2 == ump_backend)
 	{
-		DBG_MSG(2, ("Using VCM memory backend, allocation limit: %d\n", umpggy_memory_size));
-		backend = umpggy_vcm_memory_backend_create(umpggy_memory_size);
+		DBG_MSG(2, ("Using VCM memory backend, allocation limit: %d\n", ump_memory_size));
+		backend = ump_vcm_memory_backend_create(ump_memory_size);
 	}
 #endif
 
 	return backend;
 }
 
-void umpggy_memory_backend_destroy( void )
+void ump_memory_backend_destroy( void )
 {
-	if (0 == umpggy_backend)
+	if (0 == ump_backend)
 	{
-		DBG_MSG(2, ("Releasing dedicated memory: 0x%08x\n", umpggy_memory_address));
-		release_mem_region(umpggy_memory_address, umpggy_memory_size);
+		DBG_MSG(2, ("Releasing dedicated memory: 0x%08x\n", ump_memory_address));
+		release_mem_region(ump_memory_address, ump_memory_size);
 	}
 }

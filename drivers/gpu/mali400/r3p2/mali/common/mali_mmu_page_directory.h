@@ -45,7 +45,7 @@
 /**
  *
  */
-typedef enum maliggy_mmu_entry_flags
+typedef enum mali_mmu_entry_flags
 {
 	MALI_MMU_FLAGS_PRESENT = 0x01,
 	MALI_MMU_FLAGS_READ_PERMISSION = 0x02,
@@ -57,7 +57,7 @@ typedef enum maliggy_mmu_entry_flags
 	MALI_MMU_FLAGS_READ_CACHEABLE  = 0x80,
 	MALI_MMU_FLAGS_READ_ALLOCATE  = 0x100,
 	MALI_MMU_FLAGS_MASK = 0x1FF,
-} maliggy_mmu_entry_flags;
+} mali_mmu_entry_flags;
 
 
 #define MALI_MMU_FLAGS_FORCE_GP_READ_ALLOCATE ( \
@@ -71,30 +71,30 @@ MALI_MMU_FLAGS_PRESENT | \
 	MALI_MMU_FLAGS_READ_ALLOCATE )
 
 
-struct maliggy_page_directory
+struct mali_page_directory
 {
 	u32 page_directory; /**< Physical address of the memory session's page directory */
-	maliggy_io_address page_directory_mapped; /**< Pointer to the mapped version of the page directory into the kernel's address space */
+	mali_io_address page_directory_mapped; /**< Pointer to the mapped version of the page directory into the kernel's address space */
 
-	maliggy_io_address page_entries_mapped[1024]; /**< Pointers to the page tables which exists in the page directory mapped into the kernel's address space */
+	mali_io_address page_entries_mapped[1024]; /**< Pointers to the page tables which exists in the page directory mapped into the kernel's address space */
 	u32   page_entries_usage_count[1024]; /**< Tracks usage count of the page table pages, so they can be releases on the last reference */
 };
 
 /* Map Mali virtual address space (i.e. ensure page tables exist for the virtual range)  */
-_maliggy_osk_errcode_t maliggy_mmu_pagedir_map(struct maliggy_page_directory *pagedir, u32 maliggy_address, u32 size);
-_maliggy_osk_errcode_t maliggy_mmu_pagedir_unmap(struct maliggy_page_directory *pagedir, u32 maliggy_address, u32 size);
+_mali_osk_errcode_t mali_mmu_pagedir_map(struct mali_page_directory *pagedir, u32 mali_address, u32 size);
+_mali_osk_errcode_t mali_mmu_pagedir_unmap(struct mali_page_directory *pagedir, u32 mali_address, u32 size);
 
 /* Back virtual address space with actual pages. Assumes input is contiguous and 4k aligned. */
-void maliggy_mmu_pagedir_update(struct maliggy_page_directory *pagedir, u32 maliggy_address, u32 phys_address, u32 size, u32 cache_settings);
+void mali_mmu_pagedir_update(struct mali_page_directory *pagedir, u32 mali_address, u32 phys_address, u32 size, u32 cache_settings);
 
-u32 maliggy_page_directory_get_phys_address(struct maliggy_page_directory *pagedir, u32 index);
+u32 mali_page_directory_get_phys_address(struct mali_page_directory *pagedir, u32 index);
 
-u32 maliggy_allocate_empty_page(void);
-void maliggy_free_empty_page(u32 address);
-_maliggy_osk_errcode_t maliggy_create_fault_flush_pages(u32 *page_directory, u32 *page_table, u32 *data_page);
-void maliggy_destroy_fault_flush_pages(u32 *page_directory, u32 *page_table, u32 *data_page);
+u32 mali_allocate_empty_page(void);
+void mali_free_empty_page(u32 address);
+_mali_osk_errcode_t mali_create_fault_flush_pages(u32 *page_directory, u32 *page_table, u32 *data_page);
+void mali_destroy_fault_flush_pages(u32 *page_directory, u32 *page_table, u32 *data_page);
 
-struct maliggy_page_directory *maliggy_mmu_pagedir_alloc(void);
-void maliggy_mmu_pagedir_free(struct maliggy_page_directory *pagedir);
+struct mali_page_directory *mali_mmu_pagedir_alloc(void);
+void mali_mmu_pagedir_free(struct mali_page_directory *pagedir);
 
 #endif /* __MALI_MMU_PAGE_DIRECTORY_H__ */

@@ -972,9 +972,9 @@ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
 		{ MNT_NOSUID, ",nosuid" },
 		{ MNT_NODEV, ",nodev" },
 		{ MNT_NOEXEC, ",noexec" },
-		{ MNT_NOATIME, ",noatime,nodiratime,noauto_da_alloc,commit=100,nobh,barrier=0,discard" },
+		{ MNT_NOATIME, ",noatime" },
 		{ MNT_NODIRATIME, ",nodiratime" },
-		{ MNT_RELATIME, ",noatime,nodiratime,noauto_da_alloc,commit=100,nobh,barrier=0,discard" },
+		{ MNT_RELATIME, ",relatime" },
 		{ 0, NULL }
 	};
 	const struct proc_fs_info *fs_infop;

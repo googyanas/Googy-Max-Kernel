@@ -9,7 +9,7 @@
  */
 
 /**
- * @file mali_kernel_license.h
+ * @file maliggy_kernel_license.h
  * Defines for the macro MODULE_LICENSE.
  */
 

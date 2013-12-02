@@ -22,15 +22,15 @@
  * - allocate Mali page tables in OS memory
  * - destroy the object
  *
- * Allocations from OS memory are of type mali_physical_memory_allocation
+ * Allocations from OS memory are of type maliggy_physical_memory_allocation
  * which provides a function to release the allocation.
  *
  * @param max_allocation max. number of bytes that can be allocated from OS memory
  * @param cpu_usage_adjust value to add to mali physical addresses to obtain CPU physical addresses
  * @param name description of the allocator
- * @return pointer to mali_physical_memory_allocator object. NULL on failure.
+ * @return pointer to maliggy_physical_memory_allocator object. NULL on failure.
  **/
-mali_physical_memory_allocator * mali_os_allocator_create(u32 max_allocation, u32 cpu_usage_adjust, const char *name);
+maliggy_physical_memory_allocator * maliggy_os_allocator_create(u32 max_allocation, u32 cpu_usage_adjust, const char *name);
 
 #endif /* __MALI_KERNEL_MEM_OS_H__ */
 

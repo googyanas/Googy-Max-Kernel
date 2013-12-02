@@ -9,7 +9,7 @@
  */
 
 /**
- * @file ump_kernel_interface.h
+ * @file umpggy_kernel_interface.h
  */
 
 #ifndef __UMP_KERNEL_INTERFACE_REF_DRV_H__
@@ -22,11 +22,11 @@ extern "C" {
 #endif
 
 /** Turn specified physical memory into UMP memory. */
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks);
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_get(ump_secure_id secure_id);
-UMP_KERNEL_API_EXPORT ump_dd_status_code ump_dd_meminfo_set(ump_dd_handle memh, void* args);
-UMP_KERNEL_API_EXPORT void *ump_dd_meminfo_get(ump_secure_id secure_id, void* args);
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_get_from_vaddr(unsigned long vaddr);
+UMP_KERNEL_API_EXPORT umpggy_dd_handle umpggy_dd_handle_create_from_phys_blocks(umpggy_dd_physical_block * blocks, unsigned long num_blocks);
+UMP_KERNEL_API_EXPORT umpggy_dd_handle umpggy_dd_handle_get(umpggy_secure_id secure_id);
+UMP_KERNEL_API_EXPORT umpggy_dd_status_code umpggy_dd_meminfo_set(umpggy_dd_handle memh, void* args);
+UMP_KERNEL_API_EXPORT void *umpggy_dd_meminfo_get(umpggy_secure_id secure_id, void* args);
+UMP_KERNEL_API_EXPORT umpggy_dd_handle umpggy_dd_handle_get_from_vaddr(unsigned long vaddr);
 
 #ifdef __cplusplus
 }

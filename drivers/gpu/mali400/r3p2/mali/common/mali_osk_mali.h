@@ -9,7 +9,7 @@
  */
 
 /**
- * @file mali_osk_mali.h
+ * @file maliggy_osk_mali.h
  * Defines the OS abstraction layer which is specific for the Mali kernel device driver (OSK)
  */
 
@@ -24,12 +24,12 @@ extern "C"
 {
 #endif
 
-/** @addtogroup _mali_osk_miscellaneous
+/** @addtogroup _maliggy_osk_miscellaneous
  * @{ */
 
 /** @brief Struct with device specific configuration data
  */
-struct _mali_osk_device_data
+struct _maliggy_osk_device_data
 {
 	/* Dedicated GPU memory range (physical). */
 	u32 dedicated_mem_start;
@@ -46,7 +46,7 @@ struct _mali_osk_device_data
 	u32 utilization_interval;
 
 	/* Function that will receive periodic GPU utilization numbers */
-	void (*utilization_callback)(struct mali_gpu_utilization_data *data);
+	void (*utilization_callback)(struct maliggy_gpu_utilization_data *data);
 
 	/*
 	 * Mali PMU switch delay.
@@ -64,33 +64,33 @@ struct _mali_osk_device_data
  * @param res Storage for resource information if resource is found.
  * @return _MALI_OSK_ERR_OK on success, _MALI_OSK_ERR_ITEM_NOT_FOUND if resource is not found
  */
-_mali_osk_errcode_t _mali_osk_resource_find(u32 addr, _mali_osk_resource_t *res);
+_maliggy_osk_errcode_t _maliggy_osk_resource_find(u32 addr, _maliggy_osk_resource_t *res);
 
 
 /** @brief Find Mali GPU HW base address
  *
  * @return 0 if resources are found, otherwise the Mali GPU component with lowest address.
  */
-u32 _mali_osk_resource_base_address(void);
+u32 _maliggy_osk_resource_base_address(void);
 
 /** @brief Retrieve the Mali GPU specific data
  *
  * @return _MALI_OSK_ERR_OK on success, otherwise failure.
  */
-_mali_osk_errcode_t _mali_osk_device_data_get(struct _mali_osk_device_data *data);
+_maliggy_osk_errcode_t _maliggy_osk_device_data_get(struct _maliggy_osk_device_data *data);
 
 /** @brief Determines if Mali GPU has been configured with shared interrupts.
  *
  * @return MALI_TRUE if shared interrupts, MALI_FALSE if not.
  */
-mali_bool _mali_osk_shared_interrupts(void);
+maliggy_bool _maliggy_osk_shared_interrupts(void);
 
-/** @} */ /* end group _mali_osk_miscellaneous */
-
-
+/** @} */ /* end group _maliggy_osk_miscellaneous */
 
 
-/** @addtogroup _mali_osk_low_level_memory
+
+
+/** @addtogroup _maliggy_osk_low_level_memory
  * @{ */
 
 /** @brief Initialize a user-space accessible memory range
@@ -99,8 +99,8 @@ mali_bool _mali_osk_shared_interrupts(void);
  * current process, but does not map any physical pages into this range.
  *
  * This function may initialize or adjust any members of the
- * mali_memory_allocation \a descriptor supplied, before the physical pages are
- * mapped in with _mali_osk_mem_mapregion_map().
+ * maliggy_memory_allocation \a descriptor supplied, before the physical pages are
+ * mapped in with _maliggy_osk_mem_mapregion_map().
  *
  * The function will always be called with MALI_MEMORY_ALLOCATION_FLAG_MAP_INTO_USERSPACE
  * set in \a descriptor->flags. It is an error to call this function without
@@ -109,23 +109,23 @@ mali_bool _mali_osk_shared_interrupts(void);
  *
  * The \a descriptor's process_addr_mapping_info member can be modified to
  * allocate OS-specific information. Note that on input, this will be a
- * ukk_private word from the U/K inteface, as inserted by _mali_ukk_mem_mmap().
+ * ukk_private word from the U/K inteface, as inserted by _maliggy_ukk_mem_mmap().
  * This is used to pass information from the U/K interface to the OSK interface,
  * if necessary. The precise usage of the process_addr_mapping_info member
- * depends on the U/K implementation of _mali_ukk_mem_mmap().
+ * depends on the U/K implementation of _maliggy_ukk_mem_mmap().
  *
- * Therefore, the U/K implementation of _mali_ukk_mem_mmap() and the OSK
- * implementation of  _mali_osk_mem_mapregion_init() must agree on the meaning and
+ * Therefore, the U/K implementation of _maliggy_ukk_mem_mmap() and the OSK
+ * implementation of  _maliggy_osk_mem_mapregion_init() must agree on the meaning and
  * usage of the ukk_private word and process_addr_mapping_info member.
  *
  * Refer to \ref u_k_api for more information on the U/K interface.
  *
  * On successful return, \a descriptor's mapping member will be correct for
- * use with _mali_osk_mem_mapregion_term() and _mali_osk_mem_mapregion_map().
+ * use with _maliggy_osk_mem_mapregion_term() and _maliggy_osk_mem_mapregion_map().
  *
- * @param descriptor the mali_memory_allocation to initialize.
+ * @param descriptor the maliggy_memory_allocation to initialize.
  */
-_mali_osk_errcode_t _mali_osk_mem_mapregion_init( mali_memory_allocation * descriptor );
+_maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_init( maliggy_memory_allocation * descriptor );
 
 /** @brief Terminate a user-space accessible memory range
  *
@@ -136,25 +136,25 @@ _mali_osk_errcode_t _mali_osk_mem_mapregion_init( mali_memory_allocation * descr
  * It will unmap any physical pages that had been mapped into a reserved
  * virtual address range for the current process, and then releases the virtual
  * address range. Any extra book-keeping information or resources allocated
- * during _mali_osk_mem_mapregion_init() will also be released.
+ * during _maliggy_osk_mem_mapregion_init() will also be released.
  *
  * The \a descriptor itself is not freed - this must be handled by the caller of
- * _mali_osk_mem_mapregion_term().
+ * _maliggy_osk_mem_mapregion_term().
  *
  * The function will always be called with MALI_MEMORY_ALLOCATION_FLAG_MAP_INTO_USERSPACE
  * set in descriptor->flags. It is an error to call this function without
  * setting this flag. Otherwise, descriptor->flags bits are reserved for
  * future expansion
  *
- * @param descriptor the mali_memory_allocation to terminate.
+ * @param descriptor the maliggy_memory_allocation to terminate.
  */
-void _mali_osk_mem_mapregion_term( mali_memory_allocation * descriptor );
+void _maliggy_osk_mem_mapregion_term( maliggy_memory_allocation * descriptor );
 
 /** @brief Map physical pages into a user process's virtual address range
  *
  * This is used to map a number of physically contigous pages into a
  * user-process's virtual address range, which was previously reserved by a
- * call to _mali_osk_mem_mapregion_init().
+ * call to _maliggy_osk_mem_mapregion_init().
  *
  * This need not provide a mapping for the entire virtual address range
  * reserved for \a descriptor - it may be used to map single pages per call.
@@ -177,9 +177,9 @@ void _mali_osk_mem_mapregion_term( mali_memory_allocation * descriptor );
  * @note \b IMPORTANT: This code must validate the input parameters. If the
  * range defined by \a offset and \a size is outside the range allocated in
  * \a descriptor, then this function \b MUST not attempt any mapping, and must
- * instead return a suitable \ref _mali_osk_errcode_t \b failure code.
+ * instead return a suitable \ref _maliggy_osk_errcode_t \b failure code.
  *
- * @param[in,out] descriptor the mali_memory_allocation representing the
+ * @param[in,out] descriptor the maliggy_memory_allocation representing the
  * user-process's virtual address range to map into.
  *
  * @param[in] offset the offset into the virtual address range. This is only added
@@ -198,27 +198,27 @@ void _mali_osk_mem_mapregion_term( mali_memory_allocation * descriptor );
  * @param[in] size the number of bytes to map in. This must be a multiple of
  * \ref _MALI_OSK_CPU_PAGE_SIZE.
  *
- * @return _MALI_OSK_ERR_OK on sucess, otherwise a _mali_osk_errcode_t value
+ * @return _MALI_OSK_ERR_OK on sucess, otherwise a _maliggy_osk_errcode_t value
  * on failure
  *
- * @note could expand to use _mali_osk_mem_mapregion_flags_t instead of
+ * @note could expand to use _maliggy_osk_mem_mapregion_flags_t instead of
  * \ref MALI_MEMORY_ALLOCATION_OS_ALLOCATED_PHYSADDR_MAGIC, but note that we must
  * also modify the mali process address manager in the mmu/memory engine code.
  */
-_mali_osk_errcode_t _mali_osk_mem_mapregion_map( mali_memory_allocation * descriptor, u32 offset, u32 *phys_addr, u32 size );
+_maliggy_osk_errcode_t _maliggy_osk_mem_mapregion_map( maliggy_memory_allocation * descriptor, u32 offset, u32 *phys_addr, u32 size );
 
 
 /** @brief Unmap physical pages from a user process's virtual address range
  *
  * This is used to unmap a number of physically contigous pages from a
  * user-process's virtual address range, which were previously mapped by a
- * call to _mali_osk_mem_mapregion_map(). If the range specified was allocated
+ * call to _maliggy_osk_mem_mapregion_map(). If the range specified was allocated
  * from OS memory, then that memory will be returned to the OS. Whilst pages
  * will be mapped out, the Virtual address range remains reserved, and at the
  * same base address.
  *
  * When this function is used to unmap pages from OS memory
- * (_mali_osk_mem_mapregion_map() was called with *phys_addr ==
+ * (_maliggy_osk_mem_mapregion_map() was called with *phys_addr ==
  * \ref MALI_MEMORY_ALLOCATION_OS_ALLOCATED_PHYSADDR_MAGIC), then the \a flags must
  * include \ref _MALI_OSK_MEM_MAPREGION_FLAG_OS_ALLOCATED_PHYSADDR. This is because
  * it is not always easy for an OS implementation to discover whether the
@@ -234,7 +234,7 @@ _mali_osk_errcode_t _mali_osk_mem_mapregion_map( mali_memory_allocation * descri
  * setting this flag. Otherwise, \a descriptor->flags bits are reserved for
  * future expansion
  *
- * @param[in,out] descriptor the mali_memory_allocation representing the
+ * @param[in,out] descriptor the maliggy_memory_allocation representing the
  * user-process's virtual address range to map into.
  *
  * @param[in] offset the offset into the virtual address range. This is only added
@@ -248,7 +248,7 @@ _mali_osk_errcode_t _mali_osk_mem_mapregion_map( mali_memory_allocation * descri
  * of pages that were originally OS allocated, this must have
  * \ref _MALI_OSK_MEM_MAPREGION_FLAG_OS_ALLOCATED_PHYSADDR set.
  */
-void _mali_osk_mem_mapregion_unmap( mali_memory_allocation * descriptor, u32 offset, u32 size, _mali_osk_mem_mapregion_flags_t flags );
+void _maliggy_osk_mem_mapregion_unmap( maliggy_memory_allocation * descriptor, u32 offset, u32 size, _maliggy_osk_mem_mapregion_flags_t flags );
 
 /** @brief Copy as much data as possible from src to dest, do not crash if src or dest isn't available.
  *
@@ -257,9 +257,9 @@ void _mali_osk_mem_mapregion_unmap( mali_memory_allocation * descriptor, u32 off
  * @param size Number of bytes to copy
  * @return Number of bytes actually copied
  */
-u32 _mali_osk_mem_write_safe(void *dest, const void *src, u32 size);
+u32 _maliggy_osk_mem_write_safe(void *dest, const void *src, u32 size);
 
-/** @} */ /* end group _mali_osk_low_level_memory */
+/** @} */ /* end group _maliggy_osk_low_level_memory */
 
 
 #ifdef __cplusplus

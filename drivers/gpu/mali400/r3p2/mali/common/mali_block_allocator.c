@@ -25,8 +25,8 @@ typedef struct block_allocator_allocation
 {
 	/* The list will be released in reverse order */
 	block_info *last_allocated;
-	mali_allocation_engine * engine;
-	mali_memory_allocation * descriptor;
+	maliggy_allocation_engine * engine;
+	maliggy_memory_allocation * descriptor;
 	u32 start_offset;
 	u32 mapping_length;
 } block_allocator_allocation;
@@ -34,7 +34,7 @@ typedef struct block_allocator_allocation
 
 typedef struct block_allocator
 {
-    _mali_osk_lock_t *mutex;
+    _maliggy_osk_lock_t *mutex;
 	block_info * all_blocks;
 	block_info * first_free;
 	u32 base;
@@ -43,16 +43,16 @@ typedef struct block_allocator
 } block_allocator;
 
 MALI_STATIC_INLINE u32 get_phys(block_allocator * info, block_info * block);
-static mali_physical_memory_allocation_result block_allocator_allocate(void* ctx, mali_allocation_engine * engine,  mali_memory_allocation * descriptor, u32* offset, mali_physical_memory_allocation * alloc_info);
+static maliggy_physical_memory_allocation_result block_allocator_allocate(void* ctx, maliggy_allocation_engine * engine,  maliggy_memory_allocation * descriptor, u32* offset, maliggy_physical_memory_allocation * alloc_info);
 static void block_allocator_release(void * ctx, void * handle);
-static mali_physical_memory_allocation_result block_allocator_allocate_page_table_block(void * ctx, mali_page_table_block * block);
-static void block_allocator_release_page_table_block( mali_page_table_block *page_table_block );
-static void block_allocator_destroy(mali_physical_memory_allocator * allocator);
-static u32 block_allocator_stat(mali_physical_memory_allocator * allocator);
+static maliggy_physical_memory_allocation_result block_allocator_allocate_page_table_block(void * ctx, maliggy_page_table_block * block);
+static void block_allocator_release_page_table_block( maliggy_page_table_block *page_table_block );
+static void block_allocator_destroy(maliggy_physical_memory_allocator * allocator);
+static u32 block_allocator_stat(maliggy_physical_memory_allocator * allocator);
 
-mali_physical_memory_allocator * mali_block_allocator_create(u32 base_address, u32 cpu_usage_adjust, u32 size, const char *name)
+maliggy_physical_memory_allocator * maliggy_block_allocator_create(u32 base_address, u32 cpu_usage_adjust, u32 size, const char *name)
 {
-	mali_physical_memory_allocator * allocator;
+	maliggy_physical_memory_allocator * allocator;
 	block_allocator * info;
 	u32 usable_size;
 	u32 num_blocks;
@@ -69,16 +69,16 @@ mali_physical_memory_allocator * mali_block_allocator_create(u32 base_address, u
 		return NULL;
 	}
 
-	allocator = _mali_osk_malloc(sizeof(mali_physical_memory_allocator));
+	allocator = _maliggy_osk_malloc(sizeof(maliggy_physical_memory_allocator));
 	if (NULL != allocator)
 	{
-		info = _mali_osk_malloc(sizeof(block_allocator));
+		info = _maliggy_osk_malloc(sizeof(block_allocator));
 		if (NULL != info)
 		{
-            info->mutex = _mali_osk_lock_init( _MALI_OSK_LOCKFLAG_ORDERED, 0, _MALI_OSK_LOCK_ORDER_MEM_INFO);
+            info->mutex = _maliggy_osk_lock_init( _MALI_OSK_LOCKFLAG_ORDERED, 0, _MALI_OSK_LOCK_ORDER_MEM_INFO);
             if (NULL != info->mutex)
             {
-        		info->all_blocks = _mali_osk_malloc(sizeof(block_info) * num_blocks);
+        		info->all_blocks = _maliggy_osk_malloc(sizeof(block_info) * num_blocks);
 			    if (NULL != info->all_blocks)
 			    {
 				    u32 i;
@@ -103,27 +103,27 @@ mali_physical_memory_allocator * mali_block_allocator_create(u32 base_address, u
 
 				    return allocator;
 			    }
-                _mali_osk_lock_term(info->mutex);
+                _maliggy_osk_lock_term(info->mutex);
             }
-			_mali_osk_free(info);
+			_maliggy_osk_free(info);
 		}
-		_mali_osk_free(allocator);
+		_maliggy_osk_free(allocator);
 	}
 
 	return NULL;
 }
 
-static void block_allocator_destroy(mali_physical_memory_allocator * allocator)
+static void block_allocator_destroy(maliggy_physical_memory_allocator * allocator)
 {
 	block_allocator * info;
 	MALI_DEBUG_ASSERT_POINTER(allocator);
 	MALI_DEBUG_ASSERT_POINTER(allocator->ctx);
 	info = (block_allocator*)allocator->ctx;
 
-	_mali_osk_free(info->all_blocks);
-    _mali_osk_lock_term(info->mutex);
-	_mali_osk_free(info);
-	_mali_osk_free(allocator);
+	_maliggy_osk_free(info->all_blocks);
+    _maliggy_osk_lock_term(info->mutex);
+	_maliggy_osk_free(info);
+	_maliggy_osk_free(allocator);
 }
 
 MALI_STATIC_INLINE u32 get_phys(block_allocator * info, block_info * block)
@@ -131,12 +131,12 @@ MALI_STATIC_INLINE u32 get_phys(block_allocator * info, block_info * block)
 	return info->base + ((block - info->all_blocks) * MALI_BLOCK_SIZE);
 }
 
-static mali_physical_memory_allocation_result block_allocator_allocate(void* ctx, mali_allocation_engine * engine, mali_memory_allocation * descriptor, u32* offset, mali_physical_memory_allocation * alloc_info)
+static maliggy_physical_memory_allocation_result block_allocator_allocate(void* ctx, maliggy_allocation_engine * engine, maliggy_memory_allocation * descriptor, u32* offset, maliggy_physical_memory_allocation * alloc_info)
 {
 	block_allocator * info;
 	u32 left;
 	block_info * last_allocated = NULL;
-	mali_physical_memory_allocation_result result = MALI_MEM_ALLOC_NONE;
+	maliggy_physical_memory_allocation_result result = MALI_MEM_ALLOC_NONE;
 	block_allocator_allocation *ret_allocation;
 
 	MALI_DEBUG_ASSERT_POINTER(ctx);
@@ -148,14 +148,14 @@ static mali_physical_memory_allocation_result block_allocator_allocate(void* ctx
 	left = descriptor->size - *offset;
 	MALI_DEBUG_ASSERT(0 != left);
 
-	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
+	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
 
-	ret_allocation = _mali_osk_malloc( sizeof(block_allocator_allocation) );
+	ret_allocation = _maliggy_osk_malloc( sizeof(block_allocator_allocation) );
 
 	if ( NULL == ret_allocation )
 	{
 		/* Failure; try another allocator by returning MALI_MEM_ALLOC_NONE */
-		_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+		_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 		return result;
 	}
 
@@ -187,11 +187,11 @@ static mali_physical_memory_allocation_result block_allocator_allocate(void* ctx
 			current_mapping_size = left;
 		}
 
-		if (_MALI_OSK_ERR_OK != mali_allocation_engine_map_physical(engine, descriptor, *offset, phys_addr + padding, info->cpu_usage_adjust, current_mapping_size))
+		if (_MALI_OSK_ERR_OK != maliggy_allocation_engine_map_physical(engine, descriptor, *offset, phys_addr + padding, info->cpu_usage_adjust, current_mapping_size))
 		{
 			MALI_DEBUG_PRINT(1, ("Mapping of physical memory  failed\n"));
 			result = MALI_MEM_ALLOC_INTERNAL_FAILURE;
-			mali_allocation_engine_unmap_physical(engine, descriptor, ret_allocation->start_offset, ret_allocation->mapping_length, (_mali_osk_mem_mapregion_flags_t)0);
+			maliggy_allocation_engine_unmap_physical(engine, descriptor, ret_allocation->start_offset, ret_allocation->mapping_length, (_maliggy_osk_mem_mapregion_flags_t)0);
 
 			/* release all memory back to the pool */
 			while (last_allocated)
@@ -211,7 +211,7 @@ static mali_physical_memory_allocation_result block_allocator_allocate(void* ctx
 		ret_allocation->mapping_length += current_mapping_size;
 	}
 
-	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 
 	if (last_allocated)
 	{
@@ -230,7 +230,7 @@ static mali_physical_memory_allocation_result block_allocator_allocate(void* ctx
 	else
 	{
 		/* Free the allocation information - nothing to be passed back */
-		_mali_osk_free( ret_allocation );
+		_maliggy_osk_free( ret_allocation );
 	}
 
 	return result;
@@ -251,14 +251,14 @@ static void block_allocator_release(void * ctx, void * handle)
 
 	MALI_DEBUG_ASSERT_POINTER(block);
 
-	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
+	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
 	{
 		MALI_DEBUG_PRINT(1, ("allocator release: Failed to get mutex\n"));
 		return;
 	}
 
 	/* unmap */
-	mali_allocation_engine_unmap_physical(allocation->engine, allocation->descriptor, allocation->start_offset, allocation->mapping_length, (_mali_osk_mem_mapregion_flags_t)0);
+	maliggy_allocation_engine_unmap_physical(allocation->engine, allocation->descriptor, allocation->start_offset, allocation->mapping_length, (_maliggy_osk_mem_mapregion_flags_t)0);
 
 	while (block)
 	{
@@ -274,22 +274,22 @@ static void block_allocator_release(void * ctx, void * handle)
 		block = next;
 	}
 
-	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 
-	_mali_osk_free( allocation );
+	_maliggy_osk_free( allocation );
 }
 
 
-static mali_physical_memory_allocation_result block_allocator_allocate_page_table_block(void * ctx, mali_page_table_block * block)
+static maliggy_physical_memory_allocation_result block_allocator_allocate_page_table_block(void * ctx, maliggy_page_table_block * block)
 {
 	block_allocator * info;
-	mali_physical_memory_allocation_result result = MALI_MEM_ALLOC_INTERNAL_FAILURE;
+	maliggy_physical_memory_allocation_result result = MALI_MEM_ALLOC_INTERNAL_FAILURE;
 
 	MALI_DEBUG_ASSERT_POINTER(ctx);
 	MALI_DEBUG_ASSERT_POINTER(block);
 	info = (block_allocator*)ctx;
 
-	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
+	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW)) return MALI_MEM_ALLOC_INTERNAL_FAILURE;
 
 	if (NULL != info->first_free)
 	{
@@ -301,9 +301,9 @@ static mali_physical_memory_allocation_result block_allocator_allocate_page_tabl
 
 		phys = get_phys(info, alloc); /* Does not modify info or alloc */
 		size = MALI_BLOCK_SIZE; /* Must be multiple of MALI_MMU_PAGE_SIZE */
-		virt = _mali_osk_mem_mapioregion( phys, size, "Mali block allocator page tables" );
+		virt = _maliggy_osk_mem_mapioregion( phys, size, "Mali block allocator page tables" );
 
-		/* Failure of _mali_osk_mem_mapioregion will result in MALI_MEM_ALLOC_INTERNAL_FAILURE,
+		/* Failure of _maliggy_osk_mem_mapioregion will result in MALI_MEM_ALLOC_INTERNAL_FAILURE,
 		 * because it's unlikely another allocator will be able to map in. */
 
 		if ( NULL != virt )
@@ -319,20 +319,20 @@ static mali_physical_memory_allocation_result block_allocator_allocate_page_tabl
 
 			alloc->next = NULL; /* Could potentially link many blocks together instead */
 
-			_mali_osk_memset(block->mapping, 0, size);
+			_maliggy_osk_memset(block->mapping, 0, size);
 
 			result = MALI_MEM_ALLOC_FINISHED;
 		}
 	}
 	else result = MALI_MEM_ALLOC_NONE;
 
-	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 
 	return result;
 }
 
 
-static void block_allocator_release_page_table_block( mali_page_table_block *page_table_block )
+static void block_allocator_release_page_table_block( maliggy_page_table_block *page_table_block )
 {
 	block_allocator * info;
 	block_info * block, * next;
@@ -346,14 +346,14 @@ static void block_allocator_release_page_table_block( mali_page_table_block *pag
 	MALI_DEBUG_ASSERT_POINTER(block);
 
 
-	if (_MALI_OSK_ERR_OK != _mali_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
+	if (_MALI_OSK_ERR_OK != _maliggy_osk_lock_wait(info->mutex, _MALI_OSK_LOCKMODE_RW))
 	{
 		MALI_DEBUG_PRINT(1, ("allocator release: Failed to get mutex\n"));
 		return;
 	}
 
 	/* Unmap all the physical memory at once */
-	_mali_osk_mem_unmapioregion( page_table_block->phys_base, page_table_block->size, page_table_block->mapping );
+	_maliggy_osk_mem_unmapioregion( page_table_block->phys_base, page_table_block->size, page_table_block->mapping );
 
 	/** @note This loop handles the case where more than one block_info was linked.
 	 * Probably unnecessary for page table block releasing. */
@@ -369,10 +369,10 @@ static void block_allocator_release_page_table_block( mali_page_table_block *pag
 		block = next;
 	}
 
-	_mali_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
+	_maliggy_osk_lock_signal(info->mutex, _MALI_OSK_LOCKMODE_RW);
 }
 
-static u32 block_allocator_stat(mali_physical_memory_allocator * allocator)
+static u32 block_allocator_stat(maliggy_physical_memory_allocator * allocator)
 {
 	block_allocator * info;
 	block_info *block;

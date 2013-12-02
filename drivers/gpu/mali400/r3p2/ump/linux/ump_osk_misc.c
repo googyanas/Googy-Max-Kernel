@@ -9,7 +9,7 @@
  */
 
 /**
- * @file ump_osk_misc.c
+ * @file umpggy_osk_misc.c
  * Implementation of the OS abstraction layer for the UMP kernel device driver
  */
 
@@ -19,10 +19,10 @@
 #include <linux/kernel.h>
 #include "ump_kernel_linux.h"
 
-/* is called from ump_kernel_constructor in common code */
-_mali_osk_errcode_t _ump_osk_init( void )
+/* is called from umpggy_kernel_constructor in common code */
+_maliggy_osk_errcode_t _umpggy_osk_init( void )
 {
-	if (0 != ump_kernel_device_initialize())
+	if (0 != umpggy_kernel_device_initialize())
 	{
 		return _MALI_OSK_ERR_FAULT;
 	}
@@ -30,8 +30,8 @@ _mali_osk_errcode_t _ump_osk_init( void )
 	return _MALI_OSK_ERR_OK;
 }
 
-_mali_osk_errcode_t _ump_osk_term( void )
+_maliggy_osk_errcode_t _umpggy_osk_term( void )
 {
-	ump_kernel_device_terminate();
+	umpggy_kernel_device_terminate();
 	return _MALI_OSK_ERR_OK;
 }

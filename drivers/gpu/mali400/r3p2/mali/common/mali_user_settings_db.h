@@ -25,14 +25,14 @@ extern "C"
  * @param setting the setting to be changed
  * @param value the new value to set
  */
-void mali_set_user_setting(_mali_uk_user_setting_t setting, u32 value);
+void maliggy_set_user_setting(_maliggy_uk_user_setting_t setting, u32 value);
 
 /** @brief Get current Mali user setting value from DB
  *
  * @param setting the setting to extract
  * @return the value of the selected setting
  */
-u32 mali_get_user_setting(_mali_uk_user_setting_t setting);
+u32 maliggy_get_user_setting(_maliggy_uk_user_setting_t setting);
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@
  */
 
 /**
- * @file mali_osk_bitops.h
+ * @file maliggy_osk_bitops.h
  * Implementation of the OS abstraction layer for the kernel device driver
  */
 
@@ -21,7 +21,7 @@ extern "C"
 {
 #endif
 
-MALI_STATIC_INLINE void _mali_internal_clear_bit( u32 bit, u32 *addr )
+MALI_STATIC_INLINE void _maliggy_internal_clear_bit( u32 bit, u32 *addr )
 {
 	MALI_DEBUG_ASSERT( bit < 32 );
 	MALI_DEBUG_ASSERT( NULL != addr );
@@ -29,7 +29,7 @@ MALI_STATIC_INLINE void _mali_internal_clear_bit( u32 bit, u32 *addr )
 	(*addr) &= ~(1 << bit);
 }
 
-MALI_STATIC_INLINE void _mali_internal_set_bit( u32 bit, u32 *addr )
+MALI_STATIC_INLINE void _maliggy_internal_set_bit( u32 bit, u32 *addr )
 {
 	MALI_DEBUG_ASSERT( bit < 32 );
 	MALI_DEBUG_ASSERT( NULL != addr );
@@ -37,13 +37,13 @@ MALI_STATIC_INLINE void _mali_internal_set_bit( u32 bit, u32 *addr )
 	(*addr) |= (1 << bit);
 }
 
-MALI_STATIC_INLINE u32 _mali_internal_test_bit( u32 bit, u32 value )
+MALI_STATIC_INLINE u32 _maliggy_internal_test_bit( u32 bit, u32 value )
 {
 	MALI_DEBUG_ASSERT( bit < 32 );
 	return value & (1 << bit);
 }
 
-MALI_STATIC_INLINE int _mali_internal_find_first_zero_bit( u32 value )
+MALI_STATIC_INLINE int _maliggy_internal_find_first_zero_bit( u32 value )
 {
 	u32 inverted;
 	u32 negated;
@@ -63,13 +63,13 @@ MALI_STATIC_INLINE int _mali_internal_find_first_zero_bit( u32 value )
 	/* And so the first zero bit is in the same position as the 1 == number of 1s that preceeded it
 	 * Note that the output is zero if value was all 1s */
 
-	leading_zeros = _mali_osk_clz( isolated );
+	leading_zeros = _maliggy_osk_clz( isolated );
 
 	return 31 - leading_zeros;
 }
 
 
-/** @defgroup _mali_osk_bitops OSK Non-atomic Bit-operations
+/** @defgroup _maliggy_osk_bitops OSK Non-atomic Bit-operations
  * @{ */
 
 /**
@@ -80,7 +80,7 @@ MALI_STATIC_INLINE int _mali_internal_find_first_zero_bit( u32 value )
  * not normally be necessary to re-implement these. Efficient bit-twiddling
  * techniques are used where possible, implemented in portable C.
  *
- * Note that these reference implementations rely on _mali_osk_clz() being
+ * Note that these reference implementations rely on _maliggy_osk_clz() being
  * implemented.
  */
 
@@ -89,12 +89,12 @@ MALI_STATIC_INLINE int _mali_internal_find_first_zero_bit( u32 value )
  * significant bit
  * @param addr starting point for counting.
  */
-MALI_STATIC_INLINE void _mali_osk_clear_nonatomic_bit( u32 nr, u32 *addr )
+MALI_STATIC_INLINE void _maliggy_osk_clear_nonatomic_bit( u32 nr, u32 *addr )
 {
 	addr += nr >> 5; /* find the correct word */
 	nr = nr & ((1 << 5)-1); /* The bit number within the word */
 
-	_mali_internal_clear_bit( nr, addr );
+	_maliggy_internal_clear_bit( nr, addr );
 }
 
 /** @brief Set a bit in a sequence of 32-bit words
@@ -102,12 +102,12 @@ MALI_STATIC_INLINE void _mali_osk_clear_nonatomic_bit( u32 nr, u32 *addr )
  * significant bit
  * @param addr starting point for counting.
  */
-MALI_STATIC_INLINE void _mali_osk_set_nonatomic_bit( u32 nr, u32 *addr )
+MALI_STATIC_INLINE void _maliggy_osk_set_nonatomic_bit( u32 nr, u32 *addr )
 {
 	addr += nr >> 5; /* find the correct word */
 	nr = nr & ((1 << 5)-1); /* The bit number within the word */
 
-	_mali_internal_set_bit( nr, addr );
+	_maliggy_internal_set_bit( nr, addr );
 }
 
 /** @brief Test a bit in a sequence of 32-bit words
@@ -117,12 +117,12 @@ MALI_STATIC_INLINE void _mali_osk_set_nonatomic_bit( u32 nr, u32 *addr )
  * @return zero if bit was clear, non-zero if set. Do not rely on the return
  * value being related to the actual word under test.
  */
-MALI_STATIC_INLINE u32 _mali_osk_test_bit( u32 nr, u32 *addr )
+MALI_STATIC_INLINE u32 _maliggy_osk_test_bit( u32 nr, u32 *addr )
 {
 	addr += nr >> 5; /* find the correct word */
 	nr = nr & ((1 << 5)-1); /* The bit number within the word */
 
-	return _mali_internal_test_bit( nr, *addr );
+	return _maliggy_internal_test_bit( nr, *addr );
 }
 
 /* Return maxbit if not found */
@@ -132,14 +132,14 @@ MALI_STATIC_INLINE u32 _mali_osk_test_bit( u32 nr, u32 *addr )
  * @return the number of the first zero bit found, or maxbit if none were found
  * in the specified range.
  */
-MALI_STATIC_INLINE u32 _mali_osk_find_first_zero_bit( const u32 *addr, u32 maxbit )
+MALI_STATIC_INLINE u32 _maliggy_osk_find_first_zero_bit( const u32 *addr, u32 maxbit )
 {
 	u32 total;
 
 	for ( total = 0; total < maxbit; total += 32, ++addr )
 	{
 		int result;
-		result = _mali_internal_find_first_zero_bit( *addr );
+		result = _maliggy_internal_find_first_zero_bit( *addr );
 
 		/* non-negative signifies the bit was found */
 		if ( result >= 0 )
@@ -157,7 +157,7 @@ MALI_STATIC_INLINE u32 _mali_osk_find_first_zero_bit( const u32 *addr, u32 maxbi
 
 	return total; /* either the found bit nr, or maxbit if not found */
 }
-/** @} */ /* end group _mali_osk_bitops */
+/** @} */ /* end group _maliggy_osk_bitops */
 
 #ifdef __cplusplus
 }

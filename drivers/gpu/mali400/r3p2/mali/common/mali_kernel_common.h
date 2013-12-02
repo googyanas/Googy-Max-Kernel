@@ -41,7 +41,7 @@
  *
  * The (X) means that you must add an extra parenthesis around the argumentlist.
  *
- * The  printf function: MALI_PRINTF(...) is routed to _mali_osk_debugmsg
+ * The  printf function: MALI_PRINTF(...) is routed to _maliggy_osk_debugmsg
  *
  * Suggested range for the DEBUG-LEVEL is [1:6] where
  * [1:2] Is messages with highest priority, indicate possible errors.
@@ -85,11 +85,11 @@
  *	then the value is returned from the enclosing function as an error code. This effectively
  *	acts as a guard clause, and propagates error values up the call stack. This uses a
  *	temporary value to ensure that the error expression is not evaluated twice.
- *  If the counter for forcing a failure has been set using _mali_force_error, this error will be
+ *  If the counter for forcing a failure has been set using _maliggy_force_error, this error will be
  *  returned without evaluating the expression in MALI_CHECK_NO_ERROR
  */
 #define MALI_CHECK_NO_ERROR(expression) \
-    do { _mali_osk_errcode_t _check_no_error_result=(expression); \
+    do { _maliggy_osk_errcode_t _check_no_error_result=(expression); \
          if(_check_no_error_result != _MALI_OSK_ERR_OK) \
          MALI_ERROR(_check_no_error_result); \
     } while(0)
@@ -116,7 +116,7 @@
  */
 #define MALI_IGNORE(x) x=x
 
-#define MALI_PRINTF(args) _mali_osk_dbgmsg args;
+#define MALI_PRINTF(args) _maliggy_osk_dbgmsg args;
 
 #define MALI_PRINT_ERROR(args) do{ \
 	MALI_PRINTF(("Mali: ERR: %s\n" ,__FILE__)); \
@@ -131,34 +131,34 @@
 	} while (0)
 
 #ifdef DEBUG
-#ifndef mali_debug_level
-extern int mali_debug_level;
+#ifndef maliggy_debug_level
+extern int maliggy_debug_level;
 #endif
 
 #define MALI_DEBUG_CODE(code) code
 #define MALI_DEBUG_PRINT(level, args)  do { \
-	if((level) <=  mali_debug_level)\
+	if((level) <=  maliggy_debug_level)\
         {MALI_PRINTF(("Mali<" #level ">: ")); MALI_PRINTF(args); } \
 	} while (0)
 
 #define MALI_DEBUG_PRINT_ERROR(args) MALI_PRINT_ERROR(args)
 
 #define MALI_DEBUG_PRINT_IF(level,condition,args)  \
-	if((condition)&&((level) <=  mali_debug_level))\
+	if((condition)&&((level) <=  maliggy_debug_level))\
         {MALI_PRINTF(("Mali<" #level ">: ")); MALI_PRINTF(args); }
 
 #define MALI_DEBUG_PRINT_ELSE(level, args)\
-	else if((level) <=  mali_debug_level)\
+	else if((level) <=  maliggy_debug_level)\
     { MALI_PRINTF(("Mali<" #level ">: ")); MALI_PRINTF(args); }
 
 /**
  * @note these variants of DEBUG ASSERTS will cause a debugger breakpoint
- * to be entered (see _mali_osk_break() ). An alternative would be to call
- * _mali_osk_abort(), on OSs that support it.
+ * to be entered (see _maliggy_osk_break() ). An alternative would be to call
+ * _maliggy_osk_abort(), on OSs that support it.
  */
-#define MALI_DEBUG_PRINT_ASSERT(condition, args) do  {if( !(condition)) { MALI_PRINT_ERROR(args); _mali_osk_break(); } } while(0)
-#define MALI_DEBUG_ASSERT_POINTER(pointer) do  {if( (pointer)== NULL) {MALI_PRINT_ERROR(("NULL pointer " #pointer)); _mali_osk_break();} } while(0)
-#define MALI_DEBUG_ASSERT(condition) do  {if( !(condition)) {MALI_PRINT_ERROR(("ASSERT failed: " #condition )); _mali_osk_break();} } while(0)
+#define MALI_DEBUG_PRINT_ASSERT(condition, args) do  {if( !(condition)) { MALI_PRINT_ERROR(args); _maliggy_osk_break(); } } while(0)
+#define MALI_DEBUG_ASSERT_POINTER(pointer) do  {if( (pointer)== NULL) {MALI_PRINT_ERROR(("NULL pointer " #pointer)); _maliggy_osk_break();} } while(0)
+#define MALI_DEBUG_ASSERT(condition) do  {if( !(condition)) {MALI_PRINT_ERROR(("ASSERT failed: " #condition )); _maliggy_osk_break();} } while(0)
 
 #else /* DEBUG */
 

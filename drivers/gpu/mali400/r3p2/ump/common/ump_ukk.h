@@ -9,7 +9,7 @@
  */
 
 /**
- * @file ump_ukk.h
+ * @file umpggy_ukk.h
  * Defines the kernel-side interface of the user-kernel interface
  */
 
@@ -26,33 +26,33 @@ extern "C"
 #endif
 
 
-_mali_osk_errcode_t _ump_ukk_open( void** context );
+_maliggy_osk_errcode_t _umpggy_ukk_open( void** context );
 
-_mali_osk_errcode_t _ump_ukk_close( void** context );
+_maliggy_osk_errcode_t _umpggy_ukk_close( void** context );
 
-_mali_osk_errcode_t _ump_ukk_allocate( _ump_uk_allocate_s *user_interaction );
+_maliggy_osk_errcode_t _umpggy_ukk_allocate( _umpggy_uk_allocate_s *user_interaction );
 
-_mali_osk_errcode_t _ump_ukk_release( _ump_uk_release_s *release_info );
+_maliggy_osk_errcode_t _umpggy_ukk_release( _umpggy_uk_release_s *release_info );
 
-_mali_osk_errcode_t _ump_ukk_size_get( _ump_uk_size_get_s *user_interaction );
+_maliggy_osk_errcode_t _umpggy_ukk_size_get( _umpggy_uk_size_get_s *user_interaction );
 
-_mali_osk_errcode_t _ump_ukk_map_mem( _ump_uk_map_mem_s *args );
+_maliggy_osk_errcode_t _umpggy_ukk_map_mem( _umpggy_uk_map_mem_s *args );
 
-_mali_osk_errcode_t _ump_uku_get_api_version( _ump_uk_api_version_s *args );
+_maliggy_osk_errcode_t _umpggy_uku_get_api_version( _umpggy_uk_api_version_s *args );
 
-void _ump_ukk_unmap_mem( _ump_uk_unmap_mem_s *args );
+void _umpggy_ukk_unmap_mem( _umpggy_uk_unmap_mem_s *args );
 
-void _ump_ukk_msync( _ump_uk_msync_s *args );
+void _umpggy_ukk_msync( _umpggy_uk_msync_s *args );
 
-void _ump_ukk_cache_operations_control(_ump_uk_cache_operations_control_s* args);
+void _umpggy_ukk_cache_operations_control(_umpggy_uk_cache_operations_control_s* args);
 
-void _ump_ukk_switch_hw_usage(_ump_uk_switch_hw_usage_s *args );
+void _umpggy_ukk_switch_hw_usage(_umpggy_uk_switch_hw_usage_s *args );
 
-void _ump_ukk_lock(_ump_uk_lock_s *args );
+void _umpggy_ukk_lock(_umpggy_uk_lock_s *args );
 
-void _ump_ukk_unlock(_ump_uk_unlock_s *args );
+void _umpggy_ukk_unlock(_umpggy_uk_unlock_s *args );
 
-u32 _ump_ukk_report_memory_usage( void );
+u32 _umpggy_ukk_report_memory_usage( void );
 
 #ifdef __cplusplus
 }

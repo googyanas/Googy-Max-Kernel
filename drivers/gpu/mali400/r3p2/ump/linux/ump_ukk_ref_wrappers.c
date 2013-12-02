@@ -9,7 +9,7 @@
  */
 
 /**
- * @file ump_ukk_wrappers.c
+ * @file umpggy_ukk_wrappers.c
  * Defines the wrapper functions which turn Linux IOCTL calls into _ukk_ calls for the reference implementation
  */
 
@@ -30,7 +30,7 @@
 #include <linux/ion.h>
 #include "../../../../gpu/ion/ion_priv.h"
 extern struct ion_device *ion_exynos;
-extern struct ion_client *ion_client_ump;
+extern struct ion_client *ion_client_ump_ggy_ggy;
 #endif
 #ifdef CONFIG_DMA_SHARED_BUFFER
 #include <linux/dma-buf.h>
@@ -40,49 +40,49 @@ extern struct ion_client *ion_client_ump;
 /*
  * IOCTL operation; Allocate UMP memory
  */
-int ump_allocate_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_allocate_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_allocate_s user_interaction;
-	_mali_osk_errcode_t err;
+	_umpggy_uk_allocate_s user_interaction;
+	_maliggy_osk_errcode_t err;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_allocate()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_allocate()\n"));
 		return -ENOTTY;
 	}
 
 	/* Copy the user space memory to kernel space (so we safely can read it) */
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_allocate()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_allocate()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
 
-	err = _ump_ukk_allocate( &user_interaction );
+	err = _umpggy_ukk_allocate( &user_interaction );
 	if( _MALI_OSK_ERR_OK != err )
 	{
-		DBG_MSG(1, ("_ump_ukk_allocate() failed in ump_ioctl_allocate()\n"));
-		return map_errcode(err);
+		DBG_MSG(1, ("_umpggy_ukk_allocate() failed in umpggy_ioctl_allocate()\n"));
+		return map_errcode_ggy_ggy(err);
 	}
 	user_interaction.ctx = NULL;
 
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
 		/* If the copy fails then we should release the memory. We can use the IOCTL release to accomplish this */
-		_ump_uk_release_s release_args;
+		_umpggy_uk_release_s release_args;
 
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_allocate()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_allocate()\n"));
 
 		release_args.ctx = (void *) session_data;
 		release_args.secure_id = user_interaction.secure_id;
 
-		err = _ump_ukk_release( &release_args );
+		err = _umpggy_ukk_release( &release_args );
 		if(_MALI_OSK_ERR_OK != err)
 		{
-			MSG_ERR(("_ump_ukk_release() also failed when trying to release newly allocated memory in ump_ioctl_allocate()\n"));
+			MSG_ERR(("_umpggy_ukk_release() also failed when trying to release newly allocated memory in umpggy_ioctl_allocate()\n"));
 		}
 
 		return -EFAULT;
@@ -96,45 +96,45 @@ int ump_allocate_wrapper(u32 __user * argument, struct ump_session_data  * sessi
 /*
  * IOCTL operation; Import fd to  UMP memory
  */
-int ump_ion_import_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_ion_import_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_ion_import_s user_interaction;
-	ump_dd_handle *ump_handle;
-	ump_dd_physical_block * blocks;
+	_umpggy_uk_ion_import_s user_interaction;
+	umpggy_dd_handle *umpggy_handle;
+	umpggy_dd_physical_block * blocks;
 	unsigned long num_blocks;
 	struct ion_handle *ion_hnd;
 	struct scatterlist *sg;
 	struct scatterlist *sg_ion;
 	unsigned long i = 0;
 
-	ump_session_memory_list_element * session_memory_element = NULL;
-	if (ion_client_ump==NULL)
-	    ion_client_ump = ion_client_create(ion_exynos, -1, "ump");
+	umpggy_session_memory_list_element * session_memory_element = NULL;
+	if (ion_client_ump_ggy_ggy==NULL)
+	    ion_client_ump_ggy_ggy = ion_client_create(ion_exynos, -1, "ump");
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_allocate()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_allocate()\n"));
 		return -ENOTTY;
 	}
 
 	/* Copy the user space memory to kernel space (so we safely can read it) */
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_allocate()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_allocate()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
 
 	/* translate fd to secure ID*/
-	ion_hnd = ion_import_fd(ion_client_ump, user_interaction.ion_fd);
-	sg_ion = ion_map_dma(ion_client_ump,ion_hnd);
+	ion_hnd = ion_import_fd(ion_client_ump_ggy_ggy, user_interaction.ion_fd);
+	sg_ion = ion_map_dma(ion_client_ump_ggy_ggy,ion_hnd);
 
-	blocks = (ump_dd_physical_block*)_mali_osk_malloc(sizeof(ump_dd_physical_block)*1024);
+	blocks = (umpggy_dd_physical_block*)_maliggy_osk_malloc(sizeof(umpggy_dd_physical_block)*1024);
 
 	if (NULL == blocks) {
-		MSG_ERR(("Failed to allocate blocks in ump_ioctl_allocate()\n"));
+		MSG_ERR(("Failed to allocate blocks in umpggy_ioctl_allocate()\n"));
 		return -ENOMEM;
 	}
 
@@ -144,8 +144,8 @@ int ump_ion_import_wrapper(u32 __user * argument, struct ump_session_data  * ses
 		blocks[i].size = sg_dma_len(sg);
 		i++;
 		if (i>=1024) {
-			_mali_osk_free(blocks);
-			MSG_ERR(("ion_import fail() in ump_ioctl_allocate()\n"));
+			_maliggy_osk_free(blocks);
+			MSG_ERR(("ion_import fail() in umpggy_ioctl_allocate()\n"));
 			return -EFAULT;
 		}
 		sg = sg_next(sg);
@@ -154,42 +154,42 @@ int ump_ion_import_wrapper(u32 __user * argument, struct ump_session_data  * ses
 	num_blocks = i;
 
 	/* Initialize the session_memory_element, and add it to the session object */
-	session_memory_element = _mali_osk_calloc( 1, sizeof(ump_session_memory_list_element));
+	session_memory_element = _maliggy_osk_calloc( 1, sizeof(umpggy_session_memory_list_element));
 
 	if (NULL == session_memory_element)
 	{
-		_mali_osk_free(blocks);
-		DBG_MSG(1, ("Failed to allocate ump_session_memory_list_element in ump_ioctl_allocate()\n"));
+		_maliggy_osk_free(blocks);
+		DBG_MSG(1, ("Failed to allocate umpggy_session_memory_list_element in umpggy_ioctl_allocate()\n"));
 		return -EFAULT;
 	}
 
-	ump_handle = ump_dd_handle_create_from_phys_blocks(blocks, num_blocks);
-	if (UMP_DD_HANDLE_INVALID == ump_handle)
+	umpggy_handle = umpggy_dd_handle_create_from_phys_blocks(blocks, num_blocks);
+	if (UMP_DD_HANDLE_INVALID == umpggy_handle)
 	{
-		_mali_osk_free(session_memory_element);
-		_mali_osk_free(blocks);
-		DBG_MSG(1, ("Failed to allocate ump_session_memory_list_element in ump_ioctl_allocate()\n"));
+		_maliggy_osk_free(session_memory_element);
+		_maliggy_osk_free(blocks);
+		DBG_MSG(1, ("Failed to allocate umpggy_session_memory_list_element in umpggy_ioctl_allocate()\n"));
 		return -EFAULT;
 	}
 
-	session_memory_element->mem = (ump_dd_mem*)ump_handle;
-	_mali_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
-	_mali_osk_list_add(&(session_memory_element->list), &(session_data->list_head_session_memory_list));
-	_mali_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
-	ion_unmap_dma(ion_client_ump,ion_hnd);
-	ion_free(ion_client_ump, ion_hnd);
+	session_memory_element->mem = (umpggy_dd_mem*)umpggy_handle;
+	_maliggy_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+	_maliggy_osk_list_add(&(session_memory_element->list), &(session_data->list_head_session_memory_list));
+	_maliggy_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+	ion_unmap_dma(ion_client_ump_ggy_ggy,ion_hnd);
+	ion_free(ion_client_ump_ggy_ggy, ion_hnd);
 
-	_mali_osk_free(blocks);
+	_maliggy_osk_free(blocks);
 
-	user_interaction.secure_id = ump_dd_secure_id_get(ump_handle);
-	user_interaction.size = ump_dd_size_get(ump_handle);
+	user_interaction.secure_id = umpggy_dd_secure_id_get(umpggy_handle);
+	user_interaction.size = umpggy_dd_size_get(umpggy_handle);
 	user_interaction.ctx = NULL;
 
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
 		/* If the copy fails then we should release the memory. We can use the IOCTL release to accomplish this */
 
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_allocate()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_allocate()\n"));
 
 		return -EFAULT;
 	}
@@ -198,13 +198,13 @@ int ump_ion_import_wrapper(u32 __user * argument, struct ump_session_data  * ses
 #endif
 
 #ifdef CONFIG_DMA_SHARED_BUFFER
-int ump_dmabuf_import_wrapper(u32 __user *argument,
-				struct ump_session_data  *session_data)
+int umpggy_dmabuf_import_wrapper(u32 __user *argument,
+				struct umpggy_session_data  *session_data)
 {
-	ump_session_memory_list_element *session = NULL;
-	struct ump_uk_dmabuf ump_dmabuf;
-	ump_dd_handle *ump_handle;
-	ump_dd_physical_block *blocks;
+	umpggy_session_memory_list_element *session = NULL;
+	struct umpggy_uk_dmabuf umpggy_dmabuf;
+	umpggy_dd_handle *umpggy_handle;
+	umpggy_dd_physical_block *blocks;
 	struct dma_buf_attachment *attach;
 	struct dma_buf *dma_buf;
 	struct sg_table *sgt;
@@ -221,13 +221,13 @@ int ump_dmabuf_import_wrapper(u32 __user *argument,
 		return -EINVAL;
 	}
 
-	if (copy_from_user(&ump_dmabuf, argument,
-				sizeof(struct ump_uk_dmabuf))) {
+	if (copy_from_user(&umpggy_dmabuf, argument,
+				sizeof(struct umpggy_uk_dmabuf))) {
 		MSG_ERR(("copy_from_user() failed.\n"));
 		return -EFAULT;
 	}
 
-	dma_buf = dma_buf_get(ump_dmabuf.fd);
+	dma_buf = dma_buf_get(umpggy_dmabuf.fd);
 	if (IS_ERR(dma_buf))
 		return PTR_ERR(dma_buf);
 
@@ -254,11 +254,11 @@ int ump_dmabuf_import_wrapper(u32 __user *argument,
 	npages = sgt->nents;
 
 	/* really need? */
-	ump_dmabuf.ctx = (void *)session_data;
+	umpggy_dmabuf.ctx = (void *)session_data;
 
-	block_size = sizeof(ump_dd_physical_block) * npages;
+	block_size = sizeof(umpggy_dd_physical_block) * npages;
 
-	blocks = (ump_dd_physical_block *)_mali_osk_malloc(block_size);
+	blocks = (umpggy_dd_physical_block *)_maliggy_osk_malloc(block_size);
 
 	if (NULL == blocks) {
 		MSG_ERR(("Failed to allocate blocks\n"));
@@ -279,47 +279,47 @@ int ump_dmabuf_import_wrapper(u32 __user *argument,
 	 * Initialize the session memory list element, and add it
 	 * to the session object
 	 */
-	session = _mali_osk_calloc(1, sizeof(*session));
+	session = _maliggy_osk_calloc(1, sizeof(*session));
 	if (!session) {
 		DBG_MSG(1, ("Failed to allocate session.\n"));
 		ret = -EFAULT;
 		goto err_free_block;
 	}
 
-	ump_handle = ump_dd_handle_create_from_phys_blocks(blocks, i);
-	if (UMP_DD_HANDLE_INVALID == ump_handle) {
+	umpggy_handle = umpggy_dd_handle_create_from_phys_blocks(blocks, i);
+	if (UMP_DD_HANDLE_INVALID == umpggy_handle) {
 		DBG_MSG(1, ("Failed to create ump handle.\n"));
 		ret = -EFAULT;
 		goto err_free_session;
 	}
 
-	session->mem = (ump_dd_mem *)ump_handle;
+	session->mem = (umpggy_dd_mem *)umpggy_handle;
 
-	_mali_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
-	_mali_osk_list_add(&(session->list),
+	_maliggy_osk_lock_wait(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+	_maliggy_osk_list_add(&(session->list),
 			&(session_data->list_head_session_memory_list));
-	_mali_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
+	_maliggy_osk_lock_signal(session_data->lock, _MALI_OSK_LOCKMODE_RW);
 
-	_mali_osk_free(blocks);
+	_maliggy_osk_free(blocks);
 
-	ump_dmabuf.ump_handle = (uint32_t)ump_handle;
-	ump_dmabuf.size = ump_dd_size_get(ump_handle);
+	umpggy_dmabuf.umpggy_handle = (uint32_t)umpggy_handle;
+	umpggy_dmabuf.size = umpggy_dd_size_get(umpggy_handle);
 
-	if (copy_to_user(argument, &ump_dmabuf,
-				sizeof(struct ump_uk_dmabuf))) {
+	if (copy_to_user(argument, &umpggy_dmabuf,
+				sizeof(struct umpggy_uk_dmabuf))) {
 		MSG_ERR(("copy_to_user() failed.\n"));
 		ret =  -EFAULT;
-		goto err_release_ump_handle;
+		goto err_release_umpggy_handle;
 	}
 
 	return 0;
 
-err_release_ump_handle:
-	ump_dd_reference_release(ump_handle);
+err_release_umpggy_handle:
+	umpggy_dd_reference_release(umpggy_handle);
 err_free_session:
-	_mali_osk_free(session);
+	_maliggy_osk_free(session);
 err_free_block:
-	_mali_osk_free(blocks);
+	_maliggy_osk_free(blocks);
 err_dmu_buf_unmap:
 	dma_buf_unmap_attachment(attach, sgt, DMA_BIDIRECTIONAL);
 err_dma_buf_detach:

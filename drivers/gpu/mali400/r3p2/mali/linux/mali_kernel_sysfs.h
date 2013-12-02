@@ -20,8 +20,8 @@ extern "C"
 
 #define MALI_PROC_DIR "driver/mali"
 
-int mali_sysfs_register(const char *mali_dev_name);
-int mali_sysfs_unregister(void);
+int maliggy_sysfs_register(const char *maliggy_dev_name);
+int maliggy_sysfs_unregister(void);
 
 #ifdef __cplusplus
 }

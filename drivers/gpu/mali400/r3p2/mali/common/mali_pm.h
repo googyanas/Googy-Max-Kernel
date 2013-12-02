@@ -13,16 +13,16 @@
 
 #include "mali_osk.h"
 
-_mali_osk_errcode_t mali_pm_initialize(void);
-void mali_pm_terminate(void);
+_maliggy_osk_errcode_t maliggy_pm_initialize(void);
+void maliggy_pm_terminate(void);
 
 /* Callback functions registered for the runtime PMM system */
-void mali_pm_os_suspend(void);
-void mali_pm_os_resume(void);
-void mali_pm_runtime_suspend(void);
-void mali_pm_runtime_resume(void);
+void maliggy_pm_os_suspend(void);
+void maliggy_pm_os_resume(void);
+void maliggy_pm_runtime_suspend(void);
+void maliggy_pm_runtime_resume(void);
 
-void mali_pm_set_power_is_on(void);
-mali_bool mali_pm_is_power_on(void);
+void maliggy_pm_set_power_is_on(void);
+maliggy_bool maliggy_pm_is_power_on(void);
 
 #endif /* __MALI_PM_H__ */

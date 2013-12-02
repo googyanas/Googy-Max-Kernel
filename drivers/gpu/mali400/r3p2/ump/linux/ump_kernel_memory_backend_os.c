@@ -37,19 +37,19 @@ typedef struct os_allocator
 
 
 
-static void os_free(void* ctx, ump_dd_mem * descriptor);
-static int os_allocate(void* ctx, ump_dd_mem * descriptor);
-static void os_memory_backend_destroy(ump_memory_backend * backend);
-static u32 os_stat(struct ump_memory_backend *backend);
+static void os_free(void* ctx, umpggy_dd_mem * descriptor);
+static int os_allocate(void* ctx, umpggy_dd_mem * descriptor);
+static void os_memory_backend_destroy(umpggy_memory_backend * backend);
+static u32 os_stat(struct umpggy_memory_backend *backend);
 
 
 
 /*
  * Create OS memory backend
  */
-ump_memory_backend * ump_os_memory_backend_create(const int max_allocation)
+umpggy_memory_backend * umpggy_os_memory_backend_create(const int max_allocation)
 {
-	ump_memory_backend * backend;
+	umpggy_memory_backend * backend;
 	os_allocator * info;
 
 	info = kmalloc(sizeof(os_allocator), GFP_KERNEL);
@@ -63,7 +63,7 @@ ump_memory_backend * ump_os_memory_backend_create(const int max_allocation)
 
 	sema_init(&info->mutex, 1);
 
-	backend = kmalloc(sizeof(ump_memory_backend), GFP_KERNEL);
+	backend = kmalloc(sizeof(umpggy_memory_backend), GFP_KERNEL);
 	if (NULL == backend)
 	{
 		kfree(info);
@@ -76,7 +76,7 @@ ump_memory_backend * ump_os_memory_backend_create(const int max_allocation)
 	backend->shutdown = os_memory_backend_destroy;
 	backend->stat = os_stat;
 	backend->pre_allocate_physical_check = NULL;
-	backend->adjust_to_mali_phys = NULL;
+	backend->adjust_to_maliggy_phys = NULL;
 	/* MALI_SEC */
 	backend->get = NULL;
 	backend->set = NULL;
@@ -89,7 +89,7 @@ ump_memory_backend * ump_os_memory_backend_create(const int max_allocation)
 /*
  * Destroy specified OS memory backend
  */
-static void os_memory_backend_destroy(ump_memory_backend * backend)
+static void os_memory_backend_destroy(umpggy_memory_backend * backend)
 {
 	os_allocator * info = (os_allocator*)backend->ctx;
 
@@ -104,7 +104,7 @@ static void os_memory_backend_destroy(ump_memory_backend * backend)
 /*
  * Allocate UMP memory
  */
-static int os_allocate(void* ctx, ump_dd_mem * descriptor)
+static int os_allocate(void* ctx, umpggy_dd_mem * descriptor)
 {
 	u32 left;
 	os_allocator * info;
@@ -127,9 +127,9 @@ static int os_allocate(void* ctx, ump_dd_mem * descriptor)
 	descriptor->backend_info = NULL;
 	descriptor->nr_blocks = ((left + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) >> PAGE_SHIFT;
 
-	DBG_MSG(5, ("Allocating page array. Size: %lu\n", descriptor->nr_blocks * sizeof(ump_dd_physical_block)));
+	DBG_MSG(5, ("Allocating page array. Size: %lu\n", descriptor->nr_blocks * sizeof(umpggy_dd_physical_block)));
 
-	descriptor->block_array = (ump_dd_physical_block *)vmalloc(sizeof(ump_dd_physical_block) * descriptor->nr_blocks);
+	descriptor->block_array = (umpggy_dd_physical_block *)vmalloc(sizeof(umpggy_dd_physical_block) * descriptor->nr_blocks);
 	if (NULL == descriptor->block_array)
 	{
 		up(&info->mutex);
@@ -217,7 +217,7 @@ static int os_allocate(void* ctx, ump_dd_mem * descriptor)
 /*
  * Free specified UMP memory
  */
-static void os_free(void* ctx, ump_dd_mem * descriptor)
+static void os_free(void* ctx, umpggy_dd_mem * descriptor)
 {
 	os_allocator * info;
 	int i;
@@ -255,7 +255,7 @@ static void os_free(void* ctx, ump_dd_mem * descriptor)
 }
 
 
-static u32 os_stat(struct ump_memory_backend *backend)
+static u32 os_stat(struct umpggy_memory_backend *backend)
 {
 	os_allocator *info;
 	info = (os_allocator*)backend->ctx;

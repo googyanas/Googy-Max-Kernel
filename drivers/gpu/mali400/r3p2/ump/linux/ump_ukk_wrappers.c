@@ -9,7 +9,7 @@
  */
 
 /**
- * @file ump_ukk_wrappers.c
+ * @file umpggy_ukk_wrappers.c
  * Defines the wrapper functions which turn Linux IOCTL calls into _ukk_ calls
  */
 
@@ -23,31 +23,31 @@
 /*
  * IOCTL operation; Negotiate version of IOCTL API
  */
-int ump_get_api_version_wrapper(u32 __user * argument, struct ump_session_data * session_data)
+int umpggy_get_api_version_wrapper_ggy_ggy(u32 __user * argument, struct umpggy_session_data * session_data)
 {
-	_ump_uk_api_version_s version_info;
-	_mali_osk_errcode_t err;
+	_umpggy_uk_api_version_s version_info;
+	_maliggy_osk_errcode_t err;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_get_api_version()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_get_api_version()\n"));
 		return -ENOTTY;
 	}
 
 	/* Copy the user space memory to kernel space (so we safely can read it) */
 	if (0 != copy_from_user(&version_info, argument, sizeof(version_info)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_get_api_version()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_get_api_version()\n"));
 		return -EFAULT;
 	}
 
 	version_info.ctx = (void*) session_data;
-	err = _ump_uku_get_api_version( &version_info );
+	err = _umpggy_uku_get_api_version( &version_info );
 	if( _MALI_OSK_ERR_OK != err )
 	{
-		MSG_ERR(("_ump_uku_get_api_version() failed in ump_ioctl_get_api_version()\n"));
-		return map_errcode(err);
+		MSG_ERR(("_umpggy_uku_get_api_version() failed in umpggy_ioctl_get_api_version()\n"));
+		return map_errcode_ggy_ggy(err);
 	}
 
 	version_info.ctx = NULL;
@@ -55,7 +55,7 @@ int ump_get_api_version_wrapper(u32 __user * argument, struct ump_session_data *
 	/* Copy ouput data back to user space */
 	if (0 != copy_to_user(argument, &version_info, sizeof(version_info)))
 	{
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_get_api_version()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_get_api_version()\n"));
 		return -EFAULT;
 	}
 
@@ -66,31 +66,31 @@ int ump_get_api_version_wrapper(u32 __user * argument, struct ump_session_data *
 /*
  * IOCTL operation; Release reference to specified UMP memory.
  */
-int ump_release_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_release_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_release_s release_args;
-	_mali_osk_errcode_t err;
+	_umpggy_uk_release_s release_args;
+	_maliggy_osk_errcode_t err;
 
 	/* Sanity check input parameters */
 	if (NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_release()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_release()\n"));
 		return -ENOTTY;
 	}
 
 	/* Copy the user space memory to kernel space (so we safely can read it) */
 	if (0 != copy_from_user(&release_args, argument, sizeof(release_args)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_get_api_version()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_get_api_version()\n"));
 		return -EFAULT;
 	}
 
 	release_args.ctx = (void*) session_data;
-	err = _ump_ukk_release( &release_args );
+	err = _umpggy_ukk_release( &release_args );
 	if( _MALI_OSK_ERR_OK != err )
 	{
-		MSG_ERR(("_ump_ukk_release() failed in ump_ioctl_release()\n"));
-		return map_errcode(err);
+		MSG_ERR(("_umpggy_ukk_release() failed in umpggy_ioctl_release()\n"));
+		return map_errcode_ggy_ggy(err);
 	}
 
 
@@ -100,37 +100,37 @@ int ump_release_wrapper(u32 __user * argument, struct ump_session_data  * sessio
 /*
  * IOCTL operation; Return size for specified UMP memory.
  */
-int ump_size_get_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_size_get_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_size_get_s user_interaction;
-	_mali_osk_errcode_t err;
+	_umpggy_uk_size_get_s user_interaction;
+	_maliggy_osk_errcode_t err;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_size_get()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_size_get()\n"));
 		return -ENOTTY;
 	}
 
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_size_get()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_size_get()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
-	err = _ump_ukk_size_get( &user_interaction );
+	err = _umpggy_ukk_size_get( &user_interaction );
 	if( _MALI_OSK_ERR_OK != err )
 	{
-		MSG_ERR(("_ump_ukk_size_get() failed in ump_ioctl_size_get()\n"));
-		return map_errcode(err);
+		MSG_ERR(("_umpggy_ukk_size_get() failed in umpggy_ioctl_size_get()\n"));
+		return map_errcode_ggy_ggy(err);
 	}
 
 	user_interaction.ctx = NULL;
 
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_size_get()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_size_get()\n"));
 		return -EFAULT;
 	}
 
@@ -140,130 +140,130 @@ int ump_size_get_wrapper(u32 __user * argument, struct ump_session_data  * sessi
 /*
  * IOCTL operation; Do cache maintenance on specified UMP memory.
  */
-int ump_msync_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_msync_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_msync_s user_interaction;
+	_umpggy_uk_msync_s user_interaction;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_size_get()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_size_get()\n"));
 		return -ENOTTY;
 	}
 
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_msync()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_msync()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
 
-	_ump_ukk_msync( &user_interaction );
+	_umpggy_ukk_msync( &user_interaction );
 
 	user_interaction.ctx = NULL;
 
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_msync()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_msync()\n"));
 		return -EFAULT;
 	}
 
 	return 0; /* success */
 }
-int ump_cache_operations_control_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_cache_operations_control_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_cache_operations_control_s user_interaction;
+	_umpggy_uk_cache_operations_control_s user_interaction;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_size_get()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_size_get()\n"));
 		return -ENOTTY;
 	}
 
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_cache_operations_control()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_cache_operations_control()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
 
-	_ump_ukk_cache_operations_control((_ump_uk_cache_operations_control_s*) &user_interaction );
+	_umpggy_ukk_cache_operations_control((_umpggy_uk_cache_operations_control_s*) &user_interaction );
 
 	user_interaction.ctx = NULL;
 
 #if 0  /* No data to copy back */
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_cache_operations_control()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_cache_operations_control()\n"));
 		return -EFAULT;
 	}
 #endif
 	return 0; /* success */
 }
 
-int ump_switch_hw_usage_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_switch_hw_usage_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_switch_hw_usage_s user_interaction;
+	_umpggy_uk_switch_hw_usage_s user_interaction;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_size_get()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_size_get()\n"));
 		return -ENOTTY;
 	}
 
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_switch_hw_usage()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_switch_hw_usage()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
 
-	_ump_ukk_switch_hw_usage( &user_interaction );
+	_umpggy_ukk_switch_hw_usage( &user_interaction );
 
 	user_interaction.ctx = NULL;
 
 #if 0  /* No data to copy back */
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_switch_hw_usage()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_switch_hw_usage()\n"));
 		return -EFAULT;
 	}
 #endif
 	return 0; /* success */
 }
 
-int ump_lock_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_lock_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_lock_s user_interaction;
+	_umpggy_uk_lock_s user_interaction;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_size_get()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_size_get()\n"));
 		return -ENOTTY;
 	}
 
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_switch_hw_usage()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_switch_hw_usage()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
 
-	_ump_ukk_lock( &user_interaction );
+	_umpggy_ukk_lock( &user_interaction );
 
 	user_interaction.ctx = NULL;
 
 #if 0  /* No data to copy back */
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_switch_hw_usage()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_switch_hw_usage()\n"));
 		return -EFAULT;
 	}
 #endif
@@ -271,33 +271,33 @@ int ump_lock_wrapper(u32 __user * argument, struct ump_session_data  * session_d
 	return 0; /* success */
 }
 
-int ump_unlock_wrapper(u32 __user * argument, struct ump_session_data  * session_data)
+int umpggy_unlock_wrapper(u32 __user * argument, struct umpggy_session_data  * session_data)
 {
-	_ump_uk_unlock_s user_interaction;
+	_umpggy_uk_unlock_s user_interaction;
 
 	/* Sanity check input parameters */
 	if (NULL == argument || NULL == session_data)
 	{
-		MSG_ERR(("NULL parameter in ump_ioctl_size_get()\n"));
+		MSG_ERR(("NULL parameter in umpggy_ioctl_size_get()\n"));
 		return -ENOTTY;
 	}
 
 	if (0 != copy_from_user(&user_interaction, argument, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_from_user() in ump_ioctl_switch_hw_usage()\n"));
+		MSG_ERR(("copy_from_user() in umpggy_ioctl_switch_hw_usage()\n"));
 		return -EFAULT;
 	}
 
 	user_interaction.ctx = (void *) session_data;
 
-	_ump_ukk_unlock( &user_interaction );
+	_umpggy_ukk_unlock( &user_interaction );
 
 	user_interaction.ctx = NULL;
 
 #if 0  /* No data to copy back */
 	if (0 != copy_to_user(argument, &user_interaction, sizeof(user_interaction)))
 	{
-		MSG_ERR(("copy_to_user() failed in ump_ioctl_switch_hw_usage()\n"));
+		MSG_ERR(("copy_to_user() failed in umpggy_ioctl_switch_hw_usage()\n"));
 		return -EFAULT;
 	}
 #endif

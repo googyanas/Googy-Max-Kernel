@@ -69,7 +69,7 @@ typedef enum
     COUNTER_FP_7_C1,
 
     /*
-     * If more hardware counters are added, the _mali_osk_hw_counter_table
+     * If more hardware counters are added, the _maliggy_osk_hw_counter_table
      * below should also be updated.
      */
 
@@ -122,7 +122,7 @@ typedef enum
     COUNTER_FILMSTRIP,
 
     NUMBER_OF_EVENTS
-} _mali_osk_counter_id;
+} _maliggy_osk_counter_id;
 
 #define FIRST_ACTIVITY_EVENT    ACTIVITY_VP_0
 #define LAST_ACTIVITY_EVENT     ACTIVITY_FP_7
@@ -139,61 +139,61 @@ typedef enum
 /**
  * Structure to pass performance counter data of a Mali core
  */
-typedef struct _mali_profiling_core_counters
+typedef struct _maliggy_profiling_core_counters
 {
 	u32 source0;
 	u32 value0;
 	u32 source1;
 	u32 value1;
-} _mali_profiling_core_counters;
+} _maliggy_profiling_core_counters;
 
 /**
  * Structure to pass performance counter data of Mali L2 cache cores
  */
-typedef struct _mali_profiling_l2_counter_values
+typedef struct _maliggy_profiling_l2_counter_values
 {
-	struct _mali_profiling_core_counters cores[MAX_NUM_L2_CACHE_CORES];
-} _mali_profiling_l2_counter_values;
+	struct _maliggy_profiling_core_counters cores[MAX_NUM_L2_CACHE_CORES];
+} _maliggy_profiling_l2_counter_values;
 
 /**
  * Structure to pass data defining Mali instance in use:
  *
- * mali_product_id - Mali product id
- * mali_version_major - Mali version major number
- * mali_version_minor - Mali version minor number
+ * maliggy_product_id - Mali product id
+ * maliggy_version_major - Mali version major number
+ * maliggy_version_minor - Mali version minor number
  * num_of_l2_cores - number of L2 cache cores
  * num_of_fp_cores - number of fragment processor cores
  * num_of_vp_cores - number of vertex processor cores
  */
-typedef struct _mali_profiling_mali_version
+typedef struct _maliggy_profiling_maliggy_version
 {
-	u32 mali_product_id;
-	u32 mali_version_major;
-	u32 mali_version_minor;
+	u32 maliggy_product_id;
+	u32 maliggy_version_major;
+	u32 maliggy_version_minor;
 	u32 num_of_l2_cores;
 	u32 num_of_fp_cores;
 	u32 num_of_vp_cores;
-} _mali_profiling_mali_version;
+} _maliggy_profiling_maliggy_version;
 
 /*
  * List of possible actions to be controlled by Streamline.
  * The following numbers are used by gator to control the frame buffer dumping and s/w counter reporting.
- * We cannot use the enums in mali_uk_types.h because they are unknown inside gator.
+ * We cannot use the enums in maliggy_uk_types.h because they are unknown inside gator.
  */
 #define FBDUMP_CONTROL_ENABLE (1)
 #define FBDUMP_CONTROL_RATE (2)
 #define SW_COUNTER_ENABLE (3)
 #define FBDUMP_CONTROL_RESIZE_FACTOR (4)
 
-void _mali_profiling_control(u32 action, u32 value);
+void _maliggy_profiling_control(u32 action, u32 value);
 
-u32 _mali_profiling_get_l2_counters(_mali_profiling_l2_counter_values *values);
+u32 _maliggy_profiling_get_l2_counters(_maliggy_profiling_l2_counter_values *values);
 
-int _mali_profiling_set_event(u32 counter_id, s32 event_id);
+int _maliggy_profiling_set_event(u32 counter_id, s32 event_id);
 
-u32 _mali_profiling_get_api_version(void);
+u32 _maliggy_profiling_get_api_version(void);
 
-void _mali_profiling_get_mali_version(struct _mali_profiling_mali_version *values);
+void _maliggy_profiling_get_maliggy_version(struct _maliggy_profiling_maliggy_version *values);
 
 #ifdef __cplusplus
 }

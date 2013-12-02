@@ -9,7 +9,7 @@
  */
 
 /**
- * @file ump_kernel_platform.h
+ * @file umpggy_kernel_platform.h
  *
  * This file should define UMP_KERNEL_API_EXPORT,
  * which dictates how the UMP kernel API should be exported/imported.
@@ -19,7 +19,7 @@
 #ifndef __UMP_KERNEL_PLATFORM_H__
 #define __UMP_KERNEL_PLATFORM_H__
 
-/** @addtogroup ump_kernel_space_api
+/** @addtogroup umpggy_kernel_space_api
  * @{ */
 
 /**
@@ -42,7 +42,7 @@
 #endif
 
 
-/** @} */ /* end group ump_kernel_space_api */
+/** @} */ /* end group umpggy_kernel_space_api */
 
 
 #endif /* __UMP_KERNEL_PLATFORM_H__ */

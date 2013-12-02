@@ -9,7 +9,7 @@
  */
 
 /**
- * @file mali_osk_irq.c
+ * @file maliggy_osk_irq.c
  * Implementation of the OS abstraction layer for the kernel device driver
  */
 
@@ -19,26 +19,26 @@
 #include "mali_kernel_common.h"
 #include "linux/interrupt.h"
 
-typedef struct _mali_osk_irq_t_struct
+typedef struct _maliggy_osk_irq_t_struct
 {
 	u32 irqnum;
 	void *data;
-	_mali_osk_irq_uhandler_t uhandler;
-} mali_osk_irq_object_t;
+	_maliggy_osk_irq_uhandler_t uhandler;
+} maliggy_osk_irq_object_t;
 
 typedef irqreturn_t (*irq_handler_func_t)(int, void *, struct pt_regs *);
 static irqreturn_t irq_handler_upper_half (int port_name, void* dev_id ); /* , struct pt_regs *regs*/
 
-_mali_osk_irq_t *_mali_osk_irq_init( u32 irqnum, _mali_osk_irq_uhandler_t uhandler, void *int_data, _mali_osk_irq_trigger_t trigger_func, _mali_osk_irq_ack_t ack_func, void *probe_data, const char *description )
+_maliggy_osk_irq_t *_maliggy_osk_irq_init( u32 irqnum, _maliggy_osk_irq_uhandler_t uhandler, void *int_data, _maliggy_osk_irq_trigger_t trigger_func, _maliggy_osk_irq_ack_t ack_func, void *probe_data, const char *description )
 {
-	mali_osk_irq_object_t *irq_object;
+	maliggy_osk_irq_object_t *irq_object;
 	unsigned long irq_flags = 0;
 
 #if defined(CONFIG_MALI_SHARED_INTERRUPTS)
 	irq_flags |= IRQF_SHARED;
 #endif /* defined(CONFIG_MALI_SHARED_INTERRUPTS) */
 
-	irq_object = kmalloc(sizeof(mali_osk_irq_object_t), GFP_KERNEL);
+	irq_object = kmalloc(sizeof(maliggy_osk_irq_object_t), GFP_KERNEL);
 	if (NULL == irq_object)
 	{
 		return NULL;
@@ -50,7 +50,7 @@ _mali_osk_irq_t *_mali_osk_irq_init( u32 irqnum, _mali_osk_irq_uhandler_t uhandl
 		if ( (NULL != trigger_func) && (NULL != ack_func) )
 		{
 			unsigned long probe_count = 3;
-			_mali_osk_errcode_t err;
+			_maliggy_osk_errcode_t err;
 			int irq;
 
 			MALI_DEBUG_PRINT(2, ("Probing for irq\n"));
@@ -62,7 +62,7 @@ _mali_osk_irq_t *_mali_osk_irq_init( u32 irqnum, _mali_osk_irq_uhandler_t uhandl
 				mask = probe_irq_on();
 				trigger_func(probe_data);
 
-				_mali_osk_time_ubusydelay(5);
+				_maliggy_osk_time_ubusydelay(5);
 
 				irq = probe_irq_off(mask);
 				err = ack_func(probe_data);
@@ -106,9 +106,9 @@ _mali_osk_irq_t *_mali_osk_irq_init( u32 irqnum, _mali_osk_irq_uhandler_t uhandl
 	return irq_object;
 }
 
-void _mali_osk_irq_term( _mali_osk_irq_t *irq )
+void _maliggy_osk_irq_term( _maliggy_osk_irq_t *irq )
 {
-	mali_osk_irq_object_t *irq_object = (mali_osk_irq_object_t *)irq;
+	maliggy_osk_irq_object_t *irq_object = (maliggy_osk_irq_object_t *)irq;
 	free_irq(irq_object->irqnum, irq_object);
 	kfree(irq_object);
 }
@@ -122,13 +122,13 @@ void _mali_osk_irq_term( _mali_osk_irq_t *irq )
  * core we check for each turn is given by the \a dev_id variable.
  * If we detect an pending interrupt on the given core, we mask the interrupt
  * out by settging the core's IRQ_MASK register to zero.
- * Then we schedule the mali_core_irq_handler_bottom_half to run as high priority
+ * Then we schedule the maliggy_core_irq_handler_bottom_half to run as high priority
  * work queue job.
  */
 static irqreturn_t irq_handler_upper_half (int port_name, void* dev_id ) /* , struct pt_regs *regs*/
 {
 	irqreturn_t ret = IRQ_NONE;
-	mali_osk_irq_object_t *irq_object = (mali_osk_irq_object_t *)dev_id;
+	maliggy_osk_irq_object_t *irq_object = (maliggy_osk_irq_object_t *)dev_id;
 
 	if (_MALI_OSK_ERR_OK == irq_object->uhandler(irq_object->data))
 	{

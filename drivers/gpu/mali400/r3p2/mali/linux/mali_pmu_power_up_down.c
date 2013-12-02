@@ -9,7 +9,7 @@
  */
 
 /**
- * @file mali_pmu_power_up_down.c
+ * @file maliggy_pmu_power_up_down.c
  */
 
 #include <linux/version.h>
@@ -23,9 +23,9 @@
 
 /* Mali PMU power up/down APIs */
 
-int mali_pmu_powerup(void)
+int maliggy_pmu_powerup(void)
 {
-	struct mali_pmu_core *pmu = mali_pmu_get_global_pmu_core();
+	struct maliggy_pmu_core *pmu = maliggy_pmu_get_global_pmu_core();
 
 	MALI_DEBUG_PRINT(5, ("Mali PMU: Power up\n"));
 
@@ -35,7 +35,7 @@ int mali_pmu_powerup(void)
 		return -ENXIO;
 	}
 
-	if (_MALI_OSK_ERR_OK != mali_pmu_power_up_all(pmu))
+	if (_MALI_OSK_ERR_OK != maliggy_pmu_power_up_all(pmu))
 	{
 		return -EFAULT;
 	}
@@ -43,11 +43,11 @@ int mali_pmu_powerup(void)
 	return 0;
 }
 
-EXPORT_SYMBOL(mali_pmu_powerup);
+EXPORT_SYMBOL(maliggy_pmu_powerup);
 
-int mali_pmu_powerdown(void)
+int maliggy_pmu_powerdown(void)
 {
-	struct mali_pmu_core *pmu = mali_pmu_get_global_pmu_core();
+	struct maliggy_pmu_core *pmu = maliggy_pmu_get_global_pmu_core();
 
 	MALI_DEBUG_PRINT(5, ("Mali PMU: Power down\n"));
 
@@ -57,7 +57,7 @@ int mali_pmu_powerdown(void)
 		return -ENXIO;
 	}
 
-	if (_MALI_OSK_ERR_OK != mali_pmu_power_down_all(pmu))
+	if (_MALI_OSK_ERR_OK != maliggy_pmu_power_down_all(pmu))
 	{
 		return -EFAULT;
 	}
@@ -65,11 +65,11 @@ int mali_pmu_powerdown(void)
 	return 0;
 }
 
-EXPORT_SYMBOL(mali_pmu_powerdown);
+EXPORT_SYMBOL(maliggy_pmu_powerdown);
 
-int mali_perf_set_num_pp_cores(unsigned int num_cores)
+int maliggy_perf_set_num_pp_cores(unsigned int num_cores)
 {
-	return mali_pp_scheduler_set_perf_level(num_cores);
+	return maliggy_pp_scheduler_set_perf_level(num_cores);
 }
 
-EXPORT_SYMBOL(mali_perf_set_num_pp_cores);
+EXPORT_SYMBOL(maliggy_perf_set_num_pp_cores);

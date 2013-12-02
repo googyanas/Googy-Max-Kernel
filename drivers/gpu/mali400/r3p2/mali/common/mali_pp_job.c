@@ -18,15 +18,15 @@
 static u32 pp_counter_src0 = MALI_HW_CORE_NO_COUNTER;      /**< Performance counter 0, MALI_HW_CORE_NO_COUNTER for disabled */
 static u32 pp_counter_src1 = MALI_HW_CORE_NO_COUNTER;      /**< Performance counter 1, MALI_HW_CORE_NO_COUNTER for disabled */
 
-struct mali_pp_job *mali_pp_job_create(struct mali_session_data *session, _mali_uk_pp_start_job_s *uargs, u32 id)
+struct maliggy_pp_job *maliggy_pp_job_create(struct maliggy_session_data *session, _maliggy_uk_pp_start_job_s *uargs, u32 id)
 {
-	struct mali_pp_job *job;
+	struct maliggy_pp_job *job;
 	u32 perf_counter_flag;
 
-	job = _mali_osk_calloc(1, sizeof(struct mali_pp_job));
+	job = _maliggy_osk_calloc(1, sizeof(struct maliggy_pp_job));
 	if (NULL != job)
 	{
-		if (0 != _mali_osk_copy_from_user(&job->uargs, uargs, sizeof(_mali_uk_pp_start_job_s)))
+		if (0 != _maliggy_osk_copy_from_user(&job->uargs, uargs, sizeof(_maliggy_uk_pp_start_job_s)))
 		{
 			goto fail;
 		}
@@ -37,31 +37,31 @@ struct mali_pp_job *mali_pp_job_create(struct mali_session_data *session, _mali_
 			goto fail;
 		}
 
-		if (!mali_pp_job_use_no_notification(job))
+		if (!maliggy_pp_job_use_no_notification(job))
 		{
-			job->finished_notification = _mali_osk_notification_create(_MALI_NOTIFICATION_PP_FINISHED, sizeof(_mali_uk_pp_job_finished_s));
+			job->finished_notification = _maliggy_osk_notification_create(_MALI_NOTIFICATION_PP_FINISHED, sizeof(_maliggy_uk_pp_job_finished_s));
 			if (NULL == job->finished_notification) goto fail;
 		}
 
-		perf_counter_flag = mali_pp_job_get_perf_counter_flag(job);
+		perf_counter_flag = maliggy_pp_job_get_perf_counter_flag(job);
 
 		/* case when no counters came from user space
 		 * so pass the debugfs / DS-5 provided global ones to the job object */
 		if (!((perf_counter_flag & _MALI_PERFORMANCE_COUNTER_FLAG_SRC0_ENABLE) ||
 				(perf_counter_flag & _MALI_PERFORMANCE_COUNTER_FLAG_SRC1_ENABLE)))
 		{
-			mali_pp_job_set_perf_counter_src0(job, mali_pp_job_get_pp_counter_src0());
-			mali_pp_job_set_perf_counter_src1(job, mali_pp_job_get_pp_counter_src1());
+			maliggy_pp_job_set_perf_counter_src0(job, maliggy_pp_job_get_pp_counter_src0());
+			maliggy_pp_job_set_perf_counter_src1(job, maliggy_pp_job_get_pp_counter_src1());
 		}
 
-		_mali_osk_list_init(&job->list);
+		_maliggy_osk_list_init(&job->list);
 		job->session = session;
-		_mali_osk_list_init(&job->session_list);
+		_maliggy_osk_list_init(&job->session_list);
 		job->id = id;
 
 		job->sub_jobs_num = job->uargs.num_cores ? job->uargs.num_cores : 1;
-		job->pid = _mali_osk_get_pid();
-		job->tid = _mali_osk_get_tid();
+		job->pid = _maliggy_osk_get_pid();
+		job->tid = _maliggy_osk_get_tid();
 
 		job->num_memory_cookies = job->uargs.num_memory_cookies;
 		if (job->num_memory_cookies > 0)
@@ -76,14 +76,14 @@ struct mali_pp_job *mali_pp_job_create(struct mali_session_data *session, _mali_
 
 			size = sizeof(*job->uargs.memory_cookies) * job->num_memory_cookies;
 
-			job->memory_cookies = _mali_osk_malloc(size);
+			job->memory_cookies = _maliggy_osk_malloc(size);
 			if (NULL == job->memory_cookies)
 			{
 				MALI_PRINT_ERROR(("Mali PP job: Failed to allocate %d bytes of memory cookies!\n", size));
 				goto fail;
 			}
 
-			if (0 != _mali_osk_copy_from_user(job->memory_cookies, job->uargs.memory_cookies, size))
+			if (0 != _maliggy_osk_copy_from_user(job->memory_cookies, job->uargs.memory_cookies, size))
 			{
 				MALI_PRINT_ERROR(("Mali PP job: Failed to copy %d bytes of memory cookies from user!\n", size));
 				goto fail;
@@ -91,7 +91,7 @@ struct mali_pp_job *mali_pp_job_create(struct mali_session_data *session, _mali_
 
 #if defined(CONFIG_DMA_SHARED_BUFFER) && !defined(CONFIG_MALI_DMA_BUF_MAP_ON_ATTACH)
 			job->num_dma_bufs = job->num_memory_cookies;
-			job->dma_bufs = _mali_osk_calloc(job->num_dma_bufs, sizeof(struct mali_dma_buf_attachment *));
+			job->dma_bufs = _maliggy_osk_calloc(job->num_dma_bufs, sizeof(struct maliggy_dma_buf_attachment *));
 			if (NULL == job->dma_bufs)
 			{
 				MALI_PRINT_ERROR(("Mali PP job: Failed to allocate dma_bufs array!\n"));
@@ -110,58 +110,58 @@ struct mali_pp_job *mali_pp_job_create(struct mali_session_data *session, _mali_
 fail:
 	if (NULL != job)
 	{
-		mali_pp_job_delete(job);
+		maliggy_pp_job_delete(job);
 	}
 
 	return NULL;
 }
 
-void mali_pp_job_delete(struct mali_pp_job *job)
+void maliggy_pp_job_delete(struct maliggy_pp_job *job)
 {
 #ifdef CONFIG_SYNC
 	/* It is safe to delete the work without flushing. */
-	if (NULL != job->sync_work) _mali_osk_wq_delete_work_nonflush(job->sync_work);
+	if (NULL != job->sync_work) _maliggy_osk_wq_delete_work_nonflush(job->sync_work);
 	if (NULL != job->pre_fence) sync_fence_put(job->pre_fence);
 	if (NULL != job->sync_point) sync_fence_put(job->sync_point->fence);
 #endif
 	if (NULL != job->finished_notification)
 	{
-		_mali_osk_notification_delete(job->finished_notification);
+		_maliggy_osk_notification_delete(job->finished_notification);
 	}
 
-	_mali_osk_free(job->memory_cookies);
+	_maliggy_osk_free(job->memory_cookies);
 
 #if defined(CONFIG_DMA_SHARED_BUFFER) && !defined(CONFIG_MALI_DMA_BUF_MAP_ON_ATTACH)
 	/* Unmap buffers attached to job */
 	if (0 < job->num_dma_bufs)
 	{
-		mali_dma_buf_unmap_job(job);
+		maliggy_dma_buf_unmap_job(job);
 	}
 
-	_mali_osk_free(job->dma_bufs);
+	_maliggy_osk_free(job->dma_bufs);
 #endif /* CONFIG_DMA_SHARED_BUFFER */
 
-	_mali_osk_free(job);
+	_maliggy_osk_free(job);
 }
 
-u32 mali_pp_job_get_pp_counter_src0(void)
+u32 maliggy_pp_job_get_pp_counter_src0(void)
 {
 	return pp_counter_src0;
 }
 
-mali_bool mali_pp_job_set_pp_counter_src0(u32 counter)
+maliggy_bool maliggy_pp_job_set_pp_counter_src0(u32 counter)
 {
 	pp_counter_src0 = counter;
 
 	return MALI_TRUE;
 }
 
-u32 mali_pp_job_get_pp_counter_src1(void)
+u32 maliggy_pp_job_get_pp_counter_src1(void)
 {
 	return pp_counter_src1;
 }
 
-mali_bool mali_pp_job_set_pp_counter_src1(u32 counter)
+maliggy_bool maliggy_pp_job_set_pp_counter_src1(u32 counter)
 {
 	pp_counter_src1 = counter;
 

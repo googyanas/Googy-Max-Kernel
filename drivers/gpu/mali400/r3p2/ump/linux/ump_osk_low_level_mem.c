@@ -9,7 +9,7 @@
  */
 
 /**
- * @file ump_osk_memory.c
+ * @file umpggy_osk_memory.c
  * Implementation of the OS abstraction layer for the kernel device driver
  */
 
@@ -32,28 +32,28 @@
 #include <asm/cacheflush.h>
 #include <linux/dma-mapping.h>
 
-typedef struct ump_vma_usage_tracker
+typedef struct umpggy_vma_usage_tracker
 {
 	atomic_t references;
-	ump_memory_allocation *descriptor;
-} ump_vma_usage_tracker;
+	umpggy_memory_allocation *descriptor;
+} umpggy_vma_usage_tracker;
 
-static void ump_vma_open(struct vm_area_struct * vma);
-static void ump_vma_close(struct vm_area_struct * vma);
+static void umpggy_vma_open(struct vm_area_struct * vma);
+static void umpggy_vma_close(struct vm_area_struct * vma);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-static int ump_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf);
+static int umpggy_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf);
 #else
-static unsigned long ump_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address);
+static unsigned long umpggy_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address);
 #endif
 
-static struct vm_operations_struct ump_vm_ops =
+static struct vm_operations_struct umpggy_vm_ops =
 {
-	.open = ump_vma_open,
-	.close = ump_vma_close,
+	.open = umpggy_vma_open,
+	.close = umpggy_vma_close,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-	.fault = ump_cpu_page_fault_handler
+	.fault = umpggy_cpu_page_fault_handler
 #else
-	.nopfn = ump_cpu_page_fault_handler
+	.nopfn = umpggy_cpu_page_fault_handler
 #endif
 };
 
@@ -62,9 +62,9 @@ static struct vm_operations_struct ump_vm_ops =
  * This should never happen since we always map in the entire virtual memory range.
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-static int ump_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf)
+static int umpggy_cpu_page_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf)
 #else
-static unsigned long ump_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address)
+static unsigned long umpggy_cpu_page_fault_handler(struct vm_area_struct * vma, unsigned long address)
 #endif
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
@@ -81,12 +81,12 @@ static unsigned long ump_cpu_page_fault_handler(struct vm_area_struct * vma, uns
 #endif
 }
 
-static void ump_vma_open(struct vm_area_struct * vma)
+static void umpggy_vma_open(struct vm_area_struct * vma)
 {
-	ump_vma_usage_tracker * vma_usage_tracker;
+	umpggy_vma_usage_tracker * vma_usage_tracker;
 	int new_val;
 
-	vma_usage_tracker = (ump_vma_usage_tracker*)vma->vm_private_data;
+	vma_usage_tracker = (umpggy_vma_usage_tracker*)vma->vm_private_data;
 	BUG_ON(NULL == vma_usage_tracker);
 
 	new_val = atomic_inc_return(&vma_usage_tracker->references);
@@ -94,13 +94,13 @@ static void ump_vma_open(struct vm_area_struct * vma)
 	DBG_MSG(4, ("VMA open, VMA reference count incremented. VMA: 0x%08lx, reference count: %d\n", (unsigned long)vma, new_val));
 }
 
-static void ump_vma_close(struct vm_area_struct * vma)
+static void umpggy_vma_close(struct vm_area_struct * vma)
 {
-	ump_vma_usage_tracker * vma_usage_tracker;
-	_ump_uk_unmap_mem_s args;
+	umpggy_vma_usage_tracker * vma_usage_tracker;
+	_umpggy_uk_unmap_mem_s args;
 	int new_val;
 
-	vma_usage_tracker = (ump_vma_usage_tracker*)vma->vm_private_data;
+	vma_usage_tracker = (umpggy_vma_usage_tracker*)vma->vm_private_data;
 	BUG_ON(NULL == vma_usage_tracker);
 
 	new_val = atomic_dec_return(&vma_usage_tracker->references);
@@ -109,11 +109,11 @@ static void ump_vma_close(struct vm_area_struct * vma)
 
 	if (0 == new_val)
 	{
-		ump_memory_allocation * descriptor;
+		umpggy_memory_allocation * descriptor;
 
 		descriptor = vma_usage_tracker->descriptor;
 
-		args.ctx = descriptor->ump_session;
+		args.ctx = descriptor->umpggy_session;
 		args.cookie = descriptor->cookie;
 		args.mapping = descriptor->mapping;
 		args.size = descriptor->size;
@@ -121,23 +121,23 @@ static void ump_vma_close(struct vm_area_struct * vma)
 		args._ukk_private = NULL; /** @note unused */
 
 		DBG_MSG(4, ("No more VMA references left, releasing UMP memory\n"));
-		_ump_ukk_unmap_mem( & args );
+		_umpggy_ukk_unmap_mem( & args );
 
-		/* vma_usage_tracker is free()d by _ump_osk_mem_mapregion_term() */
+		/* vma_usage_tracker is free()d by _umpggy_osk_mem_mapregion_term() */
 	}
 }
 
-_mali_osk_errcode_t _ump_osk_mem_mapregion_init( ump_memory_allocation * descriptor )
+_maliggy_osk_errcode_t _umpggy_osk_mem_mapregion_init( umpggy_memory_allocation * descriptor )
 {
-	ump_vma_usage_tracker * vma_usage_tracker;
+	umpggy_vma_usage_tracker * vma_usage_tracker;
 	struct vm_area_struct *vma;
 
 	if (NULL == descriptor) return _MALI_OSK_ERR_FAULT;
 
-	vma_usage_tracker = kmalloc(sizeof(ump_vma_usage_tracker), GFP_KERNEL);
+	vma_usage_tracker = kmalloc(sizeof(umpggy_vma_usage_tracker), GFP_KERNEL);
 	if (NULL == vma_usage_tracker)
 	{
-		DBG_MSG(1, ("Failed to allocate memory for ump_vma_usage_tracker in _mali_osk_mem_mapregion_init\n"));
+		DBG_MSG(1, ("Failed to allocate memory for umpggy_vma_usage_tracker in _maliggy_osk_mem_mapregion_init\n"));
 		return -_MALI_OSK_ERR_FAULT;
 	}
 
@@ -166,21 +166,21 @@ _mali_osk_errcode_t _ump_osk_mem_mapregion_init( ump_memory_allocation * descrip
 	DBG_MSG(3, ("Mapping with page_prot: 0x%x\n", vma->vm_page_prot ));
 
 	/* Setup the functions which handle further VMA handling */
-	vma->vm_ops = &ump_vm_ops;
+	vma->vm_ops = &umpggy_vm_ops;
 
 	/* Do the va range allocation - in this case, it was done earlier, so we copy in that information */
 	descriptor->mapping = (void __user*)vma->vm_start;
 
-	atomic_set(&vma_usage_tracker->references, 1); /*this can later be increased if process is forked, see ump_vma_open() */
+	atomic_set(&vma_usage_tracker->references, 1); /*this can later be increased if process is forked, see umpggy_vma_open() */
 	vma_usage_tracker->descriptor = descriptor;
 
 	return _MALI_OSK_ERR_OK;
 }
 
-void _ump_osk_mem_mapregion_term( ump_memory_allocation * descriptor )
+void _umpggy_osk_mem_mapregion_term( umpggy_memory_allocation * descriptor )
 {
 	struct vm_area_struct* vma;
-	ump_vma_usage_tracker * vma_usage_tracker;
+	umpggy_vma_usage_tracker * vma_usage_tracker;
 
 	if (NULL == descriptor) return;
 
@@ -195,10 +195,10 @@ void _ump_osk_mem_mapregion_term( ump_memory_allocation * descriptor )
 	return;
 }
 
-_mali_osk_errcode_t _ump_osk_mem_mapregion_map( ump_memory_allocation * descriptor, u32 offset, u32 * phys_addr, unsigned long size )
+_maliggy_osk_errcode_t _umpggy_osk_mem_mapregion_map( umpggy_memory_allocation * descriptor, u32 offset, u32 * phys_addr, unsigned long size )
 {
 	struct vm_area_struct *vma;
-	_mali_osk_errcode_t retval;
+	_maliggy_osk_errcode_t retval;
 
 	if (NULL == descriptor) return _MALI_OSK_ERR_FAULT;
 
@@ -209,7 +209,7 @@ _mali_osk_errcode_t _ump_osk_mem_mapregion_map( ump_memory_allocation * descript
 	retval = remap_pfn_range( vma, ((u32)descriptor->mapping) + offset, (*phys_addr) >> PAGE_SHIFT, size, vma->vm_page_prot) ? _MALI_OSK_ERR_FAULT : _MALI_OSK_ERR_OK;;
 
 		DBG_MSG(4, ("Mapping virtual to physical memory. ID: %u, vma: 0x%08lx, virtual addr:0x%08lx, physical addr: 0x%08lx, size:%lu, prot:0x%x, vm_flags:0x%x RETVAL: 0x%x\n",
-		        ump_dd_secure_id_get(descriptor->handle),
+		        umpggy_dd_secure_id_get(descriptor->handle),
 		        (unsigned long)vma,
 		        (unsigned long)(vma->vm_start + offset),
 		        (unsigned long)*phys_addr,
@@ -220,11 +220,11 @@ _mali_osk_errcode_t _ump_osk_mem_mapregion_map( ump_memory_allocation * descript
 }
 
 /* MALI_SEC */
-static u32 _ump_osk_virt_to_phys_start(ump_dd_mem * mem, u32 start, u32 address, int *index)
+static u32 _umpggy_osk_virt_to_phys_start(umpggy_dd_mem * mem, u32 start, u32 address, int *index)
 {
 	int i;
 	u32 offset = address - start;
-	ump_dd_physical_block *block;
+	umpggy_dd_physical_block *block;
 	u32 sum = 0;
 
 	for (i=0; i<mem->nr_blocks; i++) {
@@ -232,7 +232,7 @@ static u32 _ump_osk_virt_to_phys_start(ump_dd_mem * mem, u32 start, u32 address,
 		sum += block->size;
 		if (sum > offset) {
 			*index = i;
-			DBG_MSG(3, ("_ump_osk_virt_to_phys : index : %d, virtual 0x%x, phys 0x%x\n", i, address, (u32)block->addr + offset - (sum -block->size)));
+			DBG_MSG(3, ("_umpggy_osk_virt_to_phys : index : %d, virtual 0x%x, phys 0x%x\n", i, address, (u32)block->addr + offset - (sum -block->size)));
 			return (u32)block->addr + offset - (sum -block->size);
 		}
 	}
@@ -241,11 +241,11 @@ static u32 _ump_osk_virt_to_phys_start(ump_dd_mem * mem, u32 start, u32 address,
 }
 
 /* MALI_SEC */
-static u32 _ump_osk_virt_to_phys_end(ump_dd_mem * mem, u32 start, u32 address, int *index)
+static u32 _umpggy_osk_virt_to_phys_end(umpggy_dd_mem * mem, u32 start, u32 address, int *index)
 {
 	int i;
 	u32 offset = address - start;
-	ump_dd_physical_block *block;
+	umpggy_dd_physical_block *block;
 	u32 sum = 0;
 
 	for (i=0; i<mem->nr_blocks; i++) {
@@ -253,7 +253,7 @@ static u32 _ump_osk_virt_to_phys_end(ump_dd_mem * mem, u32 start, u32 address, i
 		sum += block->size;
 		if (sum >= offset) {
 			*index = i;
-			DBG_MSG(3, ("_ump_osk_virt_to_phys : index : %d, virtual 0x%x, phys 0x%x\n", i, address, (u32)block->addr + offset - (sum -block->size)));
+			DBG_MSG(3, ("_umpggy_osk_virt_to_phys : index : %d, virtual 0x%x, phys 0x%x\n", i, address, (u32)block->addr + offset - (sum -block->size)));
 			return (u32)block->addr + offset - (sum -block->size);
 		}
 	}
@@ -262,15 +262,15 @@ static u32 _ump_osk_virt_to_phys_end(ump_dd_mem * mem, u32 start, u32 address, i
 }
 
 /* MALI_SEC */
-static void _ump_osk_msync_with_virt(ump_dd_mem * mem, ump_uk_msync_op op, u32 start, u32 address, u32 size)
+static void _umpggy_osk_msync_with_virt(umpggy_dd_mem * mem, umpggy_uk_msync_op op, u32 start, u32 address, u32 size)
 {
 	int start_index, end_index;
 	u32 start_p, end_p;
 
 	DBG_MSG(3, ("Cache flush with user virtual address. start : 0x%x, end : 0x%x, address 0x%x, size 0x%x\n", start, start+mem->size_bytes, address, size));
 
-	start_p = _ump_osk_virt_to_phys_start(mem, start, address, &start_index);
-	end_p = _ump_osk_virt_to_phys_end(mem, start, address+size, &end_index);
+	start_p = _umpggy_osk_virt_to_phys_start(mem, start, address, &start_index);
+	end_p = _umpggy_osk_virt_to_phys_end(mem, start, address+size, &end_index);
 
 	if (start_index==end_index) {
 		if (op == _UMP_UK_MSYNC_CLEAN_AND_INVALIDATE)
@@ -278,7 +278,7 @@ static void _ump_osk_msync_with_virt(ump_dd_mem * mem, ump_uk_msync_op op, u32 s
 		else
 			outer_clean_range(start_p, end_p);
 	} else {
-		ump_dd_physical_block *block;
+		umpggy_dd_physical_block *block;
 		int i;
 
 		for (i=start_index; i<=end_index; i++) {
@@ -318,7 +318,7 @@ static void level1_cache_flush_all(void)
 	__cpuc_flush_kern_all();
 }
 
-void _ump_osk_msync( ump_dd_mem * mem, void * virt, u32 offset, u32 size, ump_uk_msync_op op, ump_session_data * session_data )
+void _umpggy_osk_msync( umpggy_dd_mem * mem, void * virt, u32 offset, u32 size, umpggy_uk_msync_op op, umpggy_session_data * session_data )
 {
 	int i;
 	/* MALI_SEC */
@@ -363,7 +363,7 @@ void _ump_osk_msync( ump_dd_mem * mem, void * virt, u32 offset, u32 size, ump_uk
 				}
 				else
 				{
-					/* Flushing the L1 cache for each switch_user() if ump_cache_operations_control(START) is not called */
+					/* Flushing the L1 cache for each switch_user() if umpggy_cache_operations_control(START) is not called */
 					level1_cache_flush_all();
 				}
 			}
@@ -405,7 +405,7 @@ void _ump_osk_msync( ump_dd_mem * mem, void * virt, u32 offset, u32 size, ump_uk
 	for (i=0 ; i < mem->nr_blocks; i++)
 	{
 		u32 start_p, end_p;
-		ump_dd_physical_block *block;
+		umpggy_dd_physical_block *block;
 		block = &mem->block_array[i];
 
 		if(offset >= block->size)
@@ -470,15 +470,15 @@ void _ump_osk_msync( ump_dd_mem * mem, void * virt, u32 offset, u32 size, ump_uk
 }
 
 /* MALI_SEC */
-void _ump_osk_mem_mapregion_get( ump_dd_mem ** mem, unsigned long vaddr)
+void _umpggy_osk_mem_mapregion_get( umpggy_dd_mem ** mem, unsigned long vaddr)
 {
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma;
-	ump_vma_usage_tracker * vma_usage_tracker;
-	ump_memory_allocation *descriptor;
-	ump_dd_handle handle;
+	umpggy_vma_usage_tracker * vma_usage_tracker;
+	umpggy_memory_allocation *descriptor;
+	umpggy_dd_handle handle;
 
-	DBG_MSG(3, ("_ump_osk_mem_mapregion_get: vaddr 0x%08lx\n", vaddr));
+	DBG_MSG(3, ("_umpggy_osk_mem_mapregion_get: vaddr 0x%08lx\n", vaddr));
 
 	down_read(&mm->mmap_sem);
 	vma = find_vma(mm, vaddr);
@@ -491,7 +491,7 @@ void _ump_osk_mem_mapregion_get( ump_dd_mem ** mem, unsigned long vaddr)
 	}
 	DBG_MSG(4, ("Get vma: 0x%08lx vma->vm_start: 0x%08lx\n", (unsigned long)vma, vma->vm_start));
 
-	vma_usage_tracker = (struct ump_vma_usage_tracker*)vma->vm_private_data;
+	vma_usage_tracker = (struct umpggy_vma_usage_tracker*)vma->vm_private_data;
 	if(vma_usage_tracker == NULL)
 	{
 		DBG_MSG(3, ("Not found vma_usage_tracker\n"));
@@ -499,9 +499,9 @@ void _ump_osk_mem_mapregion_get( ump_dd_mem ** mem, unsigned long vaddr)
 		return;
 	}
 
-	descriptor = (struct ump_memory_allocation*)vma_usage_tracker->descriptor;
-	handle = (ump_dd_handle)descriptor->handle;
+	descriptor = (struct umpggy_memory_allocation*)vma_usage_tracker->descriptor;
+	handle = (umpggy_dd_handle)descriptor->handle;
 
 	DBG_MSG(3, ("Get handle: 0x%08lx\n", handle));
-	*mem = (ump_dd_mem*)handle;
+	*mem = (umpggy_dd_mem*)handle;
 }

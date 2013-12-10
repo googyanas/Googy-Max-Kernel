@@ -2462,7 +2462,7 @@ struct s5p_platform_tmu midas_tmu_data __initdata = {
 		.start_tc = 10,
 	},
 	.cpufreq = {
-		.limit_1st_throttle  = 800000, /* 800MHz in KHz order */
+		.limit_1st_throttle  = 1000000, /* 1000MHz in KHz order (ggy: stock=800Mhz) */
 		.limit_2nd_throttle  = 200000, /* 200MHz in KHz order */
 	},
 	.temp_compensate = {
